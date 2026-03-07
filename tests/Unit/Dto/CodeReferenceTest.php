@@ -1,0 +1,131 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Tests\Unit\Dto;
+
+use App\Dto\CodeReference;
+use App\Dto\CodeReferenceType;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
+use PHPUnit\Framework\TestCase;
+
+final class CodeReferenceTest extends TestCase
+{
+    #[Test]
+    public function fromPhpRoleParsesStaticMethod(): void
+    {
+        $ref = CodeReference::fromPhpRole('TYPO3\CMS\Core\Utility\GeneralUtility::hmac()');
+
+        self::assertNotNull($ref);
+        self::assertSame('TYPO3\CMS\Core\Utility\GeneralUtility', $ref->className);
+        self::assertSame('hmac', $ref->member);
+        self::assertSame(CodeReferenceType::StaticMethod, $ref->type);
+    }
+
+    #[Test]
+    public function fromPhpRoleParsesInstanceMethod(): void
+    {
+        $ref = CodeReference::fromPhpRole('TYPO3\CMS\Core\Resource\FileExtensionFilter->filterInlineChildren()');
+
+        self::assertNotNull($ref);
+        self::assertSame('TYPO3\CMS\Core\Resource\FileExtensionFilter', $ref->className);
+        self::assertSame('filterInlineChildren', $ref->member);
+        self::assertSame(CodeReferenceType::InstanceMethod, $ref->type);
+    }
+
+    #[Test]
+    public function fromPhpRoleParsesClassName(): void
+    {
+        $ref = CodeReference::fromPhpRole('TYPO3\CMS\Core\Type\Enumeration');
+
+        self::assertNotNull($ref);
+        self::assertSame('TYPO3\CMS\Core\Type\Enumeration', $ref->className);
+        self::assertNull($ref->member);
+        self::assertSame(CodeReferenceType::ClassName, $ref->type);
+    }
+
+    #[Test]
+    public function fromPhpRoleParsesProperty(): void
+    {
+        $ref = CodeReference::fromPhpRole('TYPO3\CMS\Extbase\Property\TypeConverter\AbstractTypeConverter->$sourceTypes');
+
+        self::assertNotNull($ref);
+        self::assertSame('TYPO3\CMS\Extbase\Property\TypeConverter\AbstractTypeConverter', $ref->className);
+        self::assertSame('sourceTypes', $ref->member);
+        self::assertSame(CodeReferenceType::Property, $ref->type);
+    }
+
+    #[Test]
+    public function fromPhpRoleParsesClassConstant(): void
+    {
+        $ref = CodeReference::fromPhpRole('TYPO3\CMS\Backend\Template\DocumentTemplate::STATUS_ICON_ERROR');
+
+        self::assertNotNull($ref);
+        self::assertSame('TYPO3\CMS\Backend\Template\DocumentTemplate', $ref->className);
+        self::assertSame('STATUS_ICON_ERROR', $ref->member);
+        self::assertSame(CodeReferenceType::ClassConstant, $ref->type);
+    }
+
+    #[Test]
+    public function fromPhpRoleReturnsNullForPlainFunctionName(): void
+    {
+        self::assertNull(CodeReference::fromPhpRole('file'));
+    }
+
+    #[Test]
+    public function fromPhpRoleReturnsNullForGlobalConstant(): void
+    {
+        self::assertNull(CodeReference::fromPhpRole('E_USER_DEPRECATED'));
+    }
+
+    #[Test]
+    public function fromPhpRoleStripsLeadingBackslash(): void
+    {
+        $ref = CodeReference::fromPhpRole('\TYPO3\CMS\Core\Utility\GeneralUtility::hmac()');
+
+        self::assertNotNull($ref);
+        self::assertSame('TYPO3\CMS\Core\Utility\GeneralUtility', $ref->className);
+        self::assertSame('hmac', $ref->member);
+        self::assertSame(CodeReferenceType::StaticMethod, $ref->type);
+    }
+
+    #[Test]
+    public function fromPhpRoleReturnsNullForSingleSegmentNamespace(): void
+    {
+        self::assertNull(CodeReference::fromPhpRole('GeneralUtility'));
+    }
+
+    #[Test]
+    #[DataProvider('provideClassConstantPatterns')]
+    public function fromPhpRoleRecognizesClassConstants(string $input, string $expectedMember): void
+    {
+        $ref = CodeReference::fromPhpRole($input);
+
+        self::assertNotNull($ref);
+        self::assertSame($expectedMember, $ref->member);
+        self::assertSame(CodeReferenceType::ClassConstant, $ref->type);
+    }
+
+    /**
+     * @return iterable<string, array{string, string}>
+     */
+    public static function provideClassConstantPatterns(): iterable
+    {
+        yield 'all uppercase' => [
+            'TYPO3\CMS\Core\SomeClass::SOME_CONSTANT',
+            'SOME_CONSTANT',
+        ];
+
+        yield 'uppercase with digits' => [
+            'TYPO3\CMS\Core\SomeClass::VERSION_2',
+            'VERSION_2',
+        ];
+    }
+
+    #[Test]
+    public function fromPhpRoleReturnsNullForEmptyString(): void
+    {
+        self::assertNull(CodeReference::fromPhpRole(''));
+    }
+}
