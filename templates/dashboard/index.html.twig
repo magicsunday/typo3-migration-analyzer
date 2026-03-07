@@ -1,0 +1,35 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Dashboard - TYPO3 Migration Analyzer{% endblock %}
+
+{% block body %}
+<h1>TYPO3 Migration Analyzer</h1>
+<p>TYPO3 12 &rarr; 13 Migration Coverage</p>
+
+<div class="dashboard-grid">
+    <div class="card">
+        <div class="card-value">{{ totalDocuments }}</div>
+        <div class="card-label">RST-Dokumente</div>
+    </div>
+    <div class="card">
+        <div class="card-value">{{ totalDeprecations }}</div>
+        <div class="card-label">Deprecations</div>
+    </div>
+    <div class="card">
+        <div class="card-value">{{ totalBreaking }}</div>
+        <div class="card-label">Breaking Changes</div>
+    </div>
+    <div class="card">
+        <div class="card-value">{{ totalMatchers }}</div>
+        <div class="card-label">Matcher-Eintraege</div>
+    </div>
+    <div class="card {{ coverage.coveragePercent >= 80 ? 'card--success' : (coverage.coveragePercent >= 50 ? 'card--warning' : 'card--danger') }}">
+        <div class="card-value">{{ coverage.coveragePercent }}%</div>
+        <div class="card-label">Matcher-Coverage</div>
+    </div>
+    <div class="card card--danger">
+        <div class="card-value">{{ coverage.uncovered|length }}</div>
+        <div class="card-label">Ohne Matcher</div>
+    </div>
+</div>
+{% endblock %}
