@@ -6,7 +6,7 @@ namespace App\Controller;
 
 use App\Dto\DocumentType;
 use App\Dto\ScanStatus;
-use App\Parser\RstFileLocator;
+use App\Service\DocumentService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -14,12 +14,10 @@ use Symfony\Component\Routing\Attribute\Route;
 
 final class DeprecationController extends AbstractController
 {
-    private const VERSIONS = ['12.0', '12.1', '12.2', '12.3', '12.4', '12.4.x', '13.0', '13.1', '13.2', '13.3', '13.4', '13.4.x'];
-
     #[Route('/deprecations', name: 'deprecation_list')]
-    public function list(Request $request, RstFileLocator $locator): Response
+    public function list(Request $request, DocumentService $documentService): Response
     {
-        $documents = $locator->findAll(self::VERSIONS);
+        $documents = $documentService->getDocuments();
 
         $filters = [
             'type' => $request->query->getString('type'),
@@ -78,25 +76,15 @@ final class DeprecationController extends AbstractController
 
         return $this->render('deprecation/list.html.twig', [
             'documents' => $documents,
-            'versions' => self::VERSIONS,
+            'versions' => $documentService->getVersions(),
             'filters' => $filters,
         ]);
     }
 
     #[Route('/deprecations/{filename}', name: 'deprecation_detail')]
-    public function detail(string $filename, RstFileLocator $locator): Response
+    public function detail(string $filename, DocumentService $documentService): Response
     {
-        $documents = $locator->findAll(self::VERSIONS);
-
-        $doc = null;
-
-        foreach ($documents as $document) {
-            if ($document->filename === $filename) {
-                $doc = $document;
-
-                break;
-            }
-        }
+        $doc = $documentService->findDocumentByFilename($filename);
 
         if (null === $doc) {
             throw $this->createNotFoundException(\sprintf('Document "%s" not found.', $filename));
