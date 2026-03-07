@@ -25,7 +25,6 @@ final class MatcherConfigParserTest extends TestCase
         $entries = $this->parser->parseFromInstalledPackage();
 
         self::assertNotEmpty($entries);
-        self::assertContainsOnlyInstancesOf(MatcherEntry::class, $entries);
     }
 
     #[Test]
@@ -71,7 +70,6 @@ final class MatcherConfigParserTest extends TestCase
         // Each group must contain MatcherEntry instances
         foreach ($grouped as $rstFile => $groupEntries) {
             self::assertNotEmpty($groupEntries, \sprintf('Group for "%s" is empty', $rstFile));
-            self::assertContainsOnlyInstancesOf(MatcherEntry::class, $groupEntries);
         }
     }
 

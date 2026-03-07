@@ -128,4 +128,30 @@ final class CodeReferenceTest extends TestCase
     {
         self::assertNull(CodeReference::fromPhpRole(''));
     }
+
+    #[Test]
+    public function fromPhpRoleTreatsAllUppercaseWithParenthesesAsStaticMethod(): void
+    {
+        $ref = CodeReference::fromPhpRole('TYPO3\CMS\Core\SomeClass::GET()');
+
+        self::assertNotNull($ref);
+        self::assertSame('GET', $ref->member);
+        self::assertSame(CodeReferenceType::StaticMethod, $ref->type);
+    }
+
+    #[Test]
+    public function fromPhpRoleTreatsAllUppercaseWithoutParenthesesAsConstant(): void
+    {
+        $ref = CodeReference::fromPhpRole('TYPO3\CMS\Core\SomeClass::GET');
+
+        self::assertNotNull($ref);
+        self::assertSame('GET', $ref->member);
+        self::assertSame(CodeReferenceType::ClassConstant, $ref->type);
+    }
+
+    #[Test]
+    public function fromPhpRoleReturnsNullForOnlyBackslash(): void
+    {
+        self::assertNull(CodeReference::fromPhpRole('\\'));
+    }
 }

@@ -7,6 +7,7 @@ namespace App\Tests\Unit\Generator;
 use App\Dto\CodeReference;
 use App\Dto\CodeReferenceType;
 use App\Dto\DocumentType;
+use App\Dto\MatcherEntry;
 use App\Dto\MatcherType;
 use App\Dto\RstDocument;
 use App\Dto\ScanStatus;
@@ -172,6 +173,100 @@ final class MatcherConfigGeneratorTest extends TestCase
         self::assertStringContainsString("'TYPO3\\\\CMS\\\\Core\\\\OldClass'", $rendered);
         self::assertStringContainsString("'restFiles' => [", $rendered);
         self::assertStringContainsString("'Deprecation-12345-Test.rst'", $rendered);
+    }
+
+    #[Test]
+    public function generateReturnsEmptyArrayForDocumentWithoutCodeReferences(): void
+    {
+        $document = $this->createDocument(
+            filename: 'Deprecation-99999-NoRefs.rst',
+            codeReferences: [],
+        );
+
+        $entries = $this->generator->generate($document);
+
+        self::assertSame([], $entries);
+    }
+
+    #[Test]
+    public function renderPhpHandlesIntegerConfigValues(): void
+    {
+        $entry = new MatcherEntry(
+            identifier: 'TYPO3\CMS\Core\Foo->bar',
+            matcherType: MatcherType::MethodCall,
+            restFiles: ['Test.rst'],
+            additionalConfig: [
+                'numberOfMandatoryArguments' => 2,
+                'maximumNumberOfArguments' => 5,
+            ],
+        );
+
+        $rendered = $this->generator->renderPhp([$entry]);
+
+        self::assertStringContainsString("'numberOfMandatoryArguments' => 2,", $rendered);
+        self::assertStringContainsString("'maximumNumberOfArguments' => 5,", $rendered);
+    }
+
+    #[Test]
+    public function renderPhpHandlesBooleanConfigValues(): void
+    {
+        $entry = new MatcherEntry(
+            identifier: 'TYPO3\CMS\Core\Foo->bar',
+            matcherType: MatcherType::MethodCall,
+            restFiles: ['Test.rst'],
+            additionalConfig: [
+                'someFlag' => true,
+                'anotherFlag' => false,
+            ],
+        );
+
+        $rendered = $this->generator->renderPhp([$entry]);
+
+        self::assertStringContainsString("'someFlag' => true,", $rendered);
+        self::assertStringContainsString("'anotherFlag' => false,", $rendered);
+    }
+
+    #[Test]
+    public function renderPhpHandlesStringConfigValues(): void
+    {
+        $entry = new MatcherEntry(
+            identifier: 'TYPO3\CMS\Core\Foo->bar',
+            matcherType: MatcherType::MethodCall,
+            restFiles: ['Test.rst'],
+            additionalConfig: [
+                'replacement' => 'newMethod',
+            ],
+        );
+
+        $rendered = $this->generator->renderPhp([$entry]);
+
+        self::assertStringContainsString("'replacement' => 'newMethod',", $rendered);
+    }
+
+    #[Test]
+    public function renderPhpHandlesArrayConfigValues(): void
+    {
+        $entry = new MatcherEntry(
+            identifier: 'TYPO3\CMS\Core\Foo->bar',
+            matcherType: MatcherType::MethodCallStatic,
+            restFiles: ['Test.rst'],
+            additionalConfig: [
+                'unusedArgumentNumbers' => [1, 2],
+            ],
+        );
+
+        $rendered = $this->generator->renderPhp([$entry]);
+
+        self::assertStringContainsString('unusedArgumentNumbers', $rendered);
+        self::assertStringContainsString('array', $rendered);
+    }
+
+    #[Test]
+    public function renderPhpProducesEmptyReturnArrayForEmptyEntries(): void
+    {
+        $rendered = $this->generator->renderPhp([]);
+
+        self::assertSame("<?php\n\nreturn [\n];\n", $rendered);
     }
 
     /**

@@ -39,7 +39,7 @@ final class RstParser
 
     public function parseFile(string $filePath, string $version): RstDocument
     {
-        $content = file_get_contents($filePath);
+        $content = @file_get_contents($filePath);
 
         if (false === $content) {
             throw new RuntimeException(\sprintf('Cannot read file: %s', $filePath));

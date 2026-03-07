@@ -82,6 +82,96 @@ final class MatcherCoverageAnalyzerTest extends TestCase
         self::assertSame(1, $result->totalMatchers);
     }
 
+    #[Test]
+    public function analyzeEmptyDocumentsReturnsZeroCoverage(): void
+    {
+        $result = $this->analyzer->analyze([], []);
+
+        self::assertSame(0.0, $result->coveragePercent);
+        self::assertSame(0, $result->totalDocuments);
+        self::assertSame(0, $result->totalMatchers);
+        self::assertCount(0, $result->covered);
+        self::assertCount(0, $result->uncovered);
+    }
+
+    #[Test]
+    public function analyzeEmptyDocumentsWithMatchersReturnsZeroCoverage(): void
+    {
+        $matcher = new MatcherEntry(
+            identifier: 'TYPO3\CMS\Core\SomeClass->someMethod',
+            matcherType: MatcherType::MethodCall,
+            restFiles: ['Deprecation-12345-SomeDeprecation.rst'],
+        );
+
+        $result = $this->analyzer->analyze([], [$matcher]);
+
+        self::assertSame(0.0, $result->coveragePercent);
+        self::assertSame(0, $result->totalDocuments);
+        self::assertSame(1, $result->totalMatchers);
+    }
+
+    #[Test]
+    public function multipleMatchersReferencingSameDocumentCountOnce(): void
+    {
+        $document = $this->createDocument('Deprecation-12345-Test.rst');
+
+        $matcher1 = new MatcherEntry(
+            identifier: 'TYPO3\CMS\Core\Foo->bar',
+            matcherType: MatcherType::MethodCall,
+            restFiles: ['Deprecation-12345-Test.rst'],
+        );
+
+        $matcher2 = new MatcherEntry(
+            identifier: 'TYPO3\CMS\Core\Foo->baz',
+            matcherType: MatcherType::MethodCall,
+            restFiles: ['Deprecation-12345-Test.rst'],
+        );
+
+        $result = $this->analyzer->analyze([$document], [$matcher1, $matcher2]);
+
+        self::assertCount(1, $result->covered);
+        self::assertCount(0, $result->uncovered);
+        self::assertSame(100.0, $result->coveragePercent);
+        self::assertSame(2, $result->totalMatchers);
+    }
+
+    #[Test]
+    public function matcherReferencingNonExistentDocumentDoesNotCauseError(): void
+    {
+        $document = $this->createDocument('Deprecation-11111-Existing.rst');
+
+        $matcher = new MatcherEntry(
+            identifier: 'TYPO3\CMS\Core\Foo->bar',
+            matcherType: MatcherType::MethodCall,
+            restFiles: ['Deprecation-99999-NonExistent.rst'],
+        );
+
+        $result = $this->analyzer->analyze([$document], [$matcher]);
+
+        self::assertCount(0, $result->covered);
+        self::assertCount(1, $result->uncovered);
+        self::assertSame(0.0, $result->coveragePercent);
+    }
+
+    #[Test]
+    public function coveragePercentageWithNonExactDivision(): void
+    {
+        $doc1 = $this->createDocument('Deprecation-11111-A.rst');
+        $doc2 = $this->createDocument('Deprecation-22222-B.rst');
+        $doc3 = $this->createDocument('Deprecation-33333-C.rst');
+
+        $matcher = new MatcherEntry(
+            identifier: 'TYPO3\CMS\Core\Foo->bar',
+            matcherType: MatcherType::MethodCall,
+            restFiles: ['Deprecation-11111-A.rst'],
+        );
+
+        $result = $this->analyzer->analyze([$doc1, $doc2, $doc3], [$matcher]);
+
+        // 1/3 = 33.333...%
+        self::assertEqualsWithDelta(33.333, $result->coveragePercent, 0.01);
+    }
+
     private function createDocument(string $filename): RstDocument
     {
         return new RstDocument(

@@ -10,6 +10,7 @@ use App\Dto\ScanStatus;
 use App\Parser\RstParser;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use RuntimeException;
 
 final class RstParserTest extends TestCase
 {
@@ -148,5 +149,78 @@ final class RstParserTest extends TestCase
         $propertyRef = array_values($propertyRefs)[0];
         self::assertSame('TYPO3\CMS\Core\DataHandling\DataHandler', $propertyRef->className);
         self::assertSame('recUpdateAccessCache', $propertyRef->member);
+    }
+
+    #[Test]
+    public function parseFileThrowsOnUnreadableFile(): void
+    {
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessageMatches('/Cannot read file/');
+
+        $this->parser->parseFile('/nonexistent/path/file.rst', '13.0');
+    }
+
+    #[Test]
+    public function parseFileThrowsOnUnknownDocumentType(): void
+    {
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessageMatches('/Unknown document type/');
+
+        $filePath = $this->fixturesDir.'/Unknown-77777-TestUnknown.rst';
+        $this->parser->parseFile($filePath, '13.0');
+    }
+
+    #[Test]
+    public function parseFileThrowsOnMissingIssueId(): void
+    {
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessageMatches('/No issue ID found/');
+
+        $filePath = $this->fixturesDir.'/Deprecation-66666-NoIssueId.rst';
+        $this->parser->parseFile($filePath, '13.0');
+    }
+
+    #[Test]
+    public function parseFileThrowsOnMissingTitle(): void
+    {
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessageMatches('/No title found/');
+
+        $filePath = $this->fixturesDir.'/Deprecation-55555-NoTitle.rst';
+        $this->parser->parseFile($filePath, '13.0');
+    }
+
+    #[Test]
+    public function parseDocumentWithNoCodeReferencesReturnsEmptyArray(): void
+    {
+        $filePath = $this->fixturesDir.'/Deprecation-44444-NoCodeRefs.rst';
+
+        $document = $this->parser->parseFile($filePath, '13.0');
+
+        self::assertSame([], $document->codeReferences);
+    }
+
+    #[Test]
+    public function extractSectionsWithDashUnderlines(): void
+    {
+        $filePath = $this->fixturesDir.'/Deprecation-33333-DashUnderlines.rst';
+
+        $document = $this->parser->parseFile($filePath, '13.0');
+
+        self::assertStringContainsString('deprecated', $document->description);
+        self::assertNotNull($document->impact);
+        self::assertStringContainsString('error', $document->impact);
+    }
+
+    #[Test]
+    public function extractMultipleIndexDirectives(): void
+    {
+        $filePath = $this->fixturesDir.'/Deprecation-22222-MultiIndex.rst';
+
+        $document = $this->parser->parseFile($filePath, '13.0');
+
+        self::assertContains('Backend', $document->indexTags);
+        self::assertContains('Frontend', $document->indexTags);
+        self::assertSame(ScanStatus::PartiallyScanned, $document->scanStatus);
     }
 }
