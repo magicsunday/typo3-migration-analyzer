@@ -16,7 +16,6 @@ class DeprecatedUsage
 {
     public function doSomething(): void
     {
-        /** @phpstan-ignore classConstant.deprecatedClass */
         GeneralUtility::makeInstance(Enumeration::class);
     }
 }

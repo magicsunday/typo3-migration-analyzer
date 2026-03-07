@@ -16,7 +16,6 @@ use App\Dto\ScanFinding;
 use App\Dto\ScanResult;
 use InvalidArgumentException;
 use PhpParser\NodeTraverser;
-use PhpParser\NodeVisitor;
 use PhpParser\NodeVisitor\NameResolver;
 use PhpParser\ParserFactory;
 use PhpParser\PhpVersion;
@@ -24,9 +23,9 @@ use ReflectionClass;
 use RuntimeException;
 use SplFileObject;
 use Symfony\Component\Finder\Finder;
-use TYPO3\CMS\Install\ExtensionScanner\CodeScannerInterface;
 use TYPO3\CMS\Install\ExtensionScanner\Php\CodeStatistics;
 use TYPO3\CMS\Install\ExtensionScanner\Php\GeneratorClassesResolver;
+use TYPO3\CMS\Install\ExtensionScanner\Php\Matcher\AbstractCoreMatcher;
 use TYPO3\CMS\Install\ExtensionScanner\Php\Matcher\ArrayDimensionMatcher;
 use TYPO3\CMS\Install\ExtensionScanner\Php\Matcher\ArrayGlobalMatcher;
 use TYPO3\CMS\Install\ExtensionScanner\Php\Matcher\ClassConstantMatcher;
@@ -52,7 +51,6 @@ use TYPO3\CMS\Install\ExtensionScanner\Php\Matcher\ScalarStringMatcher;
 
 use function dirname;
 use function file_get_contents;
-use function is_array;
 use function is_dir;
 use function is_string;
 use function sprintf;
@@ -67,7 +65,7 @@ final class ExtensionScanner
     /**
      * Mapping of matcher class names to their configuration file names.
      *
-     * @var array<class-string<CodeScannerInterface>, string>
+     * @var array<class-string<AbstractCoreMatcher>, string>
      */
     private const array MATCHER_CONFIG = [
         ArrayDimensionMatcher::class               => 'ArrayDimensionMatcher.php',
@@ -162,11 +160,7 @@ final class ExtensionScanner
         $matchers = $this->createMatchers();
 
         foreach ($matchers as $matcher) {
-            // All TYPO3 matchers extend AbstractCoreMatcher (NodeVisitorAbstract)
-            // but CodeScannerInterface doesn't declare NodeVisitor
-            if ($matcher instanceof NodeVisitor) {
-                $matcherTraverser->addVisitor($matcher);
-            }
+            $matcherTraverser->addVisitor($matcher);
         }
 
         $matcherTraverser->traverse($statements);
@@ -203,7 +197,7 @@ final class ExtensionScanner
     /**
      * Load configuration files and instantiate all matcher NodeVisitors.
      *
-     * @return list<CodeScannerInterface>
+     * @return list<AbstractCoreMatcher>
      */
     private function createMatchers(): array
     {
@@ -212,13 +206,9 @@ final class ExtensionScanner
 
         foreach (self::MATCHER_CONFIG as $matcherClass => $configFile) {
             $configFilePath = $configDirectory . '/' . $configFile;
-            $configuration  = require $configFilePath;
 
-            if (!is_array($configuration)) {
-                throw new RuntimeException(
-                    sprintf('Configuration file "%s" must return an array.', $configFilePath),
-                );
-            }
+            /** @var array<string, mixed> $configuration */
+            $configuration = require $configFilePath;
 
             $matchers[] = new $matcherClass($configuration);
         }

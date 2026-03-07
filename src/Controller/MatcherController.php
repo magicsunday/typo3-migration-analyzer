@@ -39,7 +39,7 @@ use const PATHINFO_FILENAME;
 
 final class MatcherController extends AbstractController
 {
-    private const FILENAME_REQUIREMENT = ['filename' => '[A-Za-z0-9_\-]+\.rst'];
+    private const array FILENAME_REQUIREMENT = ['filename' => '[A-Za-z0-9_\-]+\.rst'];
 
     public function __construct(
         private readonly DocumentService $documentService,

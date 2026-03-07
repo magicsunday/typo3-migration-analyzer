@@ -36,9 +36,9 @@ use function trim;
 final class RstParser
 {
     /** Valid RST section underline characters: = - ` : . ' " ~ ^ _ * + # */
-    private const RST_UNDERLINE_PATTERN = '/^[=\-`:\.\'"~^_*+#]{3,}$/';
+    private const string RST_UNDERLINE_PATTERN = '/^[=\-`:\.\'"~^_*+#]{3,}$/';
 
-    private const SCAN_STATUS_TAGS = [
+    private const array SCAN_STATUS_TAGS = [
         'FullyScanned',
         'PartiallyScanned',
         'NotScanned',

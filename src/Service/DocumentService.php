@@ -22,7 +22,7 @@ use Symfony\Contracts\Cache\ItemInterface;
 
 final readonly class DocumentService
 {
-    private const VERSIONS = ['12.0', '12.1', '12.2', '12.3', '12.4', '12.4.x', '13.0', '13.1', '13.2', '13.3', '13.4', '13.4.x'];
+    private const array VERSIONS = ['12.0', '12.1', '12.2', '12.3', '12.4', '12.4.x', '13.0', '13.1', '13.2', '13.3', '13.4', '13.4.x'];
 
     public function __construct(
         private RstFileLocator $locator,

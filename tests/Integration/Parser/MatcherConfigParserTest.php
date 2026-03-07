@@ -93,18 +93,8 @@ final class MatcherConfigParserTest extends TestCase
     #[Test]
     public function parsedEntryHasExpectedStructure(): void
     {
-        $entries = $this->parser->parseFromInstalledPackage();
-
-        // Find a known entry from MethodCallMatcher (confirmed it exists above)
-        $clipboardEntry = null;
-
-        foreach ($entries as $entry) {
-            if ($entry->identifier === 'TYPO3\CMS\Backend\Clipboard\Clipboard->confirmMsg') {
-                $clipboardEntry = $entry;
-
-                break;
-            }
-        }
+        $entries        = $this->parser->parseFromInstalledPackage();
+        $clipboardEntry = array_find($entries, fn ($entry): bool => $entry->identifier === 'TYPO3\CMS\Backend\Clipboard\Clipboard->confirmMsg');
 
         self::assertNotNull($clipboardEntry, 'Expected entry for Clipboard->confirmMsg not found');
         self::assertSame(MatcherType::MethodCall, $clipboardEntry->matcherType);
