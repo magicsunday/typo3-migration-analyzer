@@ -1,6 +1,8 @@
 {
+    "name": "magicsunday/typo3-migration-analyzer",
+    "description": "Analyzes TYPO3 Deprecation and Breaking-Change RST documents, identifies missing Extension Scanner matchers, calculates coverage, and generates matcher configurations.",
     "type": "project",
-    "license": "proprietary",
+    "license": "MIT",
     "minimum-stability": "stable",
     "prefer-stable": true,
     "require": {
