@@ -37,11 +37,40 @@ php -S localhost:8000 -t public/
 - TYPO3 cms-composer-installers ueberschreibt public/index.php — Workaround via `extra.typo3/cms.web-dir` in composer.json
 - Coverage aktuell bei ~51.7% (205 von 424 RST-Dokumenten ohne Matcher)
 
-## Geplante Features (v1.1+)
+## Roadmap
+
+### v1.1 — Rector + Extension-Scan
 - Rector-Rule-Skeleton-Generator
 - Eigene Extension scannen (Upload oder Pfad-Angabe)
-- Before/After Code-Vergleichsansicht
-- Coverage-Report mit Prozentualer Aufschluesselung
+- Before/After Code-Vergleichsansicht aus RSTs
+- Coverage-Report mit prozentualer Aufschluesselung
+
+### v1.2 — Intelligentere Analyse
+- Argument-Erkennung aus RST-Code-Bloecken (korrekte numberOfMandatoryArguments)
+- Migrations-Mapping: Alt->Neu Zuordnung parsen ("Replace X with Y")
+- Komplexitaets-Scoring pro Deprecation (einfach automatisierbar vs. manuell)
+
+### v1.3 — Extension-Scanner als Service
+- Extension hochladen/scannen (ZIP oder Git-URL)
+- Findings-Report mit Datei + Zeilennummer
+- Export als JSON/CSV fuer Projektmanagement
+
+### v2.0 — Multi-Version + Rector-Integration
+- Beliebige TYPO3-Versionen (9->10, 10->11, 11->12, 12->13)
+- Lauffaehige Rector-Rules generieren (Rename Class/Method, Remove Argument)
+- Rector-Config-Export (komplette rector.php)
+- Diff gegen ssch/typo3-rector (was existiert schon, was fehlt)
+
+### v2.1 — CI/CD Integration
+- CLI-Modus: `bin/console analyze:extension /path/to/ext`
+- GitHub Action fuer automatische Extension-Analyse bei PRs
+- Composer Plugin: `composer typo3:migration-check`
+
+### v3.0 — Community-Plattform
+- Datenbank-Backend (Ergebnisse speichern, historisch vergleichen)
+- Benutzer-Accounts (eigene Extensions verwalten)
+- Generierte Matcher/Rules direkt als TYPO3 Core Patch oder typo3-rector PR einreichen
+- Crowd-Validierung generierter Rules
 
 ## Design + Plan
 - `docs/plans/2026-03-07-typo3-migration-analyzer-design.md`
