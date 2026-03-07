@@ -1,6 +1,6 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Matcher generieren: {{ doc.title }}{% endblock %}
+{% block title %}Generieren: {{ doc.title }}{% endblock %}
 
 {% block breadcrumb %}
     <li class="breadcrumb-item"><a href="{{ path('dashboard') }}">Dashboard</a></li>
@@ -9,6 +9,7 @@
 {% endblock %}
 
 {% block body %}
+{# Document header #}
 <div class="mb-4">
     <div class="d-flex align-items-center gap-2 mb-2">
         {% if doc.type.value == 'deprecation' %}
@@ -20,59 +21,169 @@
         {% endif %}
         <span class="text-muted">#{{ doc.issueId }}</span>
     </div>
-    <h1 class="h3 mb-0">Matcher generieren</h1>
+    <h1 class="h3 mb-0">Code generieren</h1>
     <p class="text-muted">{{ doc.title }}</p>
 </div>
 
-{% if entries|length > 0 %}
-{# Generated entries #}
-<div class="card border-0 shadow-sm mb-4">
-    <div class="card-header bg-transparent d-flex justify-content-between align-items-center">
-        <h6 class="mb-0">
-            <i class="bi bi-puzzle me-1"></i>Generierte Matcher-Eintraege
-            <span class="badge rounded-pill text-bg-primary ms-1">{{ entries|length }}</span>
-        </h6>
+{# Tabs #}
+<ul class="nav nav-tabs mb-4" role="tablist">
+    <li class="nav-item" role="presentation">
+        <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-matcher" type="button" role="tab">
+            <i class="bi bi-puzzle me-1"></i>Matcher-Config
+            {% if entries|length > 0 %}
+                <span class="badge rounded-pill text-bg-primary ms-1">{{ entries|length }}</span>
+            {% endif %}
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-rector-config" type="button" role="tab">
+            <i class="bi bi-gear me-1"></i>Rector-Config
+            {% if rectorConfigRules|length > 0 %}
+                <span class="badge rounded-pill text-bg-success ms-1">{{ rectorConfigRules|length }}</span>
+            {% endif %}
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-rector-skeleton" type="button" role="tab">
+            <i class="bi bi-file-earmark-code me-1"></i>Rector-Skeleton
+            {% if rectorSkeletonRules|length > 0 %}
+                <span class="badge rounded-pill text-bg-secondary ms-1">{{ rectorSkeletonRules|length }}</span>
+            {% endif %}
+        </button>
+    </li>
+</ul>
+
+<div class="tab-content">
+    {# Tab 1: Matcher Config (existing content) #}
+    <div class="tab-pane fade show active" id="tab-matcher" role="tabpanel">
+        {% if entries|length > 0 %}
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-transparent d-flex justify-content-between align-items-center">
+                <h6 class="mb-0">
+                    <i class="bi bi-puzzle me-1"></i>Generierte Matcher-Eintraege
+                    <span class="badge rounded-pill text-bg-primary ms-1">{{ entries|length }}</span>
+                </h6>
+            </div>
+            <div class="table-responsive">
+                <table class="table align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>Matcher-Typ</th>
+                            <th>Identifier</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for entry in entries %}
+                        <tr>
+                            <td><code class="text-primary">{{ entry.matcherType.value }}</code></td>
+                            <td><code>{{ entry.identifier }}</code></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-transparent d-flex justify-content-between align-items-center">
+                <h6 class="mb-0"><i class="bi bi-filetype-php me-1"></i>PHP-Code</h6>
+                <a href="{{ path('matcher_export', {filename: doc.filename}) }}" class="btn btn-sm btn-typo3">
+                    <i class="bi bi-download me-1"></i>Als PHP herunterladen
+                </a>
+            </div>
+            <div class="card-body p-0">
+                <pre class="code-block m-0 rounded-0 rounded-bottom">{{ phpCode }}</pre>
+            </div>
+        </div>
+        {% else %}
+        <div class="alert alert-info d-flex align-items-center">
+            <i class="bi bi-info-circle me-2 fs-5"></i>
+            <div>Keine automatisch generierbaren Matcher für dieses Dokument.</div>
+        </div>
+        {% endif %}
     </div>
-    <div class="table-responsive">
-        <table class="table align-middle mb-0">
-            <thead>
-                <tr>
-                    <th>Matcher-Typ</th>
-                    <th>Identifier</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for entry in entries %}
-                <tr>
-                    <td><code class="text-primary">{{ entry.matcherType.value }}</code></td>
-                    <td><code>{{ entry.identifier }}</code></td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+
+    {# Tab 2: Rector Config #}
+    <div class="tab-pane fade" id="tab-rector-config" role="tabpanel">
+        {% if rectorConfigRules|length > 0 %}
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-transparent d-flex justify-content-between align-items-center">
+                <h6 class="mb-0">
+                    <i class="bi bi-gear me-1"></i>Rector-Config Regeln
+                    <span class="badge rounded-pill text-bg-success ms-1">{{ rectorConfigRules|length }}</span>
+                </h6>
+            </div>
+            <div class="table-responsive">
+                <table class="table align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>Typ</th>
+                            <th>Quelle</th>
+                            <th>Ziel</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for rule in rectorConfigRules %}
+                        <tr>
+                            <td><code class="text-success">{{ rule.type.value }}</code></td>
+                            <td><code>{{ rule.source.className }}{% if rule.source.member %}::{{ rule.source.member }}{% endif %}</code></td>
+                            <td><code>{{ rule.target.className }}{% if rule.target.member %}::{{ rule.target.member }}{% endif %}</code></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-transparent d-flex justify-content-between align-items-center">
+                <h6 class="mb-0"><i class="bi bi-filetype-php me-1"></i>rector.php</h6>
+                <a href="{{ path('rector_export_config', {filename: doc.filename}) }}" class="btn btn-sm btn-typo3">
+                    <i class="bi bi-download me-1"></i>Als PHP herunterladen
+                </a>
+            </div>
+            <div class="card-body p-0">
+                <pre class="code-block m-0 rounded-0 rounded-bottom">{{ rectorConfigPhp }}</pre>
+            </div>
+        </div>
+        {% else %}
+        <div class="alert alert-info d-flex align-items-center">
+            <i class="bi bi-info-circle me-2 fs-5"></i>
+            <div>Keine automatischen Rector-Config-Regeln erkannt. Die Migration erfordert wahrscheinlich eine komplexere Rule (siehe Rector-Skeleton Tab).</div>
+        </div>
+        {% endif %}
+    </div>
+
+    {# Tab 3: Rector Skeleton #}
+    <div class="tab-pane fade" id="tab-rector-skeleton" role="tabpanel">
+        {% if rectorSkeletonRules|length > 0 %}
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <p class="text-muted mb-0">Für die folgenden Code-Referenzen wurde kein automatisches Mapping erkannt. Die generierten Skeleton-Klassen enthalten TODO-Markierungen für die manuelle Implementierung.</p>
+            <a href="{{ path('rector_export_skeleton', {filename: doc.filename}) }}" class="btn btn-sm btn-typo3 flex-shrink-0 ms-3">
+                <i class="bi bi-download me-1"></i>{% if rectorSkeletonRules|length > 1 %}Alle herunterladen (ZIP){% else %}Als PHP herunterladen{% endif %}
+            </a>
+        </div>
+        {% for rule in rectorSkeletonRules %}
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-transparent">
+                <h6 class="mb-0">
+                    <i class="bi bi-file-earmark-code me-1"></i>
+                    <code>{{ rule.source.className }}{% if rule.source.member %}{% if rule.source.type.value == 'instance_method' or rule.source.type.value == 'property' %}->{% else %}::{% endif %}{{ rule.source.member }}{% if rule.source.type.value == 'instance_method' or rule.source.type.value == 'static_method' %}(){% endif %}{% endif %}</code>
+                </h6>
+            </div>
+            <div class="card-body p-0">
+                <pre class="code-block m-0 rounded-0 rounded-bottom">{{ rectorGenerator.renderSkeleton(rule) }}</pre>
+            </div>
+        </div>
+        {% endfor %}
+        {% else %}
+        <div class="alert alert-success d-flex align-items-center">
+            <i class="bi bi-check-circle me-2 fs-5"></i>
+            <div>Alle Code-Referenzen können durch Rector-Config-Regeln abgedeckt werden. Keine Skeletons nötig.</div>
+        </div>
+        {% endif %}
     </div>
 </div>
 
-{# PHP Code #}
-<div class="card border-0 shadow-sm mb-4">
-    <div class="card-header bg-transparent d-flex justify-content-between align-items-center">
-        <h6 class="mb-0"><i class="bi bi-filetype-php me-1"></i>PHP-Code</h6>
-        <a href="{{ path('matcher_export', {filename: doc.filename}) }}" class="btn btn-sm btn-typo3">
-            <i class="bi bi-download me-1"></i>Als PHP herunterladen
-        </a>
-    </div>
-    <div class="card-body p-0">
-        <pre class="code-block m-0 rounded-0 rounded-bottom">{{ phpCode }}</pre>
-    </div>
-</div>
-{% else %}
-<div class="alert alert-info d-flex align-items-center">
-    <i class="bi bi-info-circle me-2 fs-5"></i>
-    <div>Keine automatisch generierbaren Matcher für dieses Dokument. Manuelle Analyse erforderlich.</div>
-</div>
-{% endif %}
-
-<a href="{{ path('matcher_analysis') }}" class="btn btn-outline-secondary">
+<a href="{{ path('matcher_analysis') }}" class="btn btn-outline-secondary mt-3">
     <i class="bi bi-arrow-left me-1"></i>Zurück zur Analyse
 </a>
 {% endblock %}
