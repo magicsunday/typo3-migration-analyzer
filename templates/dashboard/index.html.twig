@@ -17,98 +17,86 @@
 {# Stat cards #}
 <div class="row g-3 mb-4">
     <div class="col-sm-6 col-xl-4">
-        <div class="card stat-card text-center border-0 shadow-sm h-100">
-            <div class="card-header bg-transparent d-flex justify-content-center align-items-center gap-3">
-                <div class="stat-icon bg-primary bg-opacity-10 text-primary">
-                    <i class="bi bi-file-earmark-text"></i>
-                </div>
-                <div class="stat-value">{{ totalDocuments }}</div>
+        <div class="card text-center shadow-sm h-100">
+            <div class="card-header d-flex justify-content-center align-items-center gap-3">
+                <i class="bi bi-file-earmark-text fs-3 text-primary"></i>
+                <span class="display-6 fw-bold">{{ totalDocuments }}</span>
             </div>
             <div class="card-body">
                 <h5 class="card-title">RST-Dokumente</h5>
             </div>
-            <div class="card-footer bg-transparent">
-                <small class="text-muted">Gesamtzahl aller geparseten Deprecation- und Breaking-Change-Dokumente aus dem TYPO3 Changelog.</small>
+            <div class="card-footer text-body-secondary">
+                Gesamtzahl aller geparseten Deprecation- und Breaking-Change-Dokumente aus dem TYPO3 Changelog.
             </div>
         </div>
     </div>
     <div class="col-sm-6 col-xl-4">
-        <div class="card stat-card text-center border-0 shadow-sm h-100">
-            <div class="card-header bg-transparent d-flex justify-content-center align-items-center gap-3">
-                <div class="stat-icon bg-warning bg-opacity-10 text-warning">
-                    <i class="bi bi-exclamation-triangle"></i>
-                </div>
-                <div class="stat-value">{{ totalDeprecations }}</div>
+        <div class="card text-center shadow-sm h-100">
+            <div class="card-header d-flex justify-content-center align-items-center gap-3">
+                <i class="bi bi-exclamation-triangle fs-3 text-warning"></i>
+                <span class="display-6 fw-bold">{{ totalDeprecations }}</span>
             </div>
             <div class="card-body">
                 <h5 class="card-title">Deprecations</h5>
             </div>
-            <div class="card-footer bg-transparent">
-                <small class="text-muted">Als veraltet markierte APIs, die in einer zukünftigen Version entfernt werden. Code sollte zeitnah migriert werden.</small>
+            <div class="card-footer text-body-secondary">
+                Als veraltet markierte APIs, die in einer zukünftigen Version entfernt werden. Code sollte zeitnah migriert werden.
             </div>
         </div>
     </div>
     <div class="col-sm-6 col-xl-4">
-        <div class="card stat-card text-center border-0 shadow-sm h-100">
-            <div class="card-header bg-transparent d-flex justify-content-center align-items-center gap-3">
-                <div class="stat-icon bg-danger bg-opacity-10 text-danger">
-                    <i class="bi bi-lightning"></i>
-                </div>
-                <div class="stat-value">{{ totalBreaking }}</div>
+        <div class="card text-center shadow-sm h-100">
+            <div class="card-header d-flex justify-content-center align-items-center gap-3">
+                <i class="bi bi-lightning fs-3 text-danger"></i>
+                <span class="display-6 fw-bold">{{ totalBreaking }}</span>
             </div>
             <div class="card-body">
                 <h5 class="card-title">Breaking Changes</h5>
             </div>
-            <div class="card-footer bg-transparent">
-                <small class="text-muted">Bereits entfernte oder geänderte APIs, die zu Fehlern führen, wenn bestehender Code nicht angepasst wird.</small>
+            <div class="card-footer text-body-secondary">
+                Bereits entfernte oder geänderte APIs, die zu Fehlern führen, wenn bestehender Code nicht angepasst wird.
             </div>
         </div>
     </div>
     <div class="col-sm-6 col-xl-4">
-        <div class="card stat-card text-center border-0 shadow-sm h-100">
-            <div class="card-header bg-transparent d-flex justify-content-center align-items-center gap-3">
-                <div class="stat-icon bg-info bg-opacity-10 text-info">
-                    <i class="bi bi-puzzle"></i>
-                </div>
-                <div class="stat-value">{{ totalMatchers }}</div>
+        <div class="card text-center shadow-sm h-100">
+            <div class="card-header d-flex justify-content-center align-items-center gap-3">
+                <i class="bi bi-puzzle fs-3 text-info"></i>
+                <span class="display-6 fw-bold">{{ totalMatchers }}</span>
             </div>
             <div class="card-body">
                 <h5 class="card-title">Matcher-Einträge</h5>
             </div>
-            <div class="card-footer bg-transparent">
-                <small class="text-muted">Konfigurierte Regeln im TYPO3 Extension Scanner, die betroffenen Code in Extensions automatisch erkennen.</small>
+            <div class="card-footer text-body-secondary">
+                Konfigurierte Regeln im TYPO3 Extension Scanner, die betroffenen Code in Extensions automatisch erkennen.
             </div>
         </div>
     </div>
     <div class="col-sm-6 col-xl-4">
-        <div class="card stat-card text-center border-0 shadow-sm h-100">
-            <div class="card-header bg-transparent d-flex justify-content-center align-items-center gap-3">
-                <div class="stat-icon {{ coverage.coveragePercent >= 80 ? 'bg-success' : (coverage.coveragePercent >= 50 ? 'bg-warning' : 'bg-danger') }} bg-opacity-10 {{ coverage.coveragePercent >= 80 ? 'text-success' : (coverage.coveragePercent >= 50 ? 'text-warning' : 'text-danger') }}">
-                    <i class="bi bi-shield-check"></i>
-                </div>
-                <div class="stat-value">{{ coverage.coveragePercent|number_format(1) }}%</div>
+        <div class="card text-center shadow-sm h-100">
+            <div class="card-header d-flex justify-content-center align-items-center gap-3">
+                <i class="bi bi-shield-check fs-3 {{ coverage.coveragePercent >= 80 ? 'text-success' : (coverage.coveragePercent >= 50 ? 'text-warning' : 'text-danger') }}"></i>
+                <span class="display-6 fw-bold">{{ coverage.coveragePercent|number_format(1) }}%</span>
             </div>
             <div class="card-body">
                 <h5 class="card-title">Matcher-Coverage</h5>
             </div>
-            <div class="card-footer bg-transparent">
-                <small class="text-muted">Anteil der RST-Dokumente, für die bereits ein passender Extension-Scanner-Matcher existiert.</small>
+            <div class="card-footer text-body-secondary">
+                Anteil der RST-Dokumente, für die bereits ein passender Extension-Scanner-Matcher existiert.
             </div>
         </div>
     </div>
     <div class="col-sm-6 col-xl-4">
-        <div class="card stat-card text-center border-0 shadow-sm h-100">
-            <div class="card-header bg-transparent d-flex justify-content-center align-items-center gap-3">
-                <div class="stat-icon bg-danger bg-opacity-10 text-danger">
-                    <i class="bi bi-x-circle"></i>
-                </div>
-                <div class="stat-value">{{ coverage.uncovered|length }}</div>
+        <div class="card text-center shadow-sm h-100">
+            <div class="card-header d-flex justify-content-center align-items-center gap-3">
+                <i class="bi bi-x-circle fs-3 text-danger"></i>
+                <span class="display-6 fw-bold">{{ coverage.uncovered|length }}</span>
             </div>
             <div class="card-body">
                 <h5 class="card-title">Ohne Matcher</h5>
             </div>
-            <div class="card-footer bg-transparent">
-                <small class="text-muted">Dokumente ohne zugehörigen Matcher &mdash; diese Änderungen werden vom Extension Scanner nicht erkannt.</small>
+            <div class="card-footer text-body-secondary">
+                Dokumente ohne zugehörigen Matcher &mdash; diese Änderungen werden vom Extension Scanner nicht erkannt.
             </div>
         </div>
     </div>
