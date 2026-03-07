@@ -40,7 +40,7 @@
 {# Content sections #}
 <div class="row">
     <div class="col-lg-8">
-        {% if doc.description is not empty %}
+        {% if doc.description|trim %}
         <div class="rst-section">
             <h6 class="text-uppercase text-muted small fw-bold mb-3">
                 <i class="bi bi-card-text me-1"></i>Description
@@ -49,7 +49,7 @@
         </div>
         {% endif %}
 
-        {% if doc.impact is not empty %}
+        {% if doc.impact|trim %}
         <div class="rst-section">
             <h6 class="text-uppercase text-muted small fw-bold mb-3">
                 <i class="bi bi-exclamation-diamond me-1"></i>Impact
@@ -58,7 +58,7 @@
         </div>
         {% endif %}
 
-        {% if doc.migration is not empty %}
+        {% if doc.migration|trim %}
         <div class="rst-section">
             <h6 class="text-uppercase text-muted small fw-bold mb-3">
                 <i class="bi bi-arrow-right-circle me-1"></i>Migration
@@ -74,10 +74,14 @@
                 <span class="badge rounded-pill text-bg-primary ms-1">{{ doc.codeBlocks|length }}</span>
             </h6>
 
+            {% set before_labels = ['before', 'vorher'] %}
+            {% set after_labels = ['after', 'nachher'] %}
+            {% set pair_labels = before_labels|merge(after_labels) %}
+
             {# Check if there are Before/After pairs #}
             {% set has_pairs = false %}
             {% for block in doc.codeBlocks %}
-                {% if block.label is not null and block.label|lower in ['before', 'after', 'vorher', 'nachher'] %}
+                {% if block.label is not null and block.label|lower in pair_labels %}
                     {% set has_pairs = true %}
                 {% endif %}
             {% endfor %}
@@ -86,14 +90,14 @@
                 {# Side-by-side comparison for Before/After pairs #}
                 <div class="code-comparison mb-3">
                     {% for block in doc.codeBlocks %}
-                        {% if block.label is not null and block.label|lower in ['before', 'vorher'] %}
+                        {% if block.label is not null and block.label|lower in before_labels %}
                             <div class="code-panel">
                                 <div class="code-panel-header before">
                                     <i class="bi bi-x-circle me-1"></i>Before (veraltet)
                                 </div>
                                 <pre><code class="hljs-code language-{{ block.language }}">{{ block.code }}</code></pre>
                             </div>
-                        {% elseif block.label is not null and block.label|lower in ['after', 'nachher'] %}
+                        {% elseif block.label is not null and block.label|lower in after_labels %}
                             <div class="code-panel">
                                 <div class="code-panel-header after">
                                     <i class="bi bi-check-circle me-1"></i>After (neu)
@@ -106,7 +110,7 @@
 
                 {# Show any unlabeled blocks separately #}
                 {% for block in doc.codeBlocks %}
-                    {% if block.label is null or block.label|lower not in ['before', 'after', 'vorher', 'nachher'] %}
+                    {% if block.label is null or block.label|lower not in pair_labels %}
                         <div class="code-single mb-3">
                             <div class="code-panel-header neutral">
                                 <i class="bi bi-file-code me-1"></i>{{ block.language|upper }}
