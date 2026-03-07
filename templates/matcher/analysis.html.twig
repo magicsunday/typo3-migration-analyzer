@@ -1,8 +1,41 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Matcher-Analyse - TYPO3 Migration Analyzer{% endblock %}
+{% block title %}Matcher-Analyse{% endblock %}
 
 {% block body %}
 <h1>Matcher-Analyse</h1>
-<p>Coming soon.</p>
+<p>Coverage: <strong>{{ coverage.coveragePercent|number_format(1) }}%</strong> ({{ coverage.covered|length }}/{{ coverage.totalDocuments }})</p>
+
+<h2>Nicht abgedeckte Dokumente ({{ coverage.uncovered|length }})</h2>
+
+<table class="data-table">
+    <thead>
+        <tr>
+            <th>Typ</th>
+            <th>Issue</th>
+            <th>Titel</th>
+            <th>Version</th>
+            <th>Referenzen</th>
+            <th>Aktion</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for doc in coverage.uncovered %}
+        <tr>
+            <td><span class="badge badge--{{ doc.type.value|lower }}">{{ doc.type.value }}</span></td>
+            <td>#{{ doc.issueId }}</td>
+            <td><a href="{{ path('deprecation_detail', {filename: doc.filename}) }}">{{ doc.title }}</a></td>
+            <td>{{ doc.version }}</td>
+            <td>{{ doc.codeReferences|length }}</td>
+            <td>
+                {% if doc.codeReferences|length > 0 %}
+                    <a href="{{ path('matcher_generate', {filename: doc.filename}) }}" class="btn btn--primary">Generieren</a>
+                {% else %}
+                    <span class="badge">Manuell</span>
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
 {% endblock %}

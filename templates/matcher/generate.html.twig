@@ -1,0 +1,38 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Matcher generieren: {{ doc.title }}{% endblock %}
+
+{% block body %}
+<h1>Matcher generieren</h1>
+<p>{{ doc.type.value }}: #{{ doc.issueId }} - {{ doc.title }}</p>
+
+{% if entries|length > 0 %}
+<h2>Generierte Matcher-Eintraege ({{ entries|length }})</h2>
+
+<table class="data-table">
+    <thead>
+        <tr>
+            <th>Matcher-Typ</th>
+            <th>Identifier</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for entry in entries %}
+        <tr>
+            <td><code>{{ entry.matcherType.value }}</code></td>
+            <td><code>{{ entry.identifier }}</code></td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<h2>PHP-Code</h2>
+<pre>{{ phpCode }}</pre>
+
+<a href="{{ path('matcher_export', {filename: doc.filename}) }}" class="btn btn--primary">Als PHP herunterladen</a>
+{% else %}
+<p>Keine automatisch generierbaren Matcher fuer dieses Dokument. Manuelle Analyse erforderlich.</p>
+{% endif %}
+
+<p style="margin-top:2rem"><a href="{{ path('matcher_analysis') }}">&larr; Zurueck zur Analyse</a></p>
+{% endblock %}
