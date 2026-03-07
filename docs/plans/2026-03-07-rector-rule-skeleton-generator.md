@@ -1636,7 +1636,7 @@ Replace the `{% block body %}` content in `templates/matcher/generate.html.twig`
         {% else %}
         <div class="alert alert-info d-flex align-items-center">
             <i class="bi bi-info-circle me-2 fs-5"></i>
-            <div>Keine automatisch generierbaren Matcher fuer dieses Dokument.</div>
+            <div>Keine automatisch generierbaren Matcher für dieses Dokument.</div>
         </div>
         {% endif %}
     </div>
@@ -1695,7 +1695,7 @@ Replace the `{% block body %}` content in `templates/matcher/generate.html.twig`
     <div class="tab-pane fade" id="tab-rector-skeleton" role="tabpanel">
         {% if rectorSkeletonRules|length > 0 %}
         <div class="d-flex justify-content-between align-items-center mb-3">
-            <p class="text-muted mb-0">Fuer die folgenden Code-Referenzen wurde kein automatisches Mapping erkannt. Die generierten Skeleton-Klassen enthalten TODO-Markierungen fuer die manuelle Implementierung.</p>
+            <p class="text-muted mb-0">Für die folgenden Code-Referenzen wurde kein automatisches Mapping erkannt. Die generierten Skeleton-Klassen enthalten TODO-Markierungen für die manuelle Implementierung.</p>
             {% if rectorSkeletonRules|length > 0 %}
             <a href="{{ path('rector_export_skeleton', {filename: doc.filename}) }}" class="btn btn-sm btn-typo3 flex-shrink-0 ms-3">
                 <i class="bi bi-download me-1"></i>{% if rectorSkeletonRules|length > 1 %}Alle herunterladen (ZIP){% else %}Als PHP herunterladen{% endif %}
@@ -1718,14 +1718,14 @@ Replace the `{% block body %}` content in `templates/matcher/generate.html.twig`
         {% else %}
         <div class="alert alert-success d-flex align-items-center">
             <i class="bi bi-check-circle me-2 fs-5"></i>
-            <div>Alle Code-Referenzen koennen durch Rector-Config-Regeln abgedeckt werden. Keine Skeletons noetig.</div>
+            <div>Alle Code-Referenzen koennen durch Rector-Config-Regeln abgedeckt werden. Keine Skeletons nötig.</div>
         </div>
         {% endif %}
     </div>
 </div>
 
 <a href="{{ path('matcher_analysis') }}" class="btn btn-outline-secondary mt-3">
-    <i class="bi bi-arrow-left me-1"></i>Zurueck zur Analyse
+    <i class="bi bi-arrow-left me-1"></i>Zurück zur Analyse
 </a>
 {% endblock %}
 ```

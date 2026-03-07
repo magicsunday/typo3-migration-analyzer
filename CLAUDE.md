@@ -3,14 +3,14 @@
 ## Projekt-Kontext
 - Symfony 7.2 Web-App die TYPO3 Deprecation/Breaking-Change RST-Dokumente parst
 - Identifiziert fehlende Extension-Scanner-Matcher und generiert diese
-- TYPO3 12 -> 13 Migration (spaeter erweiterbar auf 11 -> 12)
+- TYPO3 12 -> 13 Migration (später erweiterbar auf 11 -> 12)
 - Repo: https://github.com/magicsunday/typo3-migration-analyzer
 
 ## Tech Stack
 - PHP 8.3+, Symfony 7.2, Twig, Turbo/Stimulus, AssetMapper
-- symfony/property-info + symfony/property-access fuer Introspection
+- symfony/property-info + symfony/property-access für Introspection
 - typo3/cms-core + typo3/cms-install als Composer-Dependency (Datenquelle)
-- PHPUnit, PHPStan Level 8, PHP-CS-Fixer (@PER-CS2.0 + @Symfony)
+- PHPUnit, PHPStan Level max, PHP-CS-Fixer (@PER-CS2x0 + @Symfony)
 - Kein Webpack/Node — AssetMapper only
 - Keine Datenbank — alles wird zur Laufzeit aus Dateien geparsed + gecacht
 
@@ -27,6 +27,7 @@
 - KISS, SOLID, DRY, YAGNI
 - Fein-granulare Commits
 - Commit-Format: Beschreibender Text ohne Prefix-Convention, KEIN Co-Authored-By
+- Immer korrekte deutsche Umlaute (ä, ö, ü, ß) verwenden, keine ASCII-Ersetzungen
 
 ## Server starten
 ```bash
@@ -34,7 +35,7 @@ php -S localhost:8000 -t public/
 ```
 
 ## Bekannte Eigenheiten
-- TYPO3 cms-composer-installers ueberschreibt public/index.php — Workaround via `extra.typo3/cms.web-dir` in composer.json
+- TYPO3 cms-composer-installers überschreibt public/index.php — Workaround via `extra.typo3/cms.web-dir` in composer.json
 - Coverage aktuell bei ~51.7% (205 von 424 RST-Dokumenten ohne Matcher)
 
 ## Roadmap
@@ -43,27 +44,27 @@ php -S localhost:8000 -t public/
 - Rector-Rule-Skeleton-Generator
 - Eigene Extension scannen (Upload oder Pfad-Angabe)
 - Before/After Code-Vergleichsansicht aus RSTs
-- Coverage-Report mit prozentualer Aufschluesselung
+- Coverage-Report mit prozentualer Aufschlüsselung
 
 ### v1.2 — Intelligentere Analyse
-- Argument-Erkennung aus RST-Code-Bloecken (korrekte numberOfMandatoryArguments)
+- Argument-Erkennung aus RST-Code-Blöcken (korrekte numberOfMandatoryArguments)
 - Migrations-Mapping: Alt->Neu Zuordnung parsen ("Replace X with Y")
-- Komplexitaets-Scoring pro Deprecation (einfach automatisierbar vs. manuell)
+- Komplexitäts-Scoring pro Deprecation (einfach automatisierbar vs. manuell)
 
 ### v1.3 — Extension-Scanner als Service
 - Extension hochladen/scannen (ZIP oder Git-URL)
 - Findings-Report mit Datei + Zeilennummer
-- Export als JSON/CSV fuer Projektmanagement
+- Export als JSON/CSV für Projektmanagement
 
 ### v2.0 — Multi-Version + Rector-Integration
 - Beliebige TYPO3-Versionen (9->10, 10->11, 11->12, 12->13)
-- Lauffaehige Rector-Rules generieren (Rename Class/Method, Remove Argument)
+- Lauffähige Rector-Rules generieren (Rename Class/Method, Remove Argument)
 - Rector-Config-Export (komplette rector.php)
 - Diff gegen ssch/typo3-rector (was existiert schon, was fehlt)
 
 ### v2.1 — CI/CD Integration
 - CLI-Modus: `bin/console analyze:extension /path/to/ext`
-- GitHub Action fuer automatische Extension-Analyse bei PRs
+- GitHub Action für automatische Extension-Analyse bei PRs
 - Composer Plugin: `composer typo3:migration-check`
 
 ### v3.0 — Community-Plattform

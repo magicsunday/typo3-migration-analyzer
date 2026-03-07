@@ -30,7 +30,7 @@ rm -rf typo3-migration-analyzer-tmp
 cd typo3-migration-analyzer
 ```
 
-**Step 2: Benoetigte Pakete installieren**
+**Step 2: Benötigte Pakete installieren**
 
 Kein `webapp`-Pack — wir brauchen weder Doctrine noch Security/Mailer. Nur das Noetigste:
 
@@ -43,7 +43,7 @@ composer require symfony/twig-bundle symfony/asset-mapper symfony/stimulus-bundl
 # Introspection
 composer require symfony/property-info symfony/property-access
 
-# TYPO3 als Datenquelle (nur fuer Klassen-Reflection + RST/Matcher-Dateien)
+# TYPO3 als Datenquelle (nur für Klassen-Reflection + RST/Matcher-Dateien)
 composer require typo3/cms-core:"^13.4" typo3/cms-install:"^13.4"
 
 # Dev-Tools
@@ -98,7 +98,7 @@ parameters:
 
 **Step 5: .gitignore ergaenzen**
 
-Ergaenze in `.gitignore`:
+Ergänze in `.gitignore`:
 
 ```
 .php-cs-fixer.cache
@@ -126,7 +126,7 @@ git commit -m "Initial Symfony 7.2 project setup"
 - Test: `tests/Unit/Dto/CodeReferenceTest.php`
 - Test: `tests/Unit/Dto/RstDocumentTest.php`
 
-**Step 1: Schreibe Tests fuer CodeReference**
+**Step 1: Schreibe Tests für CodeReference**
 
 ```php
 <?php
@@ -529,7 +529,7 @@ Use the new :php:`\TYPO3\CMS\Core\New\NewService` class instead.
 .. index:: Backend, NotScanned, ext:core
 ```
 
-**Step 2: Schreibe Tests fuer RstParser**
+**Step 2: Schreibe Tests für RstParser**
 
 ```php
 <?php
@@ -1725,7 +1725,7 @@ git commit -m "Add MatcherConfigGenerator for creating matcher configs from RSTs
 
 **Step 1: Services konfigurieren**
 
-Symfonys Autowiring erledigt das meiste. Pruefe, dass `config/services.yaml` korrekt ist:
+Symfonys Autowiring erledigt das meiste. Prüfe, dass `config/services.yaml` korrekt ist:
 
 ```yaml
 services:
@@ -2261,7 +2261,7 @@ final class DeprecationController extends AbstractController
 </table>
 {% endif %}
 
-<p><a href="{{ path('deprecation_list') }}">&larr; Zurueck zur Liste</a></p>
+<p><a href="{{ path('deprecation_list') }}">&larr; Zurück zur Liste</a></p>
 {% endblock %}
 ```
 
@@ -2467,10 +2467,10 @@ final class MatcherController extends AbstractController
 
 <a href="{{ path('matcher_export', {filename: doc.filename}) }}" class="btn btn--primary">Als PHP herunterladen</a>
 {% else %}
-<p>Keine automatisch generierbaren Matcher fuer dieses Dokument. Manuelle Analyse erforderlich.</p>
+<p>Keine automatisch generierbaren Matcher für dieses Dokument. Manuelle Analyse erforderlich.</p>
 {% endif %}
 
-<p><a href="{{ path('matcher_analysis') }}">&larr; Zurueck zur Analyse</a></p>
+<p><a href="{{ path('matcher_analysis') }}">&larr; Zurück zur Analyse</a></p>
 {% endblock %}
 ```
 
@@ -2484,7 +2484,7 @@ git commit -m "Add matcher analysis and generator views"
 
 ---
 
-## Task 12: Caching fuer Performance
+## Task 12: Caching für Performance
 
 **Files:**
 - Create: `src/Service/DocumentCache.php`
