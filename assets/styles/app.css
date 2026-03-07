@@ -137,7 +137,65 @@ pre.code-block {
     font-weight: 500;
 }
 
+/* Code comparison - Before/After */
+.code-comparison {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+.code-comparison .code-panel {
+    min-width: 0;
+}
+
+.code-comparison .code-panel pre,
+.code-single pre {
+    background: #282c34;
+    color: #abb2bf;
+    padding: 1rem;
+    border-radius: 0 0 0.375rem 0.375rem;
+    font-size: 0.8125rem;
+    line-height: 1.6;
+    margin: 0;
+    overflow-x: auto;
+    white-space: pre;
+    border: 1px solid #3e4451;
+    border-top: 0;
+}
+
+.code-panel-header {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 0.5rem 1rem;
+    border-radius: 0.375rem 0.375rem 0 0;
+    border: 1px solid #3e4451;
+    border-bottom: 0;
+}
+
+.code-panel-header.before {
+    background: #3b1e1e;
+    color: #e06c75;
+}
+
+.code-panel-header.after {
+    background: #1e3b1e;
+    color: #98c379;
+}
+
+.code-panel-header.neutral {
+    background: #2c2c3a;
+    color: #abb2bf;
+}
+
 /* Responsive sidebar */
+@media (max-width: 767.98px) {
+    .code-comparison {
+        grid-template-columns: 1fr;
+    }
+}
+
 @media (max-width: 991.98px) {
     #sidebar {
         position: fixed;

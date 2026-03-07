@@ -60,6 +60,70 @@
             </h6>
             <pre>{{ doc.migration }}</pre>
         </div>
+
+        {% if doc.codeBlocks|length > 0 %}
+        <div class="rst-section">
+            <h6 class="text-uppercase text-muted small fw-bold mb-3">
+                <i class="bi bi-code-slash me-1"></i>Code-Vergleich
+                <span class="badge rounded-pill text-bg-primary ms-1">{{ doc.codeBlocks|length }}</span>
+            </h6>
+
+            {# Check if there are Before/After pairs #}
+            {% set has_pairs = false %}
+            {% for block in doc.codeBlocks %}
+                {% if block.label is not null and block.label|lower in ['before', 'after', 'vorher', 'nachher'] %}
+                    {% set has_pairs = true %}
+                {% endif %}
+            {% endfor %}
+
+            {% if has_pairs %}
+                {# Side-by-side comparison for Before/After pairs #}
+                <div class="code-comparison mb-3">
+                    {% for block in doc.codeBlocks %}
+                        {% if block.label is not null and block.label|lower in ['before', 'vorher'] %}
+                            <div class="code-panel">
+                                <div class="code-panel-header before">
+                                    <i class="bi bi-x-circle me-1"></i>Before (veraltet)
+                                </div>
+                                <pre><code class="hljs-code language-{{ block.language }}">{{ block.code }}</code></pre>
+                            </div>
+                        {% elseif block.label is not null and block.label|lower in ['after', 'nachher'] %}
+                            <div class="code-panel">
+                                <div class="code-panel-header after">
+                                    <i class="bi bi-check-circle me-1"></i>After (neu)
+                                </div>
+                                <pre><code class="hljs-code language-{{ block.language }}">{{ block.code }}</code></pre>
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+
+                {# Show any unlabeled blocks separately #}
+                {% for block in doc.codeBlocks %}
+                    {% if block.label is null or block.label|lower not in ['before', 'after', 'vorher', 'nachher'] %}
+                        <div class="code-single mb-3">
+                            <div class="code-panel-header neutral">
+                                <i class="bi bi-file-code me-1"></i>{{ block.language|upper }}
+                                {% if block.label %} — {{ block.label }}{% endif %}
+                            </div>
+                            <pre><code class="hljs-code language-{{ block.language }}">{{ block.code }}</code></pre>
+                        </div>
+                    {% endif %}
+                {% endfor %}
+            {% else %}
+                {# Sequential display for non-paired blocks #}
+                {% for block in doc.codeBlocks %}
+                    <div class="code-single mb-3">
+                        <div class="code-panel-header neutral">
+                            <i class="bi bi-file-code me-1"></i>{{ block.language|upper }}
+                            {% if block.label %} — {{ block.label }}{% endif %}
+                        </div>
+                        <pre><code class="hljs-code language-{{ block.language }}">{{ block.code }}</code></pre>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        </div>
+        {% endif %}
     </div>
 
     <div class="col-lg-4">
