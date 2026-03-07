@@ -83,6 +83,9 @@ php -S localhost:8000 -t public/
 
 ### v1.3 — Extension-Scanner als Service
 - Extension hochladen/scannen (ZIP oder Git-URL)
+  - GitHub/GitLab Repository-URLs akzeptieren (öffentlich + privat via Token)
+  - `git clone --depth 1` in temporäres Verzeichnis, scannen, aufräumen
+  - URL-Validierung und Fehlerbehandlung (nicht erreichbar, kein TYPO3-Extension-Layout)
 - Findings-Report mit Datei + Zeilennummer
 - Export als JSON/CSV für Projektmanagement
 

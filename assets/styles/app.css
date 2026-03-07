@@ -111,25 +111,33 @@ pre.code-block {
 
 /* Buttons */
 .btn-typo3 {
-    background-color: var(--typo3-orange);
-    border-color: var(--typo3-orange);
-    color: #fff;
-}
-
-.btn-typo3:hover {
-    background-color: var(--typo3-orange-hover);
-    border-color: var(--typo3-orange-hover);
-    color: #fff;
+    --bs-btn-color: #fff;
+    --bs-btn-bg: var(--typo3-orange);
+    --bs-btn-border-color: var(--typo3-orange);
+    --bs-btn-hover-color: #fff;
+    --bs-btn-hover-bg: var(--typo3-orange-hover);
+    --bs-btn-hover-border-color: var(--typo3-orange-hover);
+    --bs-btn-active-color: #fff;
+    --bs-btn-active-bg: #cc6d00;
+    --bs-btn-active-border-color: #cc6d00;
+    --bs-btn-disabled-color: #fff;
+    --bs-btn-disabled-bg: var(--typo3-orange);
+    --bs-btn-disabled-border-color: var(--typo3-orange);
+    --bs-btn-focus-shadow-rgb: 255, 135, 0;
 }
 
 .btn-outline-typo3 {
-    border-color: var(--typo3-orange);
-    color: var(--typo3-orange);
-}
-
-.btn-outline-typo3:hover {
-    background-color: var(--typo3-orange);
-    color: #fff;
+    --bs-btn-color: var(--typo3-orange);
+    --bs-btn-border-color: var(--typo3-orange);
+    --bs-btn-hover-color: #fff;
+    --bs-btn-hover-bg: var(--typo3-orange);
+    --bs-btn-hover-border-color: var(--typo3-orange);
+    --bs-btn-active-color: #fff;
+    --bs-btn-active-bg: var(--typo3-orange);
+    --bs-btn-active-border-color: var(--typo3-orange);
+    --bs-btn-disabled-color: var(--typo3-orange);
+    --bs-btn-disabled-border-color: var(--typo3-orange);
+    --bs-btn-focus-shadow-rgb: 255, 135, 0;
 }
 
 /* Badge refinements */
