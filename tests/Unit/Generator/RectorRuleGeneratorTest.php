@@ -278,6 +278,79 @@ final class RectorRuleGeneratorTest extends TestCase
         self::assertSame('', $this->generator->renderConfig($rules));
     }
 
+    #[Test]
+    public function renderSkeletonProducesValidPhpClass(): void
+    {
+        $rule = new RectorRule(
+            RectorRuleType::Skeleton,
+            new CodeReference('TYPO3\CMS\Core\Legacy\OldClass', 'doSomething', CodeReferenceType::InstanceMethod),
+            null,
+            'Deprecation: #99999 - OldClass deprecated',
+            'Deprecation-99999-OldClassDeprecated.rst',
+        );
+
+        $output = $this->generator->renderSkeleton($rule);
+
+        self::assertStringContainsString('declare(strict_types=1);', $output);
+        self::assertStringContainsString('final class OldClassDeprecatedRector extends AbstractRector', $output);
+        self::assertStringContainsString('getRuleDefinition', $output);
+        self::assertStringContainsString('getNodeTypes', $output);
+        self::assertStringContainsString('refactor', $output);
+        self::assertStringContainsString('Deprecation: #99999 - OldClass deprecated', $output);
+        self::assertStringContainsString('Deprecation-99999-OldClassDeprecated.rst', $output);
+        self::assertStringContainsString('MethodCall::class', $output);
+        self::assertStringContainsString('TYPO3\CMS\Core\Legacy\OldClass->doSomething', $output);
+    }
+
+    #[Test]
+    public function renderSkeletonUsesCorrectNodeTypeForStaticMethod(): void
+    {
+        $rule = new RectorRule(
+            RectorRuleType::Skeleton,
+            new CodeReference('TYPO3\CMS\Core\Utility', 'method', CodeReferenceType::StaticMethod),
+            null,
+            'Test',
+            'Deprecation-11111-Test.rst',
+        );
+
+        $output = $this->generator->renderSkeleton($rule);
+
+        self::assertStringContainsString('StaticCall::class', $output);
+    }
+
+    #[Test]
+    public function renderSkeletonUsesCorrectNodeTypeForClassName(): void
+    {
+        $rule = new RectorRule(
+            RectorRuleType::Skeleton,
+            new CodeReference('TYPO3\CMS\Core\OldClass', null, CodeReferenceType::ClassName),
+            null,
+            'Test',
+            'Breaking-22222-ClassRemoved.rst',
+        );
+
+        $output = $this->generator->renderSkeleton($rule);
+
+        self::assertStringContainsString('FullyQualified::class', $output);
+        self::assertStringContainsString('ClassRemovedRector', $output);
+    }
+
+    #[Test]
+    public function renderSkeletonClassNameDerivedFromFilename(): void
+    {
+        $rule = new RectorRule(
+            RectorRuleType::Skeleton,
+            new CodeReference('TYPO3\CMS\Core\Foo', null, CodeReferenceType::ClassName),
+            null,
+            'Test',
+            'Deprecation-55555-SomeComplexFeature.rst',
+        );
+
+        $output = $this->generator->renderSkeleton($rule);
+
+        self::assertStringContainsString('SomeComplexFeatureRector', $output);
+    }
+
     /**
      * @param list<CodeReference> $codeReferences
      */

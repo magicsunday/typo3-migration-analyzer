@@ -22,9 +22,13 @@ use App\Dto\RstDocument;
 use function array_filter;
 use function array_unique;
 use function array_values;
+use function pathinfo;
+use function preg_replace;
 use function sort;
 use function sprintf;
 use function str_replace;
+
+use const PATHINFO_FILENAME;
 
 /**
  * Generates Rector rules from RST documents.
@@ -34,6 +38,19 @@ use function str_replace;
  */
 final readonly class RectorRuleGenerator
 {
+    /**
+     * Maps CodeReferenceType to PhpParser node class names for skeleton getNodeTypes().
+     *
+     * @var array<string, array{string, string}>
+     */
+    private const NODE_TYPE_MAP = [
+        'class_name'      => ['Node\Name\FullyQualified', 'FullyQualified'],
+        'instance_method' => ['Node\Expr\MethodCall', 'MethodCall'],
+        'static_method'   => ['Node\Expr\StaticCall', 'StaticCall'],
+        'property'        => ['Node\Expr\PropertyFetch', 'PropertyFetch'],
+        'class_constant'  => ['Node\Expr\ClassConstFetch', 'ClassConstFetch'],
+    ];
+
     public function __construct(
         private MigrationMappingExtractor $extractor,
     ) {
@@ -233,6 +250,101 @@ final readonly class RectorRuleGenerator
             ],
             default => ['', [], ''],
         };
+    }
+
+    /**
+     * Render a skeleton-type rule as a complete Rector Rule class file.
+     */
+    public function renderSkeleton(RectorRule $rule): string
+    {
+        $className = $this->generateClassName($rule);
+        $nodeInfo  = self::NODE_TYPE_MAP[$rule->source->type->value];
+        $sourceRef = $this->buildSourceComment($rule->source);
+
+        $output = "<?php\n\n";
+        $output .= "declare(strict_types=1);\n\n";
+        $output .= "namespace App\\Rector\\Generated;\n\n";
+        $output .= "use PhpParser\\Node;\n";
+        $output .= sprintf("use PhpParser\\%s;\n", $nodeInfo[0]);
+        $output .= "use Rector\\Rector\\AbstractRector;\n";
+        $output .= "use Symplify\\RuleDocGenerator\\ValueObject\\CodeSample\\CodeSample;\n";
+        $output .= "use Symplify\\RuleDocGenerator\\ValueObject\\RuleDefinition;\n\n";
+        $output .= sprintf("/**\n * @see %s\n */\n", $rule->rstFilename);
+        $output .= sprintf("final class %s extends AbstractRector\n{\n", $className);
+
+        // getRuleDefinition()
+        $output .= "    public function getRuleDefinition(): RuleDefinition\n";
+        $output .= "    {\n";
+        $output .= "        return new RuleDefinition(\n";
+        $output .= sprintf("            '%s',\n", $this->escapePhpString($rule->description));
+        $output .= "            [\n";
+        $output .= "                new CodeSample(\n";
+        $output .= "                    '// TODO: Add before code sample',\n";
+        $output .= "                    '// TODO: Add after code sample',\n";
+        $output .= "                ),\n";
+        $output .= "            ],\n";
+        $output .= "        );\n";
+        $output .= "    }\n\n";
+
+        // getNodeTypes()
+        $output .= "    /**\n";
+        $output .= "     * @return array<class-string<Node>>\n";
+        $output .= "     */\n";
+        $output .= "    public function getNodeTypes(): array\n";
+        $output .= "    {\n";
+        $output .= sprintf("        return [%s::class];\n", $nodeInfo[1]);
+        $output .= "    }\n\n";
+
+        // refactor()
+        $output .= "    public function refactor(Node \$node): ?Node\n";
+        $output .= "    {\n";
+        $output .= "        // TODO: Implement refactoring logic\n";
+        $output .= sprintf("        // Source: %s\n", $sourceRef);
+        $output .= "\n";
+        $output .= "        return null;\n";
+        $output .= "    }\n";
+        $output .= "}\n";
+
+        return $output;
+    }
+
+    /**
+     * Derive a Rector class name from the RST filename.
+     *
+     * Example: "Deprecation-99999-SomeFeature.rst" -> "SomeFeatureRector"
+     */
+    public function generateClassName(RectorRule $rule): string
+    {
+        $basename = pathinfo($rule->rstFilename, PATHINFO_FILENAME);
+        $name     = preg_replace('/^(?:Deprecation|Breaking|Feature|Important)-\d+-/', '', $basename) ?? $basename;
+
+        return $name . 'Rector';
+    }
+
+    /**
+     * Build a human-readable source reference comment.
+     */
+    private function buildSourceComment(CodeReference $ref): string
+    {
+        if ($ref->member === null) {
+            return $ref->className;
+        }
+
+        $separator = match ($ref->type) {
+            CodeReferenceType::InstanceMethod,
+            CodeReferenceType::Property => '->',
+            CodeReferenceType::StaticMethod,
+            CodeReferenceType::ClassConstant => '::',
+            default => '::',
+        };
+
+        $suffix = match ($ref->type) {
+            CodeReferenceType::InstanceMethod,
+            CodeReferenceType::StaticMethod => '()',
+            default => '',
+        };
+
+        return $ref->className . $separator . $ref->member . $suffix;
     }
 
     private function escapePhpString(string $value): string
