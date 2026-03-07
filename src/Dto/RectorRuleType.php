@@ -13,9 +13,9 @@ namespace App\Dto;
 
 enum RectorRuleType: string
 {
-    case RenameClass = 'rename_class';
-    case RenameMethod = 'rename_method';
-    case RenameStaticMethod = 'rename_static_method';
+    case RenameClass         = 'rename_class';
+    case RenameMethod        = 'rename_method';
+    case RenameStaticMethod  = 'rename_static_method';
     case RenameClassConstant = 'rename_class_constant';
-    case Skeleton = 'skeleton';
+    case Skeleton            = 'skeleton';
 }

@@ -1,0 +1,221 @@
+<?php
+
+/**
+ * This file is part of the package magicsunday/typo3-migration-analyzer.
+ *
+ * For the full copyright and license information, please read the
+ * LICENSE file that was distributed with this source code.
+ */
+
+declare(strict_types=1);
+
+namespace App\Tests\Unit\Generator;
+
+use App\Analyzer\MigrationMappingExtractor;
+use App\Dto\CodeReference;
+use App\Dto\CodeReferenceType;
+use App\Dto\DocumentType;
+use App\Dto\RectorRule;
+use App\Dto\RectorRuleType;
+use App\Dto\RstDocument;
+use App\Dto\ScanStatus;
+use App\Generator\RectorRuleGenerator;
+use PHPUnit\Framework\Attributes\Test;
+use PHPUnit\Framework\TestCase;
+
+use function array_filter;
+use function array_values;
+use function count;
+
+final class RectorRuleGeneratorTest extends TestCase
+{
+    private RectorRuleGenerator $generator;
+
+    protected function setUp(): void
+    {
+        $this->generator = new RectorRuleGenerator(
+            new MigrationMappingExtractor(),
+        );
+    }
+
+    #[Test]
+    public function generateClassRenameConfigRule(): void
+    {
+        $doc = $this->createDocument(
+            migration: 'Replace :php:`\TYPO3\CMS\Core\OldClass` with :php:`\TYPO3\CMS\Core\NewClass`.',
+            codeReferences: [
+                new CodeReference('TYPO3\CMS\Core\OldClass', null, CodeReferenceType::ClassName),
+            ],
+        );
+
+        $rules       = $this->generator->generate($doc);
+        $configRules = $this->filterConfig($rules);
+
+        self::assertCount(1, $configRules);
+        self::assertSame(RectorRuleType::RenameClass, $configRules[0]->type);
+        self::assertSame('TYPO3\CMS\Core\OldClass', $configRules[0]->source->className);
+        self::assertNotNull($configRules[0]->target);
+        self::assertSame('TYPO3\CMS\Core\NewClass', $configRules[0]->target->className);
+        self::assertTrue($configRules[0]->isConfig());
+    }
+
+    #[Test]
+    public function generateStaticMethodRenameConfigRule(): void
+    {
+        $doc = $this->createDocument(
+            migration: ':php:`\TYPO3\CMS\Core\Service::oldMethod()` has been renamed '
+                . 'to :php:`\TYPO3\CMS\Core\Service::newMethod()`.',
+            codeReferences: [
+                new CodeReference('TYPO3\CMS\Core\Service', 'oldMethod', CodeReferenceType::StaticMethod),
+            ],
+        );
+
+        $rules       = $this->generator->generate($doc);
+        $configRules = $this->filterConfig($rules);
+
+        self::assertCount(1, $configRules);
+        self::assertSame(RectorRuleType::RenameStaticMethod, $configRules[0]->type);
+        self::assertSame('oldMethod', $configRules[0]->source->member);
+        self::assertNotNull($configRules[0]->target);
+        self::assertSame('newMethod', $configRules[0]->target->member);
+    }
+
+    #[Test]
+    public function generateInstanceMethodRenameConfigRule(): void
+    {
+        $doc = $this->createDocument(
+            migration: 'Replace :php:`\TYPO3\CMS\Core\Foo->oldMethod()` with '
+                . ':php:`\TYPO3\CMS\Core\Foo->newMethod()`.',
+            codeReferences: [
+                new CodeReference('TYPO3\CMS\Core\Foo', 'oldMethod', CodeReferenceType::InstanceMethod),
+            ],
+        );
+
+        $rules       = $this->generator->generate($doc);
+        $configRules = $this->filterConfig($rules);
+
+        self::assertCount(1, $configRules);
+        self::assertSame(RectorRuleType::RenameMethod, $configRules[0]->type);
+    }
+
+    #[Test]
+    public function generateConstantRenameConfigRule(): void
+    {
+        $doc = $this->createDocument(
+            migration: ':php:`\TYPO3\CMS\Core\Conf::OLD_CONST` has been renamed '
+                . 'to :php:`\TYPO3\CMS\Core\Conf::NEW_CONST`.',
+            codeReferences: [
+                new CodeReference('TYPO3\CMS\Core\Conf', 'OLD_CONST', CodeReferenceType::ClassConstant),
+            ],
+        );
+
+        $rules       = $this->generator->generate($doc);
+        $configRules = $this->filterConfig($rules);
+
+        self::assertCount(1, $configRules);
+        self::assertSame(RectorRuleType::RenameClassConstant, $configRules[0]->type);
+    }
+
+    #[Test]
+    public function generateSkeletonForCodeRefWithoutMapping(): void
+    {
+        $doc = $this->createDocument(
+            migration: 'There is no direct replacement.',
+            codeReferences: [
+                new CodeReference('TYPO3\CMS\Core\Legacy', null, CodeReferenceType::ClassName),
+            ],
+        );
+
+        $rules         = $this->generator->generate($doc);
+        $skeletonRules = $this->filterSkeletons($rules);
+
+        self::assertCount(1, $skeletonRules);
+        self::assertSame(RectorRuleType::Skeleton, $skeletonRules[0]->type);
+        self::assertNull($skeletonRules[0]->target);
+        self::assertFalse($skeletonRules[0]->isConfig());
+    }
+
+    #[Test]
+    public function generateSkeletonForCodeRefNotCoveredByMapping(): void
+    {
+        $doc = $this->createDocument(
+            migration: 'Replace :php:`\TYPO3\CMS\Core\OldClass` with :php:`\TYPO3\CMS\Core\NewClass`.',
+            codeReferences: [
+                new CodeReference('TYPO3\CMS\Core\OldClass', null, CodeReferenceType::ClassName),
+                new CodeReference('TYPO3\CMS\Core\SecondClass', null, CodeReferenceType::ClassName),
+            ],
+        );
+
+        $rules = $this->generator->generate($doc);
+
+        self::assertCount(2, $rules);
+        self::assertCount(1, $this->filterConfig($rules));
+        self::assertCount(1, $this->filterSkeletons($rules));
+    }
+
+    #[Test]
+    public function generateReturnsEmptyForNoCodeRefsAndNoMappings(): void
+    {
+        $doc = $this->createDocument(migration: null, codeReferences: []);
+
+        self::assertSame([], $this->generator->generate($doc));
+    }
+
+    #[Test]
+    public function generateSkeletonForMismatchedTypes(): void
+    {
+        $doc = $this->createDocument(
+            migration: 'Replace :php:`\TYPO3\CMS\Core\OldClass` with :php:`\TYPO3\CMS\Core\NewService::create()`.',
+            codeReferences: [
+                new CodeReference('TYPO3\CMS\Core\OldClass', null, CodeReferenceType::ClassName),
+            ],
+        );
+
+        $rules = $this->generator->generate($doc);
+
+        self::assertSame(0, count($this->filterConfig($rules)));
+    }
+
+    /**
+     * @param list<CodeReference> $codeReferences
+     */
+    private function createDocument(
+        ?string $migration,
+        array $codeReferences = [],
+        string $filename = 'Deprecation-99999-Test.rst',
+    ): RstDocument {
+        return new RstDocument(
+            type: DocumentType::Deprecation,
+            issueId: 99999,
+            title: 'Test document',
+            version: '13.0',
+            description: 'Test description.',
+            impact: null,
+            migration: $migration,
+            codeReferences: $codeReferences,
+            indexTags: [],
+            scanStatus: ScanStatus::NotScanned,
+            filename: $filename,
+        );
+    }
+
+    /**
+     * @param list<RectorRule> $rules
+     *
+     * @return list<RectorRule>
+     */
+    private function filterConfig(array $rules): array
+    {
+        return array_values(array_filter($rules, static fn (RectorRule $r): bool => $r->isConfig()));
+    }
+
+    /**
+     * @param list<RectorRule> $rules
+     *
+     * @return list<RectorRule>
+     */
+    private function filterSkeletons(array $rules): array
+    {
+        return array_values(array_filter($rules, static fn (RectorRule $r): bool => !$r->isConfig()));
+    }
+}
