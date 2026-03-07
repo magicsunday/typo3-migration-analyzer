@@ -47,10 +47,10 @@ final class CodeReferenceTest extends TestCase
     #[Test]
     public function fromPhpRoleParsesClassName(): void
     {
-        $ref = CodeReference::fromPhpRole(Enumeration::class); // @phpstan-ignore classConstant.deprecatedClass
+        $ref = CodeReference::fromPhpRole(Enumeration::class);
 
         self::assertNotNull($ref);
-        self::assertSame(Enumeration::class, $ref->className); // @phpstan-ignore classConstant.deprecatedClass
+        self::assertSame(Enumeration::class, $ref->className);
         self::assertNull($ref->member);
         self::assertSame(CodeReferenceType::ClassName, $ref->type);
     }

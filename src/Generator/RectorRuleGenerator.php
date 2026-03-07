@@ -18,14 +18,6 @@ use App\Dto\MigrationMapping;
 use App\Dto\RectorRule;
 use App\Dto\RectorRuleType;
 use App\Dto\RstDocument;
-use Rector\Config\RectorConfig;
-use Rector\Renaming\Rector\ClassConstFetch\RenameClassConstFetchRector;
-use Rector\Renaming\Rector\MethodCall\RenameMethodRector;
-use Rector\Renaming\Rector\Name\RenameClassRector;
-use Rector\Renaming\Rector\StaticCall\RenameStaticMethodRector;
-use Rector\Renaming\ValueObject\MethodCallRename;
-use Rector\Renaming\ValueObject\RenameClassAndConstFetch;
-use Rector\Renaming\ValueObject\RenameStaticMethod;
 
 use function array_filter;
 use function array_unique;
@@ -153,7 +145,7 @@ final readonly class RectorRuleGenerator
             return '';
         }
 
-        $imports = [RectorConfig::class];
+        $imports = ['Rector\Config\RectorConfig'];
         $groups  = [];
 
         foreach ($configRules as $rule) {
@@ -207,7 +199,7 @@ final readonly class RectorRuleGenerator
         return match ($rule->type) {
             RectorRuleType::RenameClass => [
                 'RenameClassRector',
-                [RenameClassRector::class],
+                ['Rector\Renaming\Rector\Name\RenameClassRector'],
                 sprintf(
                     "'%s' => '%s'",
                     $this->escapePhpString($rule->source->className),
@@ -217,8 +209,8 @@ final readonly class RectorRuleGenerator
             RectorRuleType::RenameMethod => [
                 'RenameMethodRector',
                 [
-                    RenameMethodRector::class,
-                    MethodCallRename::class,
+                    'Rector\Renaming\Rector\MethodCall\RenameMethodRector',
+                    'Rector\Renaming\ValueObject\MethodCallRename',
                 ],
                 sprintf(
                     "new MethodCallRename('%s', '%s', '%s')",
@@ -230,8 +222,8 @@ final readonly class RectorRuleGenerator
             RectorRuleType::RenameStaticMethod => [
                 'RenameStaticMethodRector',
                 [
-                    RenameStaticMethodRector::class,
-                    RenameStaticMethod::class,
+                    'Rector\Renaming\Rector\StaticCall\RenameStaticMethodRector',
+                    'Rector\Renaming\ValueObject\RenameStaticMethod',
                 ],
                 sprintf(
                     "new RenameStaticMethod('%s', '%s', '%s', '%s')",
@@ -244,8 +236,8 @@ final readonly class RectorRuleGenerator
             RectorRuleType::RenameClassConstant => [
                 'RenameClassConstFetchRector',
                 [
-                    RenameClassConstFetchRector::class,
-                    RenameClassAndConstFetch::class,
+                    'Rector\Renaming\Rector\ClassConstFetch\RenameClassConstFetchRector',
+                    'Rector\Renaming\ValueObject\RenameClassAndConstFetch',
                 ],
                 sprintf(
                     "new RenameClassAndConstFetch('%s', '%s', '%s', '%s')",
@@ -361,7 +353,7 @@ final readonly class RectorRuleGenerator
 
     private function escapePhpString(string $value): string
     {
-        return str_replace("'", "\\'", $value);
+        return str_replace(['\\', "'"], ['\\\\', "\\'"], $value);
     }
 
     private function buildRefKey(CodeReference $ref): string

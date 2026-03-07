@@ -45,6 +45,8 @@ final class MigrationMappingExtractor
     /**
      * Extract old->new API mappings from RST migration text.
      *
+     * Deduplicates by source+target key, keeping the first (highest confidence) match.
+     *
      * @return list<MigrationMapping>
      */
     public function extract(?string $migrationText): array
@@ -54,6 +56,7 @@ final class MigrationMappingExtractor
         }
 
         $mappings = [];
+        $seen     = [];
 
         foreach (self::MAPPING_PATTERNS as [$pattern, $sourceGroup, $targetGroup, $confidence]) {
             if (preg_match_all($pattern, $migrationText, $matches, PREG_SET_ORDER) === 0) {
@@ -72,6 +75,14 @@ final class MigrationMappingExtractor
                     continue;
                 }
 
+                $key = $source->className . '::' . ($source->member ?? '')
+                    . '->' . $target->className . '::' . ($target->member ?? '');
+
+                if (isset($seen[$key])) {
+                    continue;
+                }
+
+                $seen[$key] = true;
                 $mappings[] = new MigrationMapping($source, $target, $confidence);
             }
         }

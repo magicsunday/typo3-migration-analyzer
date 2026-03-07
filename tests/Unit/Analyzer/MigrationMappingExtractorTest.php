@@ -122,4 +122,18 @@ final class MigrationMappingExtractorTest extends TestCase
 
         self::assertCount(2, $mappings);
     }
+
+    #[Test]
+    public function extractDeduplicatesSamePairFromDifferentPatterns(): void
+    {
+        // Both "Replace X with Y" and "Use Y instead of X" match the same pair
+        $text = "Replace :php:`\\TYPO3\\CMS\\Core\\OldClass` with :php:`\\TYPO3\\CMS\\Core\\NewClass`.\n\n"
+            . 'Use :php:`\TYPO3\CMS\Core\NewClass` instead of :php:`\TYPO3\CMS\Core\OldClass`.';
+
+        $mappings = $this->extractor->extract($text);
+
+        self::assertCount(1, $mappings);
+        self::assertSame('TYPO3\CMS\Core\OldClass', $mappings[0]->source->className);
+        self::assertSame('TYPO3\CMS\Core\NewClass', $mappings[0]->target->className);
+    }
 }

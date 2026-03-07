@@ -193,7 +193,7 @@ final class RectorRuleGeneratorTest extends TestCase
         self::assertStringContainsString('declare(strict_types=1);', $output);
         self::assertStringContainsString('use Rector\Config\RectorConfig;', $output);
         self::assertStringContainsString('RenameClassRector::class', $output);
-        self::assertStringContainsString("'TYPO3\\CMS\\Core\\OldClass' => 'TYPO3\\CMS\\Core\\NewClass'", $output);
+        self::assertStringContainsString("'TYPO3\\\\CMS\\\\Core\\\\OldClass' => 'TYPO3\\\\CMS\\\\Core\\\\NewClass'", $output);
     }
 
     #[Test]
@@ -213,7 +213,7 @@ final class RectorRuleGeneratorTest extends TestCase
 
         self::assertStringContainsString('RenameMethodRector::class', $output);
         self::assertStringContainsString('MethodCallRename', $output);
-        self::assertStringContainsString("'TYPO3\\CMS\\Core\\Foo'", $output);
+        self::assertStringContainsString("'TYPO3\\\\CMS\\\\Core\\\\Foo'", $output);
         self::assertStringContainsString("'oldMethod'", $output);
         self::assertStringContainsString("'newMethod'", $output);
     }
