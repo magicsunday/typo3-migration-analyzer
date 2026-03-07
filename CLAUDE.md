@@ -26,7 +26,7 @@
 - TDD (Test-Driven Development)
 - KISS, SOLID, DRY, YAGNI
 - Fein-granulare Commits
-- Commit-Format: Beschreibender Text ohne Prefix-Convention
+- Commit-Format: Beschreibender Text ohne Prefix-Convention, KEIN Co-Authored-By
 
 ## Server starten
 ```bash
