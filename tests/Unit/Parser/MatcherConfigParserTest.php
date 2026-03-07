@@ -36,7 +36,7 @@ final class MatcherConfigParserTest extends TestCase
         foreach ($entries as $entry) {
             self::assertNotEmpty(
                 $entry->restFiles,
-                sprintf('Entry "%s" (type: %s) has no restFiles', $entry->identifier, $entry->matcherType->value),
+                \sprintf('Entry "%s" (type: %s) has no restFiles', $entry->identifier, $entry->matcherType->value),
             );
         }
     }
@@ -70,7 +70,7 @@ final class MatcherConfigParserTest extends TestCase
 
         // Each group must contain MatcherEntry instances
         foreach ($grouped as $rstFile => $groupEntries) {
-            self::assertNotEmpty($groupEntries, sprintf('Group for "%s" is empty', $rstFile));
+            self::assertNotEmpty($groupEntries, \sprintf('Group for "%s" is empty', $rstFile));
             self::assertContainsOnlyInstancesOf(MatcherEntry::class, $groupEntries);
         }
     }

@@ -20,13 +20,13 @@ final class RstParserTest extends TestCase
     protected function setUp(): void
     {
         $this->parser = new RstParser();
-        $this->fixturesDir = dirname(__DIR__, 2) . '/Fixtures/Rst';
+        $this->fixturesDir = \dirname(__DIR__, 2).'/Fixtures/Rst';
     }
 
     #[Test]
     public function parseDeprecationDocument(): void
     {
-        $filePath = $this->fixturesDir . '/Deprecation-99999-TestDeprecation.rst';
+        $filePath = $this->fixturesDir.'/Deprecation-99999-TestDeprecation.rst';
 
         $document = $this->parser->parseFile($filePath, '13.0');
 
@@ -48,7 +48,7 @@ final class RstParserTest extends TestCase
     #[Test]
     public function extractCodeReferencesFromDeprecation(): void
     {
-        $filePath = $this->fixturesDir . '/Deprecation-99999-TestDeprecation.rst';
+        $filePath = $this->fixturesDir.'/Deprecation-99999-TestDeprecation.rst';
 
         $document = $this->parser->parseFile($filePath, '13.0');
 
@@ -74,15 +74,15 @@ final class RstParserTest extends TestCase
         $oldClassRef = null;
 
         foreach ($document->codeReferences as $ref) {
-            if ($ref->className === 'TYPO3\CMS\Core\Utility\TestUtility') {
+            if ('TYPO3\CMS\Core\Utility\TestUtility' === $ref->className) {
                 $testUtilityRef = $ref;
             }
 
-            if ($ref->className === 'TYPO3\CMS\Core\Utility\NewUtility') {
+            if ('TYPO3\CMS\Core\Utility\NewUtility' === $ref->className) {
                 $newUtilityRef = $ref;
             }
 
-            if ($ref->className === 'TYPO3\CMS\Core\OldClass') {
+            if ('TYPO3\CMS\Core\OldClass' === $ref->className) {
                 $oldClassRef = $ref;
             }
         }
@@ -103,7 +103,7 @@ final class RstParserTest extends TestCase
     #[Test]
     public function parseBreakingDocument(): void
     {
-        $filePath = $this->fixturesDir . '/Breaking-88888-TestBreaking.rst';
+        $filePath = $this->fixturesDir.'/Breaking-88888-TestBreaking.rst';
 
         $document = $this->parser->parseFile($filePath, '12.0');
 
@@ -118,7 +118,7 @@ final class RstParserTest extends TestCase
     #[Test]
     public function extractIndexTags(): void
     {
-        $filePath = $this->fixturesDir . '/Deprecation-99999-TestDeprecation.rst';
+        $filePath = $this->fixturesDir.'/Deprecation-99999-TestDeprecation.rst';
 
         $document = $this->parser->parseFile($filePath, '13.0');
 
@@ -134,13 +134,13 @@ final class RstParserTest extends TestCase
     #[Test]
     public function extractPropertyReference(): void
     {
-        $filePath = $this->fixturesDir . '/Breaking-88888-TestBreaking.rst';
+        $filePath = $this->fixturesDir.'/Breaking-88888-TestBreaking.rst';
 
         $document = $this->parser->parseFile($filePath, '12.0');
 
         $propertyRefs = array_filter(
             $document->codeReferences,
-            static fn ($ref) => $ref->type === CodeReferenceType::Property,
+            static fn ($ref) => CodeReferenceType::Property === $ref->type,
         );
 
         self::assertCount(1, $propertyRefs);

@@ -8,6 +8,7 @@ use App\Dto\CodeReference;
 use App\Dto\DocumentType;
 use App\Dto\RstDocument;
 use App\Dto\ScanStatus;
+use RuntimeException;
 
 class RstParser
 {
@@ -22,7 +23,7 @@ class RstParser
         $content = file_get_contents($filePath);
 
         if (false === $content) {
-            throw new \RuntimeException(sprintf('Cannot read file: %s', $filePath));
+            throw new RuntimeException(\sprintf('Cannot read file: %s', $filePath));
         }
 
         $filename = basename($filePath);
@@ -60,7 +61,7 @@ class RstParser
             return DocumentType::Important;
         }
 
-        throw new \RuntimeException(sprintf('Unknown document type for filename: %s', $filename));
+        throw new RuntimeException(\sprintf('Unknown document type for filename: %s', $filename));
     }
 
     private function extractIssueId(string $content): int
@@ -69,7 +70,7 @@ class RstParser
             return (int) $matches[1];
         }
 
-        throw new \RuntimeException('No issue ID found in document');
+        throw new RuntimeException('No issue ID found in document');
     }
 
     private function extractTitle(string $content): string
@@ -78,20 +79,20 @@ class RstParser
             return $matches[0];
         }
 
-        throw new \RuntimeException('No title found in document');
+        throw new RuntimeException('No title found in document');
     }
 
     private function extractSection(string $content, string $sectionName): ?string
     {
         // Split content into lines
         $lines = explode("\n", $content);
-        $lineCount = count($lines);
+        $lineCount = \count($lines);
         $sectionStart = null;
 
         // Find the section header (case-insensitive match)
-        for ($i = 0; $i < $lineCount; $i++) {
+        for ($i = 0; $i < $lineCount; ++$i) {
             if (
-                preg_match('/^' . preg_quote($sectionName, '/') . '$/i', trim($lines[$i]))
+                preg_match('/^'.preg_quote($sectionName, '/').'$/i', trim($lines[$i]))
                 && isset($lines[$i + 1])
                 && preg_match('/^={3,}$/', trim($lines[$i + 1]))
             ) {
@@ -108,7 +109,7 @@ class RstParser
         // Collect lines until the next section header or end of file
         $sectionLines = [];
 
-        for ($i = $sectionStart; $i < $lineCount; $i++) {
+        for ($i = $sectionStart; $i < $lineCount; ++$i) {
             // Check if this line is a new section header (line followed by === underline)
             if (
                 isset($lines[$i + 1])
@@ -152,7 +153,7 @@ class RstParser
             }
 
             // Deduplicate by className + member
-            $key = $ref->className . '::' . ($ref->member ?? '');
+            $key = $ref->className.'::'.($ref->member ?? '');
 
             if (isset($seen[$key])) {
                 continue;
@@ -179,7 +180,7 @@ class RstParser
         return array_values(
             array_filter(
                 $rawTags,
-                static fn (string $tag): bool => '' !== $tag && !in_array($tag, self::SCAN_STATUS_TAGS, true),
+                static fn (string $tag): bool => '' !== $tag && !\in_array($tag, self::SCAN_STATUS_TAGS, true),
             ),
         );
     }

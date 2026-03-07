@@ -6,6 +6,7 @@ namespace App\Parser;
 
 use App\Dto\MatcherEntry;
 use App\Dto\MatcherType;
+use RuntimeException;
 
 class MatcherConfigParser
 {
@@ -19,15 +20,13 @@ class MatcherConfigParser
         $configDir = $this->findConfigDirectory();
 
         if (null === $configDir) {
-            throw new \RuntimeException(
-                'TYPO3 Extension Scanner config directory not found. Is typo3/cms-install installed?',
-            );
+            throw new RuntimeException('TYPO3 Extension Scanner config directory not found. Is typo3/cms-install installed?');
         }
 
         $entries = [];
 
         foreach (MatcherType::cases() as $matcherType) {
-            $filePath = $configDir . '/' . $matcherType->value . '.php';
+            $filePath = $configDir.'/'.$matcherType->value.'.php';
 
             if (!is_file($filePath)) {
                 continue;
@@ -77,8 +76,8 @@ class MatcherConfigParser
      */
     public function findConfigDirectory(): ?string
     {
-        $projectRoot = dirname(__DIR__, 2);
-        $configDir = $projectRoot . '/vendor/typo3/cms-install/Configuration/ExtensionScanner/Php';
+        $projectRoot = \dirname(__DIR__, 2);
+        $configDir = $projectRoot.'/vendor/typo3/cms-install/Configuration/ExtensionScanner/Php';
 
         if (is_dir($configDir)) {
             return $configDir;
