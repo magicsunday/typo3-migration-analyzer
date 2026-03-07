@@ -1,5 +1,12 @@
 <?php
 
+/**
+ * This file is part of the package magicsunday/typo3-migration-analyzer.
+ *
+ * For the full copyright and license information, please read the
+ * LICENSE file that was distributed with this source code.
+ */
+
 declare(strict_types=1);
 
 namespace App\Tests\Unit\Parser;
@@ -12,6 +19,8 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
 
+use function dirname;
+
 final class RstParserTest extends TestCase
 {
     private RstParser $parser;
@@ -20,14 +29,14 @@ final class RstParserTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->parser = new RstParser();
-        $this->fixturesDir = \dirname(__DIR__, 2).'/Fixtures/Rst';
+        $this->parser      = new RstParser();
+        $this->fixturesDir = dirname(__DIR__, 2) . '/Fixtures/Rst';
     }
 
     #[Test]
     public function parseDeprecationDocument(): void
     {
-        $filePath = $this->fixturesDir.'/Deprecation-99999-TestDeprecation.rst';
+        $filePath = $this->fixturesDir . '/Deprecation-99999-TestDeprecation.rst';
 
         $document = $this->parser->parseFile($filePath, '13.0');
 
@@ -49,7 +58,7 @@ final class RstParserTest extends TestCase
     #[Test]
     public function extractCodeReferencesFromDeprecation(): void
     {
-        $filePath = $this->fixturesDir.'/Deprecation-99999-TestDeprecation.rst';
+        $filePath = $this->fixturesDir . '/Deprecation-99999-TestDeprecation.rst';
 
         $document = $this->parser->parseFile($filePath, '13.0');
 
@@ -71,19 +80,19 @@ final class RstParserTest extends TestCase
 
         // Verify member names
         $testUtilityRef = null;
-        $newUtilityRef = null;
-        $oldClassRef = null;
+        $newUtilityRef  = null;
+        $oldClassRef    = null;
 
         foreach ($document->codeReferences as $ref) {
-            if ('TYPO3\CMS\Core\Utility\TestUtility' === $ref->className) {
+            if ($ref->className === 'TYPO3\CMS\Core\Utility\TestUtility') {
                 $testUtilityRef = $ref;
             }
 
-            if ('TYPO3\CMS\Core\Utility\NewUtility' === $ref->className) {
+            if ($ref->className === 'TYPO3\CMS\Core\Utility\NewUtility') {
                 $newUtilityRef = $ref;
             }
 
-            if ('TYPO3\CMS\Core\OldClass' === $ref->className) {
+            if ($ref->className === 'TYPO3\CMS\Core\OldClass') {
                 $oldClassRef = $ref;
             }
         }
@@ -104,7 +113,7 @@ final class RstParserTest extends TestCase
     #[Test]
     public function parseBreakingDocument(): void
     {
-        $filePath = $this->fixturesDir.'/Breaking-88888-TestBreaking.rst';
+        $filePath = $this->fixturesDir . '/Breaking-88888-TestBreaking.rst';
 
         $document = $this->parser->parseFile($filePath, '12.0');
 
@@ -119,7 +128,7 @@ final class RstParserTest extends TestCase
     #[Test]
     public function extractIndexTags(): void
     {
-        $filePath = $this->fixturesDir.'/Deprecation-99999-TestDeprecation.rst';
+        $filePath = $this->fixturesDir . '/Deprecation-99999-TestDeprecation.rst';
 
         $document = $this->parser->parseFile($filePath, '13.0');
 
@@ -135,13 +144,13 @@ final class RstParserTest extends TestCase
     #[Test]
     public function extractPropertyReference(): void
     {
-        $filePath = $this->fixturesDir.'/Breaking-88888-TestBreaking.rst';
+        $filePath = $this->fixturesDir . '/Breaking-88888-TestBreaking.rst';
 
         $document = $this->parser->parseFile($filePath, '12.0');
 
         $propertyRefs = array_filter(
             $document->codeReferences,
-            static fn ($ref) => CodeReferenceType::Property === $ref->type,
+            static fn ($ref) => $ref->type === CodeReferenceType::Property,
         );
 
         self::assertCount(1, $propertyRefs);
@@ -166,7 +175,7 @@ final class RstParserTest extends TestCase
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessageMatches('/Unknown document type/');
 
-        $filePath = $this->fixturesDir.'/Unknown-77777-TestUnknown.rst';
+        $filePath = $this->fixturesDir . '/Unknown-77777-TestUnknown.rst';
         $this->parser->parseFile($filePath, '13.0');
     }
 
@@ -176,7 +185,7 @@ final class RstParserTest extends TestCase
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessageMatches('/No issue ID found/');
 
-        $filePath = $this->fixturesDir.'/Deprecation-66666-NoIssueId.rst';
+        $filePath = $this->fixturesDir . '/Deprecation-66666-NoIssueId.rst';
         $this->parser->parseFile($filePath, '13.0');
     }
 
@@ -186,14 +195,14 @@ final class RstParserTest extends TestCase
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessageMatches('/No title found/');
 
-        $filePath = $this->fixturesDir.'/Deprecation-55555-NoTitle.rst';
+        $filePath = $this->fixturesDir . '/Deprecation-55555-NoTitle.rst';
         $this->parser->parseFile($filePath, '13.0');
     }
 
     #[Test]
     public function parseDocumentWithNoCodeReferencesReturnsEmptyArray(): void
     {
-        $filePath = $this->fixturesDir.'/Deprecation-44444-NoCodeRefs.rst';
+        $filePath = $this->fixturesDir . '/Deprecation-44444-NoCodeRefs.rst';
 
         $document = $this->parser->parseFile($filePath, '13.0');
 
@@ -203,7 +212,7 @@ final class RstParserTest extends TestCase
     #[Test]
     public function extractSectionsWithDashUnderlines(): void
     {
-        $filePath = $this->fixturesDir.'/Deprecation-33333-DashUnderlines.rst';
+        $filePath = $this->fixturesDir . '/Deprecation-33333-DashUnderlines.rst';
 
         $document = $this->parser->parseFile($filePath, '13.0');
 
@@ -215,7 +224,7 @@ final class RstParserTest extends TestCase
     #[Test]
     public function extractMultipleIndexDirectives(): void
     {
-        $filePath = $this->fixturesDir.'/Deprecation-22222-MultiIndex.rst';
+        $filePath = $this->fixturesDir . '/Deprecation-22222-MultiIndex.rst';
 
         $document = $this->parser->parseFile($filePath, '13.0');
 

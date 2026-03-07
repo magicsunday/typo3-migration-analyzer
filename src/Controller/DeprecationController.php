@@ -1,5 +1,12 @@
 <?php
 
+/**
+ * This file is part of the package magicsunday/typo3-migration-analyzer.
+ *
+ * For the full copyright and license information, please read the
+ * LICENSE file that was distributed with this source code.
+ */
+
 declare(strict_types=1);
 
 namespace App\Controller;
@@ -27,16 +34,16 @@ final class DeprecationController extends AbstractController
         $documents = $documentService->getDocuments();
 
         $filters = [
-            'type' => $request->query->getString('type'),
+            'type'    => $request->query->getString('type'),
             'version' => $request->query->getString('version'),
-            'scan' => $request->query->getString('scan'),
-            'q' => $request->query->getString('q'),
+            'scan'    => $request->query->getString('scan'),
+            'q'       => $request->query->getString('q'),
         ];
 
-        if ('' !== $filters['type']) {
+        if ($filters['type'] !== '') {
             $filterType = DocumentType::tryFrom(strtolower($filters['type']));
 
-            if (null !== $filterType) {
+            if ($filterType !== null) {
                 $documents = array_filter(
                     $documents,
                     static fn ($doc) => $doc->type === $filterType,
@@ -44,25 +51,25 @@ final class DeprecationController extends AbstractController
             }
         }
 
-        if ('' !== $filters['version']) {
+        if ($filters['version'] !== '') {
             $filterVersion = $filters['version'];
-            $documents = array_filter(
+            $documents     = array_filter(
                 $documents,
                 static fn ($doc) => $doc->version === $filterVersion,
             );
         }
 
-        if ('' !== $filters['scan']) {
+        if ($filters['scan'] !== '') {
             $scanStatus = ScanStatus::tryFrom(
                 match ($filters['scan']) {
-                    'FullyScanned' => 'fully_scanned',
+                    'FullyScanned'     => 'fully_scanned',
                     'PartiallyScanned' => 'partially_scanned',
-                    'NotScanned' => 'not_scanned',
-                    default => $filters['scan'],
+                    'NotScanned'       => 'not_scanned',
+                    default            => $filters['scan'],
                 },
             );
 
-            if (null !== $scanStatus) {
+            if ($scanStatus !== null) {
                 $documents = array_filter(
                     $documents,
                     static fn ($doc) => $doc->scanStatus === $scanStatus,
@@ -70,8 +77,8 @@ final class DeprecationController extends AbstractController
             }
         }
 
-        if ('' !== $filters['q']) {
-            $query = mb_strtolower($filters['q']);
+        if ($filters['q'] !== '') {
+            $query     = mb_strtolower($filters['q']);
             $documents = array_filter(
                 $documents,
                 static fn ($doc) => str_contains(mb_strtolower($doc->title), $query)
@@ -83,8 +90,8 @@ final class DeprecationController extends AbstractController
 
         return $this->render('deprecation/list.html.twig', [
             'documents' => $documents,
-            'versions' => $documentService->getVersions(),
-            'filters' => $filters,
+            'versions'  => $documentService->getVersions(),
+            'filters'   => $filters,
         ]);
     }
 
@@ -93,8 +100,8 @@ final class DeprecationController extends AbstractController
     {
         $doc = $documentService->findDocumentByFilename($filename);
 
-        if (null === $doc) {
-            throw $this->createNotFoundException(\sprintf('Document "%s" not found.', $filename));
+        if ($doc === null) {
+            throw $this->createNotFoundException(sprintf('Document "%s" not found.', $filename));
         }
 
         return $this->render('deprecation/detail.html.twig', [

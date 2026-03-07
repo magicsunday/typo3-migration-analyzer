@@ -1,5 +1,12 @@
 <?php
 
+/**
+ * This file is part of the package magicsunday/typo3-migration-analyzer.
+ *
+ * For the full copyright and license information, please read the
+ * LICENSE file that was distributed with this source code.
+ */
+
 declare(strict_types=1);
 
 namespace App\Controller;
@@ -8,11 +15,13 @@ use App\Dto\MatcherEntry;
 use App\Dto\RstDocument;
 use App\Generator\MatcherConfigGenerator;
 use App\Service\DocumentService;
+use RuntimeException;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\HeaderUtils;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Symfony\Component\Routing\Attribute\Route;
+use ZipArchive;
 
 use function pathinfo;
 use function sprintf;
@@ -72,17 +81,17 @@ final class MatcherController extends AbstractController
         $coverage = $this->documentService->getCoverage();
 
         $response = new StreamedResponse(function () use ($coverage): void {
-            $zip = new \ZipArchive();
+            $zip     = new ZipArchive();
             $tmpFile = tempnam(sys_get_temp_dir(), 'matcher_export_');
 
-            if ($tmpFile === false || $zip->open($tmpFile, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) !== true) {
-                throw new \RuntimeException('Failed to create ZIP archive.');
+            if ($tmpFile === false || $zip->open($tmpFile, ZipArchive::CREATE | ZipArchive::OVERWRITE) !== true) {
+                throw new RuntimeException('Failed to create ZIP archive.');
             }
 
             foreach ($coverage->uncovered as $doc) {
                 $entries = $this->generator->generate($doc);
 
-                if ([] === $entries) {
+                if ($entries === []) {
                     continue;
                 }
 

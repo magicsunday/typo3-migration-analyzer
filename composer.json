@@ -60,11 +60,50 @@
             "assets:install %PUBLIC_DIR%": "symfony-cmd",
             "importmap:install": "symfony-cmd"
         },
+        "ci:cgl": [
+            "php-cs-fixer fix --config .php-cs-fixer.dist.php --diff --verbose"
+        ],
+        "ci:rector": [
+            "rector process --config rector.php"
+        ],
+        "ci:test:php:cgl": [
+            "@ci:cgl --dry-run"
+        ],
+        "ci:test:php:lint": [
+            "phplint --configuration .phplint.yml"
+        ],
+        "ci:test:php:phpstan": [
+            "phpstan analyze --configuration phpstan.neon --memory-limit=-1"
+        ],
+        "ci:test:php:phpstan:baseline": [
+            "phpstan analyze --configuration phpstan.neon --memory-limit=-1 --generate-baseline phpstan-baseline.neon --allow-empty-baseline"
+        ],
+        "ci:test:php:rector": [
+            "@ci:rector --dry-run"
+        ],
+        "ci:test:php:unit": [
+            "phpunit --configuration phpunit.xml"
+        ],
+        "ci:test:php:unit:coverage": [
+            "XDEBUG_MODE=coverage phpunit --configuration phpunit.xml --coverage-html coverage/"
+        ],
+        "ci:test:php:cpd": [
+            "npx jscpd --config .jscpd.json"
+        ],
+        "ci:test": [
+            "@ci:test:php:lint",
+            "@ci:test:php:cgl",
+            "@ci:test:php:rector",
+            "@ci:test:php:phpstan",
+            "@ci:test:php:unit",
+            "@ci:test:php:cpd"
+        ],
         "post-install-cmd": [
             "@auto-scripts"
         ],
         "post-update-cmd": [
-            "@auto-scripts"
+            "@auto-scripts",
+            "npm install jscpd"
         ]
     },
     "conflict": {
@@ -81,9 +120,14 @@
     },
     "require-dev": {
         "friendsofphp/php-cs-fixer": "^3.94",
+        "overtrue/phplint": "*",
         "phpstan/extension-installer": "^1.4",
         "phpstan/phpstan": "^2.1",
+        "phpstan/phpstan-deprecation-rules": "*",
+        "phpstan/phpstan-phpunit": "*",
+        "phpstan/phpstan-strict-rules": "*",
         "phpstan/phpstan-symfony": "^2.0",
-        "phpunit/phpunit": "^13.0"
+        "phpunit/phpunit": "^13.0",
+        "rector/rector": "*"
     }
 }

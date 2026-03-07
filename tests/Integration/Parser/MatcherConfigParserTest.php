@@ -1,5 +1,12 @@
 <?php
 
+/**
+ * This file is part of the package magicsunday/typo3-migration-analyzer.
+ *
+ * For the full copyright and license information, please read the
+ * LICENSE file that was distributed with this source code.
+ */
+
 declare(strict_types=1);
 
 namespace App\Tests\Integration\Parser;
@@ -8,6 +15,8 @@ use App\Dto\MatcherType;
 use App\Parser\MatcherConfigParser;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+
+use function sprintf;
 
 final class MatcherConfigParserTest extends TestCase
 {
@@ -34,7 +43,7 @@ final class MatcherConfigParserTest extends TestCase
         foreach ($entries as $entry) {
             self::assertNotEmpty(
                 $entry->restFiles,
-                \sprintf('Entry "%s" (type: %s) has no restFiles', $entry->identifier, $entry->matcherType->value),
+                sprintf('Entry "%s" (type: %s) has no restFiles', $entry->identifier, $entry->matcherType->value),
             );
         }
     }
@@ -68,7 +77,7 @@ final class MatcherConfigParserTest extends TestCase
 
         // Each group must contain MatcherEntry instances
         foreach ($grouped as $rstFile => $groupEntries) {
-            self::assertNotEmpty($groupEntries, \sprintf('Group for "%s" is empty', $rstFile));
+            self::assertNotEmpty($groupEntries, sprintf('Group for "%s" is empty', $rstFile));
         }
     }
 
@@ -90,7 +99,7 @@ final class MatcherConfigParserTest extends TestCase
         $clipboardEntry = null;
 
         foreach ($entries as $entry) {
-            if ('TYPO3\CMS\Backend\Clipboard\Clipboard->confirmMsg' === $entry->identifier) {
+            if ($entry->identifier === 'TYPO3\CMS\Backend\Clipboard\Clipboard->confirmMsg') {
                 $clipboardEntry = $entry;
 
                 break;

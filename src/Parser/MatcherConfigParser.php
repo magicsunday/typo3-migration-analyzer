@@ -1,5 +1,12 @@
 <?php
 
+/**
+ * This file is part of the package magicsunday/typo3-migration-analyzer.
+ *
+ * For the full copyright and license information, please read the
+ * LICENSE file that was distributed with this source code.
+ */
+
 declare(strict_types=1);
 
 namespace App\Parser;
@@ -9,6 +16,7 @@ use App\Dto\MatcherType;
 use RuntimeException;
 
 use function array_diff_key;
+use function dirname;
 use function is_array;
 use function is_dir;
 use function is_file;
@@ -24,14 +32,14 @@ final class MatcherConfigParser
     {
         $configDir = $this->findConfigDirectory();
 
-        if (null === $configDir) {
+        if ($configDir === null) {
             throw new RuntimeException('TYPO3 Extension Scanner config directory not found. Is typo3/cms-install installed?');
         }
 
         $entries = [];
 
         foreach (MatcherType::cases() as $matcherType) {
-            $filePath = $configDir.'/'.$matcherType->value.'.php';
+            $filePath = $configDir . '/' . $matcherType->value . '.php';
 
             if (!is_file($filePath)) {
                 continue;
@@ -46,7 +54,7 @@ final class MatcherConfigParser
             /** @var array<string, array<string, mixed>> $config */
             foreach ($config as $identifier => $entry) {
                 /** @var list<string> $restFiles */
-                $restFiles = $entry['restFiles'] ?? [];
+                $restFiles        = $entry['restFiles'] ?? [];
                 $additionalConfig = array_diff_key($entry, ['restFiles' => true]);
 
                 $entries[] = new MatcherEntry(
@@ -86,8 +94,8 @@ final class MatcherConfigParser
      */
     public function findConfigDirectory(): ?string
     {
-        $projectRoot = \dirname(__DIR__, 2);
-        $configDir = $projectRoot.'/vendor/typo3/cms-install/Configuration/ExtensionScanner/Php';
+        $projectRoot = dirname(__DIR__, 2);
+        $configDir   = $projectRoot . '/vendor/typo3/cms-install/Configuration/ExtensionScanner/Php';
 
         if (is_dir($configDir)) {
             return $configDir;

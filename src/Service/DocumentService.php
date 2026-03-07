@@ -1,5 +1,12 @@
 <?php
 
+/**
+ * This file is part of the package magicsunday/typo3-migration-analyzer.
+ *
+ * For the full copyright and license information, please read the
+ * LICENSE file that was distributed with this source code.
+ */
+
 declare(strict_types=1);
 
 namespace App\Service;
@@ -12,8 +19,6 @@ use App\Parser\MatcherConfigParser;
 use App\Parser\RstFileLocator;
 use Symfony\Contracts\Cache\CacheInterface;
 use Symfony\Contracts\Cache\ItemInterface;
-
-use function count;
 
 final readonly class DocumentService
 {

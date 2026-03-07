@@ -1,5 +1,12 @@
 <?php
 
+/**
+ * This file is part of the package magicsunday/typo3-migration-analyzer.
+ *
+ * For the full copyright and license information, please read the
+ * LICENSE file that was distributed with this source code.
+ */
+
 declare(strict_types=1);
 
 namespace App\Parser;
@@ -41,8 +48,8 @@ final class RstParser
     {
         $content = @file_get_contents($filePath);
 
-        if (false === $content) {
-            throw new RuntimeException(\sprintf('Cannot read file: %s', $filePath));
+        if ($content === false) {
+            throw new RuntimeException(sprintf('Cannot read file: %s', $filePath));
         }
 
         $filename = basename($filePath);
@@ -80,7 +87,7 @@ final class RstParser
             return DocumentType::Important;
         }
 
-        throw new RuntimeException(\sprintf('Unknown document type for filename: %s', $filename));
+        throw new RuntimeException(sprintf('Unknown document type for filename: %s', $filename));
     }
 
     private function extractIssueId(string $content): int
@@ -104,8 +111,8 @@ final class RstParser
     private function extractSection(string $content, string $sectionName): ?string
     {
         // Split content into lines
-        $lines = explode("\n", $content);
-        $lineCount = \count($lines);
+        $lines        = explode("\n", $content);
+        $lineCount    = count($lines);
         $sectionStart = null;
 
         // Find the section header (case-insensitive match)
@@ -117,11 +124,12 @@ final class RstParser
             ) {
                 // Section content starts after the underline
                 $sectionStart = $i + 2;
+
                 break;
             }
         }
 
-        if (null === $sectionStart) {
+        if ($sectionStart === null) {
             return null;
         }
 
@@ -133,7 +141,7 @@ final class RstParser
             if (
                 isset($lines[$i + 1])
                 && preg_match(self::RST_UNDERLINE_PATTERN, trim($lines[$i + 1]))
-                && '' !== trim($lines[$i])
+                && trim($lines[$i]) !== ''
             ) {
                 break;
             }
@@ -149,7 +157,7 @@ final class RstParser
         $sectionContent = implode("\n", $sectionLines);
         $sectionContent = trim($sectionContent);
 
-        return '' === $sectionContent ? null : $sectionContent;
+        return $sectionContent === '' ? null : $sectionContent;
     }
 
     /**
@@ -161,24 +169,24 @@ final class RstParser
             return [];
         }
 
-        $seen = [];
+        $seen       = [];
         $references = [];
 
         foreach ($matches[1] as $phpRoleValue) {
             $ref = CodeReference::fromPhpRole($phpRoleValue);
 
-            if (null === $ref) {
+            if ($ref === null) {
                 continue;
             }
 
             // Deduplicate by className + member
-            $key = $ref->className.'::'.($ref->member ?? '');
+            $key = $ref->className . '::' . ($ref->member ?? '');
 
             if (isset($seen[$key])) {
                 continue;
             }
 
-            $seen[$key] = true;
+            $seen[$key]   = true;
             $references[] = $ref;
         }
 
@@ -200,7 +208,7 @@ final class RstParser
 
         foreach ($matches[1] as $tagLine) {
             foreach (array_map('trim', explode(',', $tagLine)) as $tag) {
-                if ('' !== $tag) {
+                if ($tag !== '') {
                     $tags[] = $tag;
                 }
             }

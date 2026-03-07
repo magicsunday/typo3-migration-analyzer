@@ -1,5 +1,12 @@
 <?php
 
+/**
+ * This file is part of the package magicsunday/typo3-migration-analyzer.
+ *
+ * For the full copyright and license information, please read the
+ * LICENSE file that was distributed with this source code.
+ */
+
 declare(strict_types=1);
 
 namespace App\Tests\Integration\Parser;
@@ -10,6 +17,8 @@ use App\Parser\RstFileLocator;
 use App\Parser\RstParser;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+
+use function count;
 
 final class RstFileLocatorTest extends TestCase
 {
@@ -43,7 +52,7 @@ final class RstFileLocatorTest extends TestCase
         );
 
         // At least several versions should have documents
-        self::assertGreaterThanOrEqual(6, \count($foundVersions));
+        self::assertGreaterThanOrEqual(6, count($foundVersions));
     }
 
     #[Test]

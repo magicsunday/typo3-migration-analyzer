@@ -1,5 +1,12 @@
 <?php
 
+/**
+ * This file is part of the package magicsunday/typo3-migration-analyzer.
+ *
+ * For the full copyright and license information, please read the
+ * LICENSE file that was distributed with this source code.
+ */
+
 declare(strict_types=1);
 
 namespace App\Tests\Unit\Generator;
@@ -69,7 +76,7 @@ final class MatcherConfigGeneratorTest extends TestCase
         self::assertSame(['Deprecation-23456-MethodRemoved.rst'], $entries[0]->restFiles);
         self::assertSame([
             'numberOfMandatoryArguments' => 0,
-            'maximumNumberOfArguments' => 0,
+            'maximumNumberOfArguments'   => 0,
         ], $entries[0]->additionalConfig);
     }
 
@@ -95,7 +102,7 @@ final class MatcherConfigGeneratorTest extends TestCase
         self::assertSame(['Deprecation-34567-StaticMethodRemoved.rst'], $entries[0]->restFiles);
         self::assertSame([
             'numberOfMandatoryArguments' => 0,
-            'maximumNumberOfArguments' => 0,
+            'maximumNumberOfArguments'   => 0,
         ], $entries[0]->additionalConfig);
     }
 
@@ -165,7 +172,7 @@ final class MatcherConfigGeneratorTest extends TestCase
             ],
         );
 
-        $entries = $this->generator->generate($document);
+        $entries  = $this->generator->generate($document);
         $rendered = $this->generator->renderPhp($entries);
 
         self::assertStringContainsString('<?php', $rendered);
@@ -197,7 +204,7 @@ final class MatcherConfigGeneratorTest extends TestCase
             restFiles: ['Test.rst'],
             additionalConfig: [
                 'numberOfMandatoryArguments' => 2,
-                'maximumNumberOfArguments' => 5,
+                'maximumNumberOfArguments'   => 5,
             ],
         );
 
@@ -215,7 +222,7 @@ final class MatcherConfigGeneratorTest extends TestCase
             matcherType: MatcherType::MethodCall,
             restFiles: ['Test.rst'],
             additionalConfig: [
-                'someFlag' => true,
+                'someFlag'    => true,
                 'anotherFlag' => false,
             ],
         );

@@ -21,13 +21,17 @@
 ###< friendsofphp/php-cs-fixer ###
 
 ###> phpunit/phpunit ###
-/phpunit.xml
 /.phpunit.cache/
 ###< phpunit/phpunit ###
 
 ###> phpstan/phpstan ###
 phpstan-baseline.neon
 ###< phpstan/phpstan ###
+
+###> build ###
+/.build/
+/coverage/
+###< build ###
 
 ###> docker ###
 /.typo3-dummy

@@ -1,5 +1,12 @@
 <?php
 
+/**
+ * This file is part of the package magicsunday/typo3-migration-analyzer.
+ *
+ * For the full copyright and license information, please read the
+ * LICENSE file that was distributed with this source code.
+ */
+
 declare(strict_types=1);
 
 namespace App\Analyzer;
@@ -34,7 +41,7 @@ final class MatcherCoverageAnalyzer
 
         // 2. For each document, check if its filename is in the set
         // 3. Split into covered/uncovered
-        $covered = [];
+        $covered   = [];
         $uncovered = [];
 
         foreach ($documents as $document) {
@@ -69,8 +76,8 @@ final class MatcherCoverageAnalyzer
     /**
      * Build coverage breakdown by a document property (version or type).
      *
-     * @param RstDocument[]        $documents
-     * @param array<string, true>  $referencedFiles
+     * @param RstDocument[]       $documents
+     * @param array<string, true> $referencedFiles
      *
      * @return list<CoverageBreakdown>
      */
@@ -80,7 +87,7 @@ final class MatcherCoverageAnalyzer
         $groups = [];
 
         foreach ($documents as $document) {
-            $key = 'type' === $property
+            $key = $property === 'type'
                 ? ucfirst($document->type->value)
                 : $document->version;
 

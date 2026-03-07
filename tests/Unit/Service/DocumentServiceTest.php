@@ -1,18 +1,18 @@
 <?php
 
+/**
+ * This file is part of the package magicsunday/typo3-migration-analyzer.
+ *
+ * For the full copyright and license information, please read the
+ * LICENSE file that was distributed with this source code.
+ */
+
 declare(strict_types=1);
 
 namespace App\Tests\Unit\Service;
 
 use App\Analyzer\MatcherCoverageAnalyzer;
-use App\Dto\CodeReference;
-use App\Dto\CodeReferenceType;
 use App\Dto\CoverageResult;
-use App\Dto\DocumentType;
-use App\Dto\MatcherEntry;
-use App\Dto\MatcherType;
-use App\Dto\RstDocument;
-use App\Dto\ScanStatus;
 use App\Parser\MatcherConfigParser;
 use App\Parser\RstFileLocator;
 use App\Parser\RstParser;
@@ -26,7 +26,7 @@ final class DocumentServiceTest extends TestCase
     #[Test]
     public function getVersionsReturnsExpectedList(): void
     {
-        $service = $this->createServiceWithFixtures();
+        $service  = $this->createServiceWithFixtures();
         $versions = $service->getVersions();
 
         self::assertNotEmpty($versions);
@@ -66,7 +66,7 @@ final class DocumentServiceTest extends TestCase
         // Use a document that we know exists in the real TYPO3 vendor data
         $documents = $service->getDocuments();
 
-        if ([] === $documents) {
+        if ($documents === []) {
             self::markTestSkipped('No documents found in vendor directory.');
         }
 

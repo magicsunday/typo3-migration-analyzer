@@ -1,5 +1,12 @@
 <?php
 
+/**
+ * This file is part of the package magicsunday/typo3-migration-analyzer.
+ *
+ * For the full copyright and license information, please read the
+ * LICENSE file that was distributed with this source code.
+ */
+
 declare(strict_types=1);
 
 namespace App\Generator;
@@ -10,7 +17,6 @@ use App\Dto\MatcherEntry;
 use App\Dto\MatcherType;
 use App\Dto\RstDocument;
 
-use function is_array;
 use function str_replace;
 use function var_export;
 
@@ -26,8 +32,8 @@ final class MatcherConfigGenerator
         $entries = [];
 
         foreach ($document->codeReferences as $codeReference) {
-            $matcherType = $this->resolveMatcherType($codeReference);
-            $identifier = $this->buildIdentifier($codeReference);
+            $matcherType      = $this->resolveMatcherType($codeReference);
+            $identifier       = $this->buildIdentifier($codeReference);
             $additionalConfig = $this->buildAdditionalConfig($matcherType);
 
             $entries[] = new MatcherEntry(
@@ -62,26 +68,26 @@ final class MatcherConfigGenerator
     private function resolveMatcherType(CodeReference $codeReference): MatcherType
     {
         return match ($codeReference->type) {
-            CodeReferenceType::ClassName => MatcherType::ClassName,
+            CodeReferenceType::ClassName      => MatcherType::ClassName,
             CodeReferenceType::InstanceMethod => MatcherType::MethodCall,
-            CodeReferenceType::StaticMethod => MatcherType::MethodCallStatic,
-            CodeReferenceType::Property => MatcherType::PropertyProtected,
-            CodeReferenceType::ClassConstant => MatcherType::ClassConstant,
+            CodeReferenceType::StaticMethod   => MatcherType::MethodCallStatic,
+            CodeReferenceType::Property       => MatcherType::PropertyProtected,
+            CodeReferenceType::ClassConstant  => MatcherType::ClassConstant,
         };
     }
 
     private function buildIdentifier(CodeReference $codeReference): string
     {
-        if (null === $codeReference->member) {
+        if ($codeReference->member === null) {
             return $codeReference->className;
         }
 
         return match ($codeReference->type) {
             CodeReferenceType::InstanceMethod,
-            CodeReferenceType::Property => $codeReference->className.'->'.$codeReference->member,
+            CodeReferenceType::Property => $codeReference->className . '->' . $codeReference->member,
             CodeReferenceType::StaticMethod,
-            CodeReferenceType::ClassConstant => $codeReference->className.'::'.$codeReference->member,
-            CodeReferenceType::ClassName => $codeReference->className,
+            CodeReferenceType::ClassConstant => $codeReference->className . '::' . $codeReference->member,
+            CodeReferenceType::ClassName     => $codeReference->className,
         };
     }
 
@@ -90,10 +96,10 @@ final class MatcherConfigGenerator
      */
     private function buildAdditionalConfig(MatcherType $matcherType): array
     {
-        if (MatcherType::MethodCall === $matcherType || MatcherType::MethodCallStatic === $matcherType) {
+        if ($matcherType === MatcherType::MethodCall || $matcherType === MatcherType::MethodCallStatic) {
             return [
                 'numberOfMandatoryArguments' => 0,
-                'maximumNumberOfArguments' => 0,
+                'maximumNumberOfArguments'   => 0,
             ];
         }
 
@@ -103,11 +109,11 @@ final class MatcherConfigGenerator
     private function renderEntry(MatcherEntry $entry): string
     {
         $escaped = $this->escapePhpString($entry->identifier);
-        $output = "    '{$escaped}' => [\n";
+        $output  = "    '{$escaped}' => [\n";
 
         foreach ($entry->additionalConfig as $key => $value) {
             $rendered = var_export($value, true);
-            $output  .= "        '{$key}' => {$rendered},\n";
+            $output .= "        '{$key}' => {$rendered},\n";
         }
 
         $output .= "        'restFiles' => [\n";
