@@ -2,44 +2,98 @@
 
 {% block title %}{{ doc.type.value }} #{{ doc.issueId }}{% endblock %}
 
+{% block breadcrumb %}
+    <li class="breadcrumb-item"><a href="{{ path('dashboard') }}">Dashboard</a></li>
+    <li class="breadcrumb-item"><a href="{{ path('deprecation_list') }}">Deprecations</a></li>
+    <li class="breadcrumb-item active">#{{ doc.issueId }}</li>
+{% endblock %}
+
 {% block body %}
-<h1>{{ doc.type.value }}: #{{ doc.issueId }} - {{ doc.title }}</h1>
-<p>
-    Version: <strong>{{ doc.version }}</strong> |
-    Scan: <span class="badge badge--{{ doc.scanStatus.value|lower }}">{{ doc.scanStatus.value }}</span> |
-    Tags: {{ doc.indexTags|join(', ') }}
-</p>
+<div class="mb-4">
+    <div class="d-flex align-items-center gap-2 mb-2">
+        {% if doc.type.value == 'deprecation' %}
+            <span class="badge text-bg-warning">Deprecation</span>
+        {% elseif doc.type.value == 'breaking' %}
+            <span class="badge text-bg-danger">Breaking</span>
+        {% else %}
+            <span class="badge text-bg-secondary">{{ doc.type.value }}</span>
+        {% endif %}
+        <span class="badge text-bg-light text-dark border">{{ doc.version }}</span>
+        {% if doc.scanStatus.value == 'fully_scanned' %}
+            <span class="badge text-bg-success">Fully Scanned</span>
+        {% elseif doc.scanStatus.value == 'partially_scanned' %}
+            <span class="badge text-bg-warning">Partially Scanned</span>
+        {% else %}
+            <span class="badge text-bg-danger">Not Scanned</span>
+        {% endif %}
+    </div>
+    <h1 class="h3 mb-1">#{{ doc.issueId }} &mdash; {{ doc.title }}</h1>
+    {% if doc.indexTags|length > 0 %}
+        <div class="mt-2">
+            {% for tag in doc.indexTags %}
+                <span class="badge bg-light text-muted border me-1">{{ tag }}</span>
+            {% endfor %}
+        </div>
+    {% endif %}
+</div>
 
-<h2>Description</h2>
-<pre>{{ doc.description }}</pre>
+{# Content sections #}
+<div class="row">
+    <div class="col-lg-8">
+        <div class="rst-section">
+            <h6 class="text-uppercase text-muted small fw-bold mb-3">
+                <i class="bi bi-card-text me-1"></i>Description
+            </h6>
+            <pre>{{ doc.description }}</pre>
+        </div>
 
-<h2>Impact</h2>
-<pre>{{ doc.impact }}</pre>
+        <div class="rst-section">
+            <h6 class="text-uppercase text-muted small fw-bold mb-3">
+                <i class="bi bi-exclamation-diamond me-1"></i>Impact
+            </h6>
+            <pre>{{ doc.impact }}</pre>
+        </div>
 
-<h2>Migration</h2>
-<pre>{{ doc.migration }}</pre>
+        <div class="rst-section">
+            <h6 class="text-uppercase text-muted small fw-bold mb-3">
+                <i class="bi bi-arrow-right-circle me-1"></i>Migration
+            </h6>
+            <pre>{{ doc.migration }}</pre>
+        </div>
+    </div>
 
-{% if doc.codeReferences|length > 0 %}
-<h2>Code-Referenzen</h2>
-<table class="data-table">
-    <thead>
-        <tr>
-            <th>Typ</th>
-            <th>Klasse</th>
-            <th>Member</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for ref in doc.codeReferences %}
-        <tr>
-            <td><span class="badge">{{ ref.type.value }}</span></td>
-            <td><code>{{ ref.className }}</code></td>
-            <td>{% if ref.member %}<code>{{ ref.member }}</code>{% else %}-{% endif %}</td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
-{% endif %}
+    <div class="col-lg-4">
+        {% if doc.codeReferences|length > 0 %}
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-transparent">
+                <h6 class="card-title mb-0">
+                    <i class="bi bi-code-slash me-1"></i>Code-Referenzen
+                    <span class="badge rounded-pill text-bg-primary ms-1">{{ doc.codeReferences|length }}</span>
+                </h6>
+            </div>
+            <div class="list-group list-group-flush">
+                {% for ref in doc.codeReferences %}
+                <div class="list-group-item">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div class="text-break">
+                            <code class="small">{{ ref.className }}</code>
+                            {% if ref.member %}
+                                <br><span class="text-muted small">::</span><code class="small text-primary">{{ ref.member }}</code>
+                            {% endif %}
+                        </div>
+                        <span class="badge text-bg-secondary ms-2">{{ ref.type.value }}</span>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
 
-<p style="margin-top:2rem"><a href="{{ path('deprecation_list') }}">&larr; Zurueck zur Liste</a></p>
+<div class="mt-4">
+    <a href="{{ path('deprecation_list') }}" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left me-1"></i>Zurueck zur Liste
+    </a>
+</div>
 {% endblock %}

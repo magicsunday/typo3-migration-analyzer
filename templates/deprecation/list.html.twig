@@ -2,52 +2,114 @@
 
 {% block title %}Deprecations &amp; Breaking Changes{% endblock %}
 
-{% block body %}
-<h1>Deprecations &amp; Breaking Changes</h1>
-<p>{{ documents|length }} Dokumente gefunden</p>
+{% block breadcrumb %}
+    <li class="breadcrumb-item"><a href="{{ path('dashboard') }}">Dashboard</a></li>
+    <li class="breadcrumb-item active">Deprecations</li>
+{% endblock %}
 
-<div class="filter-bar">
-    <select onchange="location.href=this.value">
-        <option value="{{ path('deprecation_list', filters|merge({type: ''})) }}">Alle Typen</option>
-        <option value="{{ path('deprecation_list', filters|merge({type: 'Deprecation'})) }}" {{ filters.type == 'Deprecation' ? 'selected' }}>Deprecation</option>
-        <option value="{{ path('deprecation_list', filters|merge({type: 'Breaking'})) }}" {{ filters.type == 'Breaking' ? 'selected' }}>Breaking</option>
-    </select>
-    <select onchange="location.href=this.value">
-        <option value="{{ path('deprecation_list', filters|merge({version: ''})) }}">Alle Versionen</option>
-        {% for v in versions %}
-        <option value="{{ path('deprecation_list', filters|merge({version: v})) }}" {{ filters.version == v ? 'selected' }}>{{ v }}</option>
-        {% endfor %}
-    </select>
-    <select onchange="location.href=this.value">
-        <option value="{{ path('deprecation_list', filters|merge({scan: ''})) }}">Alle Scan-Status</option>
-        <option value="{{ path('deprecation_list', filters|merge({scan: 'FullyScanned'})) }}" {{ filters.scan == 'FullyScanned' ? 'selected' }}>FullyScanned</option>
-        <option value="{{ path('deprecation_list', filters|merge({scan: 'PartiallyScanned'})) }}" {{ filters.scan == 'PartiallyScanned' ? 'selected' }}>PartiallyScanned</option>
-        <option value="{{ path('deprecation_list', filters|merge({scan: 'NotScanned'})) }}" {{ filters.scan == 'NotScanned' ? 'selected' }}>NotScanned</option>
-    </select>
+{% block body %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h3 mb-1">Deprecations &amp; Breaking Changes</h1>
+        <p class="text-muted mb-0">{{ documents|length }} Dokumente gefunden</p>
+    </div>
 </div>
 
-<table class="data-table">
-    <thead>
-        <tr>
-            <th>Typ</th>
-            <th>Issue</th>
-            <th>Titel</th>
-            <th>Version</th>
-            <th>Scan-Status</th>
-            <th>Referenzen</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for doc in documents %}
-        <tr>
-            <td><span class="badge badge--{{ doc.type.value|lower }}">{{ doc.type.value }}</span></td>
-            <td>#{{ doc.issueId }}</td>
-            <td><a href="{{ path('deprecation_detail', {filename: doc.filename}) }}">{{ doc.title }}</a></td>
-            <td>{{ doc.version }}</td>
-            <td><span class="badge badge--{{ doc.scanStatus.value|lower }}">{{ doc.scanStatus.value }}</span></td>
-            <td>{{ doc.codeReferences|length }}</td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
+{# Filter bar #}
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-body">
+        <div class="row g-3">
+            <div class="col-sm-6 col-lg-3">
+                <label class="form-label small text-muted">Typ</label>
+                <select class="form-select form-select-sm" onchange="location.href=this.value">
+                    <option value="{{ path('deprecation_list', filters|merge({type: ''})) }}">Alle Typen</option>
+                    <option value="{{ path('deprecation_list', filters|merge({type: 'Deprecation'})) }}" {{ filters.type == 'Deprecation' ? 'selected' }}>Deprecation</option>
+                    <option value="{{ path('deprecation_list', filters|merge({type: 'Breaking'})) }}" {{ filters.type == 'Breaking' ? 'selected' }}>Breaking</option>
+                </select>
+            </div>
+            <div class="col-sm-6 col-lg-3">
+                <label class="form-label small text-muted">Version</label>
+                <select class="form-select form-select-sm" onchange="location.href=this.value">
+                    <option value="{{ path('deprecation_list', filters|merge({version: ''})) }}">Alle Versionen</option>
+                    {% for v in versions %}
+                    <option value="{{ path('deprecation_list', filters|merge({version: v})) }}" {{ filters.version == v ? 'selected' }}>{{ v }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-sm-6 col-lg-3">
+                <label class="form-label small text-muted">Scan-Status</label>
+                <select class="form-select form-select-sm" onchange="location.href=this.value">
+                    <option value="{{ path('deprecation_list', filters|merge({scan: ''})) }}">Alle</option>
+                    <option value="{{ path('deprecation_list', filters|merge({scan: 'FullyScanned'})) }}" {{ filters.scan == 'FullyScanned' ? 'selected' }}>Fully Scanned</option>
+                    <option value="{{ path('deprecation_list', filters|merge({scan: 'PartiallyScanned'})) }}" {{ filters.scan == 'PartiallyScanned' ? 'selected' }}>Partially Scanned</option>
+                    <option value="{{ path('deprecation_list', filters|merge({scan: 'NotScanned'})) }}" {{ filters.scan == 'NotScanned' ? 'selected' }}>Not Scanned</option>
+                </select>
+            </div>
+            <div class="col-sm-6 col-lg-3">
+                <label class="form-label small text-muted">&nbsp;</label>
+                {% if filters.type or filters.version or filters.scan %}
+                    <a href="{{ path('deprecation_list') }}" class="btn btn-sm btn-outline-secondary d-block">
+                        <i class="bi bi-x-circle me-1"></i>Filter zuruecksetzen
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{# Documents table #}
+<div class="card border-0 shadow-sm">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead>
+                <tr>
+                    <th>Typ</th>
+                    <th>Issue</th>
+                    <th>Titel</th>
+                    <th>Version</th>
+                    <th>Scan-Status</th>
+                    <th class="text-center">Referenzen</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for doc in documents %}
+                <tr>
+                    <td>
+                        {% if doc.type.value == 'deprecation' %}
+                            <span class="badge text-bg-warning">Deprecation</span>
+                        {% elseif doc.type.value == 'breaking' %}
+                            <span class="badge text-bg-danger">Breaking</span>
+                        {% else %}
+                            <span class="badge text-bg-secondary">{{ doc.type.value }}</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-muted">#{{ doc.issueId }}</td>
+                    <td>
+                        <a href="{{ path('deprecation_detail', {filename: doc.filename}) }}" class="text-decoration-none fw-medium">
+                            {{ doc.title }}
+                        </a>
+                    </td>
+                    <td><span class="badge text-bg-light text-dark border">{{ doc.version }}</span></td>
+                    <td>
+                        {% if doc.scanStatus.value == 'fully_scanned' %}
+                            <span class="badge text-bg-success">Fully Scanned</span>
+                        {% elseif doc.scanStatus.value == 'partially_scanned' %}
+                            <span class="badge text-bg-warning">Partially Scanned</span>
+                        {% else %}
+                            <span class="badge text-bg-danger">Not Scanned</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-center">
+                        {% if doc.codeReferences|length > 0 %}
+                            <span class="badge rounded-pill text-bg-primary">{{ doc.codeReferences|length }}</span>
+                        {% else %}
+                            <span class="text-muted">&mdash;</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
 {% endblock %}

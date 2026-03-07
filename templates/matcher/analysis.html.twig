@@ -2,40 +2,86 @@
 
 {% block title %}Matcher-Analyse{% endblock %}
 
+{% block breadcrumb %}
+    <li class="breadcrumb-item"><a href="{{ path('dashboard') }}">Dashboard</a></li>
+    <li class="breadcrumb-item active">Matcher-Analyse</li>
+{% endblock %}
+
 {% block body %}
-<h1>Matcher-Analyse</h1>
-<p>Coverage: <strong>{{ coverage.coveragePercent|number_format(1) }}%</strong> ({{ coverage.covered|length }}/{{ coverage.totalDocuments }})</p>
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h3 mb-1">Matcher-Analyse</h1>
+        <p class="text-muted mb-0">{{ coverage.uncovered|length }} Dokumente ohne Matcher-Abdeckung</p>
+    </div>
+    <div class="d-flex align-items-center gap-3">
+        <div class="text-end">
+            <div class="h4 mb-0 {{ coverage.coveragePercent >= 80 ? 'text-success' : (coverage.coveragePercent >= 50 ? 'text-warning' : 'text-danger') }}">
+                {{ coverage.coveragePercent|number_format(1) }}%
+            </div>
+            <small class="text-muted">{{ coverage.covered|length }} / {{ coverage.totalDocuments }}</small>
+        </div>
+        <div style="width: 100px;">
+            <div class="progress progress-thick">
+                <div class="progress-bar {{ coverage.coveragePercent >= 80 ? 'bg-success' : (coverage.coveragePercent >= 50 ? 'bg-warning' : 'bg-danger') }}"
+                     style="width: {{ coverage.coveragePercent }}%"></div>
+            </div>
+        </div>
+    </div>
+</div>
 
-<h2>Nicht abgedeckte Dokumente ({{ coverage.uncovered|length }})</h2>
-
-<table class="data-table">
-    <thead>
-        <tr>
-            <th>Typ</th>
-            <th>Issue</th>
-            <th>Titel</th>
-            <th>Version</th>
-            <th>Referenzen</th>
-            <th>Aktion</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for doc in coverage.uncovered %}
-        <tr>
-            <td><span class="badge badge--{{ doc.type.value|lower }}">{{ doc.type.value }}</span></td>
-            <td>#{{ doc.issueId }}</td>
-            <td><a href="{{ path('deprecation_detail', {filename: doc.filename}) }}">{{ doc.title }}</a></td>
-            <td>{{ doc.version }}</td>
-            <td>{{ doc.codeReferences|length }}</td>
-            <td>
-                {% if doc.codeReferences|length > 0 %}
-                    <a href="{{ path('matcher_generate', {filename: doc.filename}) }}" class="btn btn--primary">Generieren</a>
-                {% else %}
-                    <span class="badge">Manuell</span>
-                {% endif %}
-            </td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
+{# Uncovered documents table #}
+<div class="card border-0 shadow-sm">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead>
+                <tr>
+                    <th>Typ</th>
+                    <th>Issue</th>
+                    <th>Titel</th>
+                    <th>Version</th>
+                    <th class="text-center">Referenzen</th>
+                    <th class="text-end">Aktion</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for doc in coverage.uncovered %}
+                <tr>
+                    <td>
+                        {% if doc.type.value == 'deprecation' %}
+                            <span class="badge text-bg-warning">Deprecation</span>
+                        {% elseif doc.type.value == 'breaking' %}
+                            <span class="badge text-bg-danger">Breaking</span>
+                        {% else %}
+                            <span class="badge text-bg-secondary">{{ doc.type.value }}</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-muted">#{{ doc.issueId }}</td>
+                    <td>
+                        <a href="{{ path('deprecation_detail', {filename: doc.filename}) }}" class="text-decoration-none fw-medium">
+                            {{ doc.title }}
+                        </a>
+                    </td>
+                    <td><span class="badge text-bg-light text-dark border">{{ doc.version }}</span></td>
+                    <td class="text-center">
+                        {% if doc.codeReferences|length > 0 %}
+                            <span class="badge rounded-pill text-bg-primary">{{ doc.codeReferences|length }}</span>
+                        {% else %}
+                            <span class="text-muted">&mdash;</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-end">
+                        {% if doc.codeReferences|length > 0 %}
+                            <a href="{{ path('matcher_generate', {filename: doc.filename}) }}" class="btn btn-sm btn-typo3">
+                                <i class="bi bi-gear me-1"></i>Generieren
+                            </a>
+                        {% else %}
+                            <span class="badge text-bg-secondary">Manuell</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
 {% endblock %}

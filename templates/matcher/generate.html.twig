@@ -2,37 +2,77 @@
 
 {% block title %}Matcher generieren: {{ doc.title }}{% endblock %}
 
+{% block breadcrumb %}
+    <li class="breadcrumb-item"><a href="{{ path('dashboard') }}">Dashboard</a></li>
+    <li class="breadcrumb-item"><a href="{{ path('matcher_analysis') }}">Matcher-Analyse</a></li>
+    <li class="breadcrumb-item active">Generieren</li>
+{% endblock %}
+
 {% block body %}
-<h1>Matcher generieren</h1>
-<p>{{ doc.type.value }}: #{{ doc.issueId }} - {{ doc.title }}</p>
+<div class="mb-4">
+    <div class="d-flex align-items-center gap-2 mb-2">
+        {% if doc.type.value == 'deprecation' %}
+            <span class="badge text-bg-warning">Deprecation</span>
+        {% elseif doc.type.value == 'breaking' %}
+            <span class="badge text-bg-danger">Breaking</span>
+        {% else %}
+            <span class="badge text-bg-secondary">{{ doc.type.value }}</span>
+        {% endif %}
+        <span class="text-muted">#{{ doc.issueId }}</span>
+    </div>
+    <h1 class="h3 mb-0">Matcher generieren</h1>
+    <p class="text-muted">{{ doc.title }}</p>
+</div>
 
 {% if entries|length > 0 %}
-<h2>Generierte Matcher-Eintraege ({{ entries|length }})</h2>
+{# Generated entries #}
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-transparent d-flex justify-content-between align-items-center">
+        <h6 class="mb-0">
+            <i class="bi bi-puzzle me-1"></i>Generierte Matcher-Eintraege
+            <span class="badge rounded-pill text-bg-primary ms-1">{{ entries|length }}</span>
+        </h6>
+    </div>
+    <div class="table-responsive">
+        <table class="table align-middle mb-0">
+            <thead>
+                <tr>
+                    <th>Matcher-Typ</th>
+                    <th>Identifier</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for entry in entries %}
+                <tr>
+                    <td><code class="text-primary">{{ entry.matcherType.value }}</code></td>
+                    <td><code>{{ entry.identifier }}</code></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
 
-<table class="data-table">
-    <thead>
-        <tr>
-            <th>Matcher-Typ</th>
-            <th>Identifier</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for entry in entries %}
-        <tr>
-            <td><code>{{ entry.matcherType.value }}</code></td>
-            <td><code>{{ entry.identifier }}</code></td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
-
-<h2>PHP-Code</h2>
-<pre>{{ phpCode }}</pre>
-
-<a href="{{ path('matcher_export', {filename: doc.filename}) }}" class="btn btn--primary">Als PHP herunterladen</a>
+{# PHP Code #}
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-transparent d-flex justify-content-between align-items-center">
+        <h6 class="mb-0"><i class="bi bi-filetype-php me-1"></i>PHP-Code</h6>
+        <a href="{{ path('matcher_export', {filename: doc.filename}) }}" class="btn btn-sm btn-typo3">
+            <i class="bi bi-download me-1"></i>Als PHP herunterladen
+        </a>
+    </div>
+    <div class="card-body p-0">
+        <pre class="code-block m-0 rounded-0 rounded-bottom">{{ phpCode }}</pre>
+    </div>
+</div>
 {% else %}
-<p>Keine automatisch generierbaren Matcher fuer dieses Dokument. Manuelle Analyse erforderlich.</p>
+<div class="alert alert-info d-flex align-items-center">
+    <i class="bi bi-info-circle me-2 fs-5"></i>
+    <div>Keine automatisch generierbaren Matcher fuer dieses Dokument. Manuelle Analyse erforderlich.</div>
+</div>
 {% endif %}
 
-<p style="margin-top:2rem"><a href="{{ path('matcher_analysis') }}">&larr; Zurueck zur Analyse</a></p>
+<a href="{{ path('matcher_analysis') }}" class="btn btn-outline-secondary">
+    <i class="bi bi-arrow-left me-1"></i>Zurueck zur Analyse
+</a>
 {% endblock %}

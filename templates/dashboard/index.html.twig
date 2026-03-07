@@ -2,34 +2,116 @@
 
 {% block title %}Dashboard - TYPO3 Migration Analyzer{% endblock %}
 
-{% block body %}
-<h1>TYPO3 Migration Analyzer</h1>
-<p>TYPO3 12 &rarr; 13 Migration Coverage</p>
+{% block breadcrumb %}
+    <li class="breadcrumb-item active">Dashboard</li>
+{% endblock %}
 
-<div class="dashboard-grid">
-    <div class="card">
-        <div class="card-value">{{ totalDocuments }}</div>
-        <div class="card-label">RST-Dokumente</div>
+{% block body %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h3 mb-1">Dashboard</h1>
+        <p class="text-muted mb-0">TYPO3 12 &rarr; 13 Migration Coverage</p>
     </div>
-    <div class="card">
-        <div class="card-value">{{ totalDeprecations }}</div>
-        <div class="card-label">Deprecations</div>
+</div>
+
+{# Stat cards #}
+<div class="row g-3 mb-4">
+    <div class="col-sm-6 col-xl-4">
+        <div class="card stat-card border-0 shadow-sm h-100">
+            <div class="card-body d-flex align-items-center">
+                <div class="stat-icon bg-primary bg-opacity-10 text-primary me-3">
+                    <i class="bi bi-file-earmark-text"></i>
+                </div>
+                <div>
+                    <div class="stat-value">{{ totalDocuments }}</div>
+                    <div class="stat-label">RST-Dokumente</div>
+                </div>
+            </div>
+        </div>
     </div>
-    <div class="card">
-        <div class="card-value">{{ totalBreaking }}</div>
-        <div class="card-label">Breaking Changes</div>
+    <div class="col-sm-6 col-xl-4">
+        <div class="card stat-card border-0 shadow-sm h-100">
+            <div class="card-body d-flex align-items-center">
+                <div class="stat-icon bg-warning bg-opacity-10 text-warning me-3">
+                    <i class="bi bi-exclamation-triangle"></i>
+                </div>
+                <div>
+                    <div class="stat-value">{{ totalDeprecations }}</div>
+                    <div class="stat-label">Deprecations</div>
+                </div>
+            </div>
+        </div>
     </div>
-    <div class="card">
-        <div class="card-value">{{ totalMatchers }}</div>
-        <div class="card-label">Matcher-Eintraege</div>
+    <div class="col-sm-6 col-xl-4">
+        <div class="card stat-card border-0 shadow-sm h-100">
+            <div class="card-body d-flex align-items-center">
+                <div class="stat-icon bg-danger bg-opacity-10 text-danger me-3">
+                    <i class="bi bi-lightning"></i>
+                </div>
+                <div>
+                    <div class="stat-value">{{ totalBreaking }}</div>
+                    <div class="stat-label">Breaking Changes</div>
+                </div>
+            </div>
+        </div>
     </div>
-    <div class="card {{ coverage.coveragePercent >= 80 ? 'card--success' : (coverage.coveragePercent >= 50 ? 'card--warning' : 'card--danger') }}">
-        <div class="card-value">{{ coverage.coveragePercent|number_format(1) }}%</div>
-        <div class="card-label">Matcher-Coverage</div>
+    <div class="col-sm-6 col-xl-4">
+        <div class="card stat-card border-0 shadow-sm h-100">
+            <div class="card-body d-flex align-items-center">
+                <div class="stat-icon bg-info bg-opacity-10 text-info me-3">
+                    <i class="bi bi-puzzle"></i>
+                </div>
+                <div>
+                    <div class="stat-value">{{ totalMatchers }}</div>
+                    <div class="stat-label">Matcher-Eintraege</div>
+                </div>
+            </div>
+        </div>
     </div>
-    <div class="card card--danger">
-        <div class="card-value">{{ coverage.uncovered|length }}</div>
-        <div class="card-label">Ohne Matcher</div>
+    <div class="col-sm-6 col-xl-4">
+        <div class="card stat-card border-0 shadow-sm h-100">
+            <div class="card-body d-flex align-items-center">
+                <div class="stat-icon {{ coverage.coveragePercent >= 80 ? 'bg-success' : (coverage.coveragePercent >= 50 ? 'bg-warning' : 'bg-danger') }} bg-opacity-10 {{ coverage.coveragePercent >= 80 ? 'text-success' : (coverage.coveragePercent >= 50 ? 'text-warning' : 'text-danger') }} me-3">
+                    <i class="bi bi-shield-check"></i>
+                </div>
+                <div>
+                    <div class="stat-value">{{ coverage.coveragePercent|number_format(1) }}%</div>
+                    <div class="stat-label">Matcher-Coverage</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-4">
+        <div class="card stat-card border-0 shadow-sm h-100">
+            <div class="card-body d-flex align-items-center">
+                <div class="stat-icon bg-danger bg-opacity-10 text-danger me-3">
+                    <i class="bi bi-x-circle"></i>
+                </div>
+                <div>
+                    <div class="stat-value">{{ coverage.uncovered|length }}</div>
+                    <div class="stat-label">Ohne Matcher</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{# Coverage bar #}
+<div class="card border-0 shadow-sm">
+    <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <h6 class="card-title mb-0">Matcher-Coverage</h6>
+            <span class="text-muted small">{{ coverage.covered|length }} / {{ coverage.totalDocuments }} Dokumente abgedeckt</span>
+        </div>
+        <div class="progress progress-thick">
+            <div class="progress-bar {{ coverage.coveragePercent >= 80 ? 'bg-success' : (coverage.coveragePercent >= 50 ? 'bg-warning' : 'bg-danger') }}"
+                 role="progressbar"
+                 style="width: {{ coverage.coveragePercent }}%"
+                 aria-valuenow="{{ coverage.coveragePercent }}"
+                 aria-valuemin="0"
+                 aria-valuemax="100">
+            </div>
+        </div>
     </div>
 </div>
 {% endblock %}
