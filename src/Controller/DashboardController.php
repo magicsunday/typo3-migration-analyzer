@@ -11,8 +11,8 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
-use App\Dto\RstDocument;
 use App\Dto\DocumentType;
+use App\Dto\RstDocument;
 use App\Service\DocumentService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;

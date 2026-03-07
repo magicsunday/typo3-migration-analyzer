@@ -11,8 +11,6 @@ declare(strict_types=1);
 
 namespace App\Tests\Unit\Generator;
 
-use TYPO3\CMS\Core\Utility\GeneralUtility;
-use TYPO3\CMS\Core\DataHandling\DataHandler;
 use App\Dto\CodeReference;
 use App\Dto\CodeReferenceType;
 use App\Dto\DocumentType;
@@ -23,6 +21,8 @@ use App\Dto\ScanStatus;
 use App\Generator\MatcherConfigGenerator;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use TYPO3\CMS\Core\DataHandling\DataHandler;
+use TYPO3\CMS\Core\Utility\GeneralUtility;
 
 final class MatcherConfigGeneratorTest extends TestCase
 {

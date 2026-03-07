@@ -11,7 +11,6 @@ declare(strict_types=1);
 
 namespace App\Tests\Unit\Dto;
 
-use TYPO3\CMS\Core\Utility\GeneralUtility;
 use App\Dto\CodeReference;
 use App\Dto\CodeReferenceType;
 use App\Dto\DocumentType;
@@ -19,6 +18,7 @@ use App\Dto\RstDocument;
 use App\Dto\ScanStatus;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use TYPO3\CMS\Core\Utility\GeneralUtility;
 
 final class RstDocumentTest extends TestCase
 {

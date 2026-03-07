@@ -12,7 +12,6 @@ declare(strict_types=1);
 namespace App\Tests\Unit\Parser;
 
 use App\Dto\CodeReference;
-use TYPO3\CMS\Core\DataHandling\DataHandler;
 use App\Dto\CodeReferenceType;
 use App\Dto\DocumentType;
 use App\Dto\ScanStatus;
@@ -20,6 +19,7 @@ use App\Parser\RstParser;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
+use TYPO3\CMS\Core\DataHandling\DataHandler;
 
 use function dirname;
 

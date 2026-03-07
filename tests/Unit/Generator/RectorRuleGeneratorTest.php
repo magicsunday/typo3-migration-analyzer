@@ -351,6 +351,20 @@ final class RectorRuleGeneratorTest extends TestCase
         self::assertStringContainsString('SomeComplexFeatureRector', $output);
     }
 
+    #[Test]
+    public function generateClassNameConvertsHyphensToPascalCase(): void
+    {
+        $rule = new RectorRule(
+            RectorRuleType::Skeleton,
+            new CodeReference('TYPO3\CMS\Core\Foo', null, CodeReferenceType::ClassName),
+            null,
+            'Test',
+            'Breaking-94243-SendUserSessionCookiesAsHash-signedJWT.rst',
+        );
+
+        self::assertSame('SendUserSessionCookiesAsHashSignedJWTRector', $this->generator->generateClassName($rule));
+    }
+
     /**
      * @param list<CodeReference> $codeReferences
      */

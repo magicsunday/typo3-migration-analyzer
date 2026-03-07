@@ -11,14 +11,6 @@ declare(strict_types=1);
 
 namespace App\Generator;
 
-use Rector\Config\RectorConfig;
-use Rector\Renaming\Rector\Name\RenameClassRector;
-use Rector\Renaming\Rector\MethodCall\RenameMethodRector;
-use Rector\Renaming\ValueObject\MethodCallRename;
-use Rector\Renaming\Rector\StaticCall\RenameStaticMethodRector;
-use Rector\Renaming\ValueObject\RenameStaticMethod;
-use Rector\Renaming\Rector\ClassConstFetch\RenameClassConstFetchRector;
-use Rector\Renaming\ValueObject\RenameClassAndConstFetch;
 use App\Analyzer\MigrationMappingExtractor;
 use App\Dto\CodeReference;
 use App\Dto\CodeReferenceType;
@@ -26,6 +18,14 @@ use App\Dto\MigrationMapping;
 use App\Dto\RectorRule;
 use App\Dto\RectorRuleType;
 use App\Dto\RstDocument;
+use Rector\Config\RectorConfig;
+use Rector\Renaming\Rector\ClassConstFetch\RenameClassConstFetchRector;
+use Rector\Renaming\Rector\MethodCall\RenameMethodRector;
+use Rector\Renaming\Rector\Name\RenameClassRector;
+use Rector\Renaming\Rector\StaticCall\RenameStaticMethodRector;
+use Rector\Renaming\ValueObject\MethodCallRename;
+use Rector\Renaming\ValueObject\RenameClassAndConstFetch;
+use Rector\Renaming\ValueObject\RenameStaticMethod;
 
 use function array_filter;
 use function array_unique;
@@ -35,6 +35,7 @@ use function preg_replace;
 use function sort;
 use function sprintf;
 use function str_replace;
+use function ucwords;
 
 use const PATHINFO_FILENAME;
 
@@ -317,12 +318,14 @@ final readonly class RectorRuleGenerator
     /**
      * Derive a Rector class name from the RST filename.
      *
-     * Example: "Deprecation-99999-SomeFeature.rst" -> "SomeFeatureRector"
+     * Strips the document-type prefix, converts remaining hyphens to PascalCase.
+     * Example: "Breaking-94243-SendUserSessionCookiesAsHash-signedJWT.rst" -> "SendUserSessionCookiesAsHashSignedJWTRector"
      */
     public function generateClassName(RectorRule $rule): string
     {
         $basename = pathinfo($rule->rstFilename, PATHINFO_FILENAME);
         $name     = preg_replace('/^(?:Deprecation|Breaking|Feature|Important)-\d+-/', '', $basename) ?? $basename;
+        $name     = str_replace('-', '', ucwords($name, '-'));
 
         return $name . 'Rector';
     }
@@ -341,13 +344,13 @@ final readonly class RectorRuleGenerator
             CodeReferenceType::Property => '->',
             CodeReferenceType::StaticMethod,
             CodeReferenceType::ClassConstant => '::',
-            default => '::',
+            default                          => '::',
         };
 
         $suffix = match ($ref->type) {
             CodeReferenceType::InstanceMethod,
             CodeReferenceType::StaticMethod => '()',
-            default => '',
+            default                         => '',
         };
 
         return $ref->className . $separator . $ref->member . $suffix;

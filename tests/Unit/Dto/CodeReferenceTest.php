@@ -11,14 +11,14 @@ declare(strict_types=1);
 
 namespace App\Tests\Unit\Dto;
 
-use TYPO3\CMS\Core\Type\Enumeration;
-use TYPO3\CMS\Core\Utility\GeneralUtility;
-use TYPO3\CMS\Extbase\Property\TypeConverter\AbstractTypeConverter;
 use App\Dto\CodeReference;
 use App\Dto\CodeReferenceType;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use TYPO3\CMS\Core\Type\Enumeration;
+use TYPO3\CMS\Core\Utility\GeneralUtility;
+use TYPO3\CMS\Extbase\Property\TypeConverter\AbstractTypeConverter;
 
 final class CodeReferenceTest extends TestCase
 {

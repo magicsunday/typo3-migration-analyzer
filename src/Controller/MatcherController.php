@@ -66,13 +66,13 @@ final class MatcherController extends AbstractController
         $rectorSkeletonRules = array_values(array_filter($rectorRules, static fn (RectorRule $r): bool => !$r->isConfig()));
 
         return $this->render('matcher/generate.html.twig', [
-            'doc'                  => $doc,
-            'entries'              => $entries,
-            'phpCode'              => $phpCode,
-            'rectorConfigRules'    => $rectorConfigRules,
-            'rectorConfigPhp'      => count($rectorConfigRules) > 0 ? $this->rectorGenerator->renderConfig($rectorConfigRules) : null,
-            'rectorSkeletonRules'  => $rectorSkeletonRules,
-            'rectorGenerator'      => $this->rectorGenerator,
+            'doc'                 => $doc,
+            'entries'             => $entries,
+            'phpCode'             => $phpCode,
+            'rectorConfigRules'   => $rectorConfigRules,
+            'rectorConfigPhp'     => count($rectorConfigRules) > 0 ? $this->rectorGenerator->renderConfig($rectorConfigRules) : null,
+            'rectorSkeletonRules' => $rectorSkeletonRules,
+            'rectorGenerator'     => $this->rectorGenerator,
         ]);
     }
 
@@ -173,8 +173,8 @@ final class MatcherController extends AbstractController
             throw $this->createNotFoundException(sprintf('Document "%s" not found.', $filename));
         }
 
-        $rules          = $this->rectorGenerator->generate($doc);
-        $skeletonRules  = array_values(array_filter($rules, static fn (RectorRule $r): bool => !$r->isConfig()));
+        $rules         = $this->rectorGenerator->generate($doc);
+        $skeletonRules = array_values(array_filter($rules, static fn (RectorRule $r): bool => !$r->isConfig()));
 
         if ($skeletonRules === []) {
             throw $this->createNotFoundException('No Rector skeleton rules for this document.');
