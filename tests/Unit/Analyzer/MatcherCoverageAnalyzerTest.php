@@ -232,6 +232,48 @@ final class MatcherCoverageAnalyzerTest extends TestCase
         self::assertSame(100.0, $fullyScannedBreakdown->percent);
     }
 
+    #[Test]
+    public function analyzeBuildsMatcherTypeBreakdown(): void
+    {
+        $doc1 = $this->createDocument('Deprecation-11111-A.rst');
+        $doc2 = $this->createDocument('Deprecation-22222-B.rst');
+
+        $methodMatcher = new MatcherEntry(
+            identifier: 'TYPO3\CMS\Core\Foo->bar',
+            matcherType: MatcherType::MethodCall,
+            restFiles: ['Deprecation-11111-A.rst'],
+        );
+
+        $classMatcher = new MatcherEntry(
+            identifier: 'TYPO3\CMS\Core\Baz',
+            matcherType: MatcherType::ClassName,
+            restFiles: ['Deprecation-22222-B.rst'],
+        );
+
+        $result = $this->analyzer->analyze([$doc1, $doc2], [$methodMatcher, $classMatcher]);
+
+        self::assertNotEmpty($result->byMatcherType);
+
+        $methodBreakdown = null;
+        $classBreakdown  = null;
+
+        foreach ($result->byMatcherType as $breakdown) {
+            if ($breakdown->label === 'MethodCallMatcher') {
+                $methodBreakdown = $breakdown;
+            }
+
+            if ($breakdown->label === 'ClassNameMatcher') {
+                $classBreakdown = $breakdown;
+            }
+        }
+
+        self::assertNotNull($methodBreakdown);
+        self::assertSame(1, $methodBreakdown->total);
+
+        self::assertNotNull($classBreakdown);
+        self::assertSame(1, $classBreakdown->total);
+    }
+
     private function createDocument(string $filename): RstDocument
     {
         return new RstDocument(

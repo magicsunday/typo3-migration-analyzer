@@ -19,6 +19,7 @@ final readonly class CoverageResult
      * @param CoverageBreakdown[] $byVersion
      * @param CoverageBreakdown[] $byType
      * @param CoverageBreakdown[] $byScanStatus
+     * @param CoverageBreakdown[] $byMatcherType
      */
     public function __construct(
         public array $covered,
@@ -29,6 +30,7 @@ final readonly class CoverageResult
         public array $byVersion = [],
         public array $byType = [],
         public array $byScanStatus = [],
+        public array $byMatcherType = [],
     ) {
     }
 }

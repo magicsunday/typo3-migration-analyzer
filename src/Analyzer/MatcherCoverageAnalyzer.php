@@ -59,10 +59,11 @@ final class MatcherCoverageAnalyzer
             ? count($covered) / $totalDocuments * 100.0
             : 0.0;
 
-        // 5. Build breakdowns by version and type
-        $byVersion    = $this->buildBreakdown($documents, $referencedFiles, 'version');
-        $byType       = $this->buildBreakdown($documents, $referencedFiles, 'type');
-        $byScanStatus = $this->buildBreakdown($documents, $referencedFiles, 'scanStatus');
+        // 5. Build breakdowns by version, type, scan status, and matcher type
+        $byVersion     = $this->buildBreakdown($documents, $referencedFiles, 'version');
+        $byType        = $this->buildBreakdown($documents, $referencedFiles, 'type');
+        $byScanStatus  = $this->buildBreakdown($documents, $referencedFiles, 'scanStatus');
+        $byMatcherType = $this->buildMatcherTypeBreakdown($matchers);
 
         return new CoverageResult(
             covered: $covered,
@@ -73,6 +74,7 @@ final class MatcherCoverageAnalyzer
             byVersion: $byVersion,
             byType: $byType,
             byScanStatus: $byScanStatus,
+            byMatcherType: $byMatcherType,
         );
     }
 
@@ -121,6 +123,49 @@ final class MatcherCoverageAnalyzer
                 total: $counts['total'],
                 covered: $counts['covered'],
                 percent: $percent,
+            );
+        }
+
+        return $breakdowns;
+    }
+
+    /**
+     * Build coverage breakdown by matcher type.
+     *
+     * Groups matcher entries by their MatcherType and counts how many unique
+     * RST documents each type covers.
+     *
+     * @param MatcherEntry[] $matchers
+     *
+     * @return list<CoverageBreakdown>
+     */
+    private function buildMatcherTypeBreakdown(array $matchers): array
+    {
+        /** @var array<string, array<string, true>> $byType */
+        $byType = [];
+
+        foreach ($matchers as $matcher) {
+            $type = $matcher->matcherType->value;
+
+            if (!isset($byType[$type])) {
+                $byType[$type] = [];
+            }
+
+            foreach ($matcher->restFiles as $restFile) {
+                $byType[$type][$restFile] = true;
+            }
+        }
+
+        ksort($byType);
+
+        $breakdowns = [];
+
+        foreach ($byType as $label => $files) {
+            $breakdowns[] = new CoverageBreakdown(
+                label: $label,
+                total: count($files),
+                covered: count($files),
+                percent: 100.0,
             );
         }
 
