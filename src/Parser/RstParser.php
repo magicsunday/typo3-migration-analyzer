@@ -1,0 +1,211 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Parser;
+
+use App\Dto\CodeReference;
+use App\Dto\DocumentType;
+use App\Dto\RstDocument;
+use App\Dto\ScanStatus;
+
+class RstParser
+{
+    private const SCAN_STATUS_TAGS = [
+        'FullyScanned',
+        'PartiallyScanned',
+        'NotScanned',
+    ];
+
+    public function parseFile(string $filePath, string $version): RstDocument
+    {
+        $content = file_get_contents($filePath);
+
+        if (false === $content) {
+            throw new \RuntimeException(sprintf('Cannot read file: %s', $filePath));
+        }
+
+        $filename = basename($filePath);
+
+        return new RstDocument(
+            type: $this->extractType($filename),
+            issueId: $this->extractIssueId($content),
+            title: $this->extractTitle($content),
+            version: $version,
+            description: $this->extractSection($content, 'Description') ?? '',
+            impact: $this->extractSection($content, 'Impact'),
+            migration: $this->extractSection($content, 'Migration'),
+            codeReferences: $this->extractCodeReferences($content),
+            indexTags: $this->extractIndexTags($content),
+            scanStatus: $this->extractScanStatus($content),
+            filename: $filename,
+        );
+    }
+
+    private function extractType(string $filename): DocumentType
+    {
+        if (str_starts_with($filename, 'Deprecation-')) {
+            return DocumentType::Deprecation;
+        }
+
+        if (str_starts_with($filename, 'Breaking-')) {
+            return DocumentType::Breaking;
+        }
+
+        if (str_starts_with($filename, 'Feature-')) {
+            return DocumentType::Feature;
+        }
+
+        if (str_starts_with($filename, 'Important-')) {
+            return DocumentType::Important;
+        }
+
+        throw new \RuntimeException(sprintf('Unknown document type for filename: %s', $filename));
+    }
+
+    private function extractIssueId(string $content): int
+    {
+        if (preg_match('/:issue:`(\d+)`/', $content, $matches)) {
+            return (int) $matches[1];
+        }
+
+        throw new \RuntimeException('No issue ID found in document');
+    }
+
+    private function extractTitle(string $content): string
+    {
+        if (preg_match('/^(Deprecation|Breaking|Feature|Important):\s+#\d+\s+-\s+(.+)$/m', $content, $matches)) {
+            return $matches[0];
+        }
+
+        throw new \RuntimeException('No title found in document');
+    }
+
+    private function extractSection(string $content, string $sectionName): ?string
+    {
+        // Split content into lines
+        $lines = explode("\n", $content);
+        $lineCount = count($lines);
+        $sectionStart = null;
+
+        // Find the section header (case-insensitive match)
+        for ($i = 0; $i < $lineCount; $i++) {
+            if (
+                preg_match('/^' . preg_quote($sectionName, '/') . '$/i', trim($lines[$i]))
+                && isset($lines[$i + 1])
+                && preg_match('/^={3,}$/', trim($lines[$i + 1]))
+            ) {
+                // Section content starts after the underline
+                $sectionStart = $i + 2;
+                break;
+            }
+        }
+
+        if (null === $sectionStart) {
+            return null;
+        }
+
+        // Collect lines until the next section header or end of file
+        $sectionLines = [];
+
+        for ($i = $sectionStart; $i < $lineCount; $i++) {
+            // Check if this line is a new section header (line followed by === underline)
+            if (
+                isset($lines[$i + 1])
+                && preg_match('/^={3,}$/', trim($lines[$i + 1]))
+                && '' !== trim($lines[$i])
+            ) {
+                break;
+            }
+
+            // Also stop at index directives
+            if (preg_match('/^\.\.\s+index::/', trim($lines[$i]))) {
+                break;
+            }
+
+            $sectionLines[] = $lines[$i];
+        }
+
+        $sectionContent = implode("\n", $sectionLines);
+        $sectionContent = trim($sectionContent);
+
+        return '' === $sectionContent ? null : $sectionContent;
+    }
+
+    /**
+     * @return list<CodeReference>
+     */
+    private function extractCodeReferences(string $content): array
+    {
+        if (!preg_match_all('/:php:`([^`]+)`/', $content, $matches)) {
+            return [];
+        }
+
+        $seen = [];
+        $references = [];
+
+        foreach ($matches[1] as $phpRoleValue) {
+            $ref = CodeReference::fromPhpRole($phpRoleValue);
+
+            if (null === $ref) {
+                continue;
+            }
+
+            // Deduplicate by className + member
+            $key = $ref->className . '::' . ($ref->member ?? '');
+
+            if (isset($seen[$key])) {
+                continue;
+            }
+
+            $seen[$key] = true;
+            $references[] = $ref;
+        }
+
+        return $references;
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function extractIndexTags(string $content): array
+    {
+        if (!preg_match('/\.\.\s+index::\s*(.+)$/m', $content, $matches)) {
+            return [];
+        }
+
+        $rawTags = array_map('trim', explode(',', $matches[1]));
+
+        return array_values(
+            array_filter(
+                $rawTags,
+                static fn (string $tag): bool => '' !== $tag && !in_array($tag, self::SCAN_STATUS_TAGS, true),
+            ),
+        );
+    }
+
+    private function extractScanStatus(string $content): ScanStatus
+    {
+        if (!preg_match('/\.\.\s+index::\s*(.+)$/m', $content, $matches)) {
+            return ScanStatus::NotScanned;
+        }
+
+        $tags = array_map('trim', explode(',', $matches[1]));
+
+        foreach ($tags as $tag) {
+            if ('FullyScanned' === $tag) {
+                return ScanStatus::FullyScanned;
+            }
+
+            if ('PartiallyScanned' === $tag) {
+                return ScanStatus::PartiallyScanned;
+            }
+
+            if ('NotScanned' === $tag) {
+                return ScanStatus::NotScanned;
+            }
+        }
+
+        return ScanStatus::NotScanned;
+    }
+}
