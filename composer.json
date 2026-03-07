@@ -121,7 +121,7 @@
             "phpunit --configuration phpunit.xml"
         ],
         "ci:test:php:unit:coverage": [
-            "XDEBUG_MODE=coverage phpunit --configuration phpunit.xml --coverage-html coverage/"
+            "XDEBUG_MODE=coverage phpunit --configuration phpunit.xml --coverage-html .build/coverage/"
         ],
         "ci:test:php:cpd": [
             "npx jscpd --config .jscpd.json"

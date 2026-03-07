@@ -17,12 +17,7 @@
 
 ###> friendsofphp/php-cs-fixer ###
 /.php-cs-fixer.php
-/.php-cs-fixer.cache
 ###< friendsofphp/php-cs-fixer ###
-
-###> phpunit/phpunit ###
-/.phpunit.cache/
-###< phpunit/phpunit ###
 
 ###> phpstan/phpstan ###
 phpstan-baseline.neon
@@ -30,7 +25,6 @@ phpstan-baseline.neon
 
 ###> build ###
 /.build/
-/coverage/
 /node_modules/
 /package.json
 /package-lock.json
