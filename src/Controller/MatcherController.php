@@ -11,6 +11,7 @@ use App\Service\DocumentService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\HeaderUtils;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 use Symfony\Component\Routing\Attribute\Route;
 
 use function pathinfo;
@@ -60,6 +61,49 @@ final class MatcherController extends AbstractController
 
         $response = new Response($phpCode);
         $response->headers->set('Content-Type', 'application/x-php; charset=UTF-8');
+        $response->headers->set('Content-Disposition', $disposition);
+
+        return $response;
+    }
+
+    #[Route('/matcher-analysis/export-all', name: 'matcher_export_all')]
+    public function exportAll(): StreamedResponse
+    {
+        $coverage = $this->documentService->getCoverage();
+
+        $response = new StreamedResponse(function () use ($coverage): void {
+            $zip = new \ZipArchive();
+            $tmpFile = tempnam(sys_get_temp_dir(), 'matcher_export_');
+
+            if ($tmpFile === false || $zip->open($tmpFile, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) !== true) {
+                throw new \RuntimeException('Failed to create ZIP archive.');
+            }
+
+            foreach ($coverage->uncovered as $doc) {
+                $entries = $this->generator->generate($doc);
+
+                if ([] === $entries) {
+                    continue;
+                }
+
+                $phpCode  = $this->generator->renderPhp($entries);
+                $filename = pathinfo($doc->filename, PATHINFO_FILENAME) . '.php';
+
+                $zip->addFromString($filename, $phpCode);
+            }
+
+            $zip->close();
+
+            readfile($tmpFile);
+            unlink($tmpFile);
+        });
+
+        $disposition = HeaderUtils::makeDisposition(
+            HeaderUtils::DISPOSITION_ATTACHMENT,
+            'matcher-configs.zip',
+        );
+
+        $response->headers->set('Content-Type', 'application/zip');
         $response->headers->set('Content-Disposition', $disposition);
 
         return $response;

@@ -29,7 +29,12 @@
     </div>
 </div>
 
-<p class="text-muted mb-4">Diese Seite zeigt alle RST-Dokumente, für die noch kein passender Extension-Scanner-Matcher existiert. Für Dokumente mit Code-Referenzen können Matcher automatisch generiert werden &mdash; alle anderen erfordern eine manuelle Analyse.</p>
+<div class="d-flex justify-content-between align-items-start mb-4">
+    <p class="text-muted mb-0 me-3">Diese Seite zeigt alle RST-Dokumente, für die noch kein passender Extension-Scanner-Matcher existiert. Für Dokumente mit Code-Referenzen können Matcher automatisch generiert werden &mdash; alle anderen erfordern eine manuelle Analyse.</p>
+    <a href="{{ path('matcher_export_all') }}" class="btn btn-sm btn-typo3 flex-shrink-0">
+        <i class="bi bi-download me-1"></i>Alle exportieren (ZIP)
+    </a>
+</div>
 
 {# Uncovered documents table #}
 <div class="card border-0 shadow-sm">
