@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Tests\Unit\Parser;
+namespace App\Tests\Integration\Parser;
 
 use App\Dto\DocumentType;
 use App\Dto\RstDocument;

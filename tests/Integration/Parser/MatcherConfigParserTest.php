@@ -2,9 +2,8 @@
 
 declare(strict_types=1);
 
-namespace App\Tests\Unit\Parser;
+namespace App\Tests\Integration\Parser;
 
-use App\Dto\MatcherEntry;
 use App\Dto\MatcherType;
 use App\Parser\MatcherConfigParser;
 use PHPUnit\Framework\Attributes\Test;

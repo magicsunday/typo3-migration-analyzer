@@ -45,6 +45,7 @@ final class MatcherConfigParser
 
             /** @var array<string, array<string, mixed>> $config */
             foreach ($config as $identifier => $entry) {
+                /** @var list<string> $restFiles */
                 $restFiles = $entry['restFiles'] ?? [];
                 $additionalConfig = array_diff_key($entry, ['restFiles' => true]);
 
