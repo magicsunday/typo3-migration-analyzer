@@ -12,6 +12,13 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 
+use function array_filter;
+use function array_values;
+use function mb_strtolower;
+use function sprintf;
+use function str_contains;
+use function strtolower;
+
 final class DeprecationController extends AbstractController
 {
     #[Route('/deprecations', name: 'deprecation_list')]
@@ -81,7 +88,7 @@ final class DeprecationController extends AbstractController
         ]);
     }
 
-    #[Route('/deprecations/{filename}', name: 'deprecation_detail')]
+    #[Route('/deprecations/{filename}', name: 'deprecation_detail', requirements: ['filename' => '[A-Za-z0-9_\-]+\.rst'])]
     public function detail(string $filename, DocumentService $documentService): Response
     {
         $doc = $documentService->findDocumentByFilename($filename);

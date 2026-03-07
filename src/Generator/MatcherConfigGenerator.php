@@ -10,6 +10,10 @@ use App\Dto\MatcherEntry;
 use App\Dto\MatcherType;
 use App\Dto\RstDocument;
 
+use function is_array;
+use function str_replace;
+use function var_export;
+
 final class MatcherConfigGenerator
 {
     /**
@@ -102,7 +106,8 @@ final class MatcherConfigGenerator
         $output = "    '{$escaped}' => [\n";
 
         foreach ($entry->additionalConfig as $key => $value) {
-            $output .= "        '{$key}' => {$value},\n";
+            $rendered = var_export($value, true);
+            $output  .= "        '{$key}' => {$rendered},\n";
         }
 
         $output .= "        'restFiles' => [\n";
@@ -120,6 +125,6 @@ final class MatcherConfigGenerator
 
     private function escapePhpString(string $value): string
     {
-        return str_replace("'", "\\'", $value);
+        return str_replace(['\\', "'"], ['\\\\', "\\'"], $value);
     }
 }

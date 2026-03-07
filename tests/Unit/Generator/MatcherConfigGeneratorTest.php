@@ -169,7 +169,7 @@ final class MatcherConfigGeneratorTest extends TestCase
 
         self::assertStringContainsString('<?php', $rendered);
         self::assertStringContainsString('return [', $rendered);
-        self::assertStringContainsString("'TYPO3\\CMS\\Core\\OldClass'", $rendered);
+        self::assertStringContainsString("'TYPO3\\\\CMS\\\\Core\\\\OldClass'", $rendered);
         self::assertStringContainsString("'restFiles' => [", $rendered);
         self::assertStringContainsString("'Deprecation-12345-Test.rst'", $rendered);
     }

@@ -8,7 +8,12 @@ use App\Dto\MatcherEntry;
 use App\Dto\MatcherType;
 use RuntimeException;
 
-class MatcherConfigParser
+use function array_diff_key;
+use function is_array;
+use function is_dir;
+use function is_file;
+
+final class MatcherConfigParser
 {
     /**
      * Parse all matcher configuration files from the installed TYPO3 cms-install package.
@@ -32,9 +37,13 @@ class MatcherConfigParser
                 continue;
             }
 
-            /** @var array<string, array<string, mixed>> $config */
             $config = include $filePath;
 
+            if (!is_array($config)) {
+                continue;
+            }
+
+            /** @var array<string, array<string, mixed>> $config */
             foreach ($config as $identifier => $entry) {
                 $restFiles = $entry['restFiles'] ?? [];
                 $additionalConfig = array_diff_key($entry, ['restFiles' => true]);
