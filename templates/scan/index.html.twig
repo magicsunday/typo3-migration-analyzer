@@ -1,0 +1,41 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Extension scannen{% endblock %}
+
+{% block breadcrumb %}
+    <li class="breadcrumb-item"><a href="{{ path('dashboard') }}">Dashboard</a></li>
+    <li class="breadcrumb-item active">Extension scannen</li>
+{% endblock %}
+
+{% block body %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h3 mb-1">Extension scannen</h1>
+        <p class="text-muted mb-0">Analysieren Sie eine TYPO3-Extension auf Deprecations und Breaking Changes.</p>
+    </div>
+</div>
+
+{% for message in app.flashes('danger') %}
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Schliessen"></button>
+    </div>
+{% endfor %}
+
+<div class="card border-0 shadow-sm">
+    <div class="card-body">
+        <form method="post" action="{{ path('scan_run') }}">
+            <div class="mb-3">
+                <label for="extension_path" class="form-label">Pfad zur Extension</label>
+                <input type="text" class="form-control" id="extension_path" name="extension_path"
+                       placeholder="/var/www/html/packages/my_extension"
+                       required>
+                <div class="form-text">Absoluter Pfad zum Verzeichnis der TYPO3-Extension auf dem Server.</div>
+            </div>
+            <button type="submit" class="btn btn-typo3">
+                <i class="bi bi-play-circle me-1"></i>Scan starten
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}
