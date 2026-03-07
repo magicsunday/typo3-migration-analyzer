@@ -24,7 +24,7 @@
         <div class="card-label">Matcher-Eintraege</div>
     </div>
     <div class="card {{ coverage.coveragePercent >= 80 ? 'card--success' : (coverage.coveragePercent >= 50 ? 'card--warning' : 'card--danger') }}">
-        <div class="card-value">{{ coverage.coveragePercent }}%</div>
+        <div class="card-value">{{ coverage.coveragePercent|number_format(1) }}%</div>
         <div class="card-label">Matcher-Coverage</div>
     </div>
     <div class="card card--danger">

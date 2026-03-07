@@ -74,6 +74,9 @@
         "symfony": {
             "allow-contrib": false,
             "require": "7.2.*"
+        },
+        "typo3/cms": {
+            "web-dir": ".typo3-dummy"
         }
     },
     "require-dev": {
