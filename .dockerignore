@@ -1,0 +1,9 @@
+/.git
+/.idea
+/docs
+/tests
+/var
+/vendor
+/.typo3-dummy
+/.phpunit.cache
+/.php-cs-fixer.cache

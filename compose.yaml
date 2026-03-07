@@ -1,0 +1,46 @@
+name: typo3-migration-analyzer
+
+services:
+    # PHP-FPM service
+    # Runs the Symfony application with all parsed RST documents and matcher configs
+    phpfpm:
+        build:
+            context: .
+            dockerfile: ./Dockerfile
+            target: php-build
+            args:
+                PHP_VERSION: ${PHP_VERSION:-8.4}
+        environment:
+            - APP_ENV
+            - APP_SECRET
+            - DEFAULT_URI=${DEFAULT_URI:-http://localhost:${HTTP_PORT:-8080}}
+        restart: unless-stopped
+        volumes:
+            - /etc/timezone:/etc/timezone:ro
+            - /etc/localtime:/etc/localtime:ro
+        networks:
+            - default
+
+    # Nginx web server
+    # Serves the web application and proxies PHP requests to PHP-FPM
+    nginx:
+        depends_on:
+            - phpfpm
+        build:
+            context: .
+            dockerfile: ./Dockerfile
+            target: nginx-build
+        environment:
+            - ENFORCE_HTTPS
+        restart: unless-stopped
+        ports:
+            - "${HTTP_PORT:-8080}:80"
+        volumes:
+            - /etc/timezone:/etc/timezone:ro
+            - /etc/localtime:/etc/localtime:ro
+        networks:
+            - default
+
+# Network configuration
+networks:
+    default:

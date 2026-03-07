@@ -1,0 +1,39 @@
+# Traefik Reverse Proxy Configuration
+#
+# This configuration integrates the services with Traefik for:
+# - Automatic SSL/TLS certificate management
+# - Domain-based routing
+# - Service discovery
+#
+# Usage:
+#   COMPOSE_FILE=compose.yaml:compose.traefik.yaml
+
+services:
+    # Override DEFAULT_URI with the actual domain
+    phpfpm:
+        environment:
+            - DEFAULT_URI=https://${DEV_DOMAIN}
+
+    # Configure Nginx for Traefik integration
+    nginx:
+        # When using Traefik, do not expose host ports directly
+        ports: []
+        labels:
+            # Enable Traefik for this container
+            - traefik.enable=true
+            # Define the router name using the project name (from .env)
+            - traefik.http.routers.${COMPOSE_PROJECT_NAME}.service=${COMPOSE_PROJECT_NAME}-service
+            # Route requests based on the domain name (from .env)
+            - traefik.http.routers.${COMPOSE_PROJECT_NAME}.rule=Host(`${DEV_DOMAIN}`)
+            # Specify the internal port that Traefik should forward traffic to
+            - traefik.http.services.${COMPOSE_PROJECT_NAME}-service.loadbalancer.server.port=80
+        networks:
+            # Connect to the external Traefik network
+            - traefik
+
+# Network configuration
+networks:
+    # External Traefik network
+    # This must already exist and have Traefik running on it
+    traefik:
+        external: true

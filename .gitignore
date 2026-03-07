@@ -27,3 +27,7 @@
 ###> phpstan/phpstan ###
 phpstan-baseline.neon
 ###< phpstan/phpstan ###
+
+###> docker ###
+/.typo3-dummy
+###< docker ###
