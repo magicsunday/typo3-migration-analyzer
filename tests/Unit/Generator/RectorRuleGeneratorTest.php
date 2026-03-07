@@ -365,6 +365,30 @@ final class RectorRuleGeneratorTest extends TestCase
         self::assertSame('SendUserSessionCookiesAsHashSignedJWTRector', $this->generator->generateClassName($rule));
     }
 
+    #[Test]
+    public function generateClassNameConvertsUnderscoresAndDots(): void
+    {
+        $rule = new RectorRule(
+            RectorRuleType::Skeleton,
+            new CodeReference('TYPO3\CMS\Core\Foo', null, CodeReferenceType::ClassName),
+            null,
+            'Test',
+            'Deprecation-12345-AddUppercamelcaseToStdWrap.case.rst',
+        );
+
+        self::assertSame('AddUppercamelcaseToStdWrapCaseRector', $this->generator->generateClassName($rule));
+
+        $rule2 = new RectorRule(
+            RectorRuleType::Skeleton,
+            new CodeReference('TYPO3\CMS\Core\Foo', null, CodeReferenceType::ClassName),
+            null,
+            'Test',
+            'Deprecation-12345-Ext_makeToolbarDeprecated.rst',
+        );
+
+        self::assertSame('ExtMakeToolbarDeprecatedRector', $this->generator->generateClassName($rule2));
+    }
+
     /**
      * @param list<CodeReference> $codeReferences
      */

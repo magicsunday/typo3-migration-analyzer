@@ -318,14 +318,18 @@ final readonly class RectorRuleGenerator
     /**
      * Derive a Rector class name from the RST filename.
      *
-     * Strips the document-type prefix, converts remaining hyphens to PascalCase.
+     * Strips the document-type prefix, converts separator characters (hyphens, underscores, dots)
+     * to PascalCase and removes any remaining non-alphanumeric characters.
+     *
      * Example: "Breaking-94243-SendUserSessionCookiesAsHash-signedJWT.rst" -> "SendUserSessionCookiesAsHashSignedJWTRector"
      */
     public function generateClassName(RectorRule $rule): string
     {
         $basename = pathinfo($rule->rstFilename, PATHINFO_FILENAME);
         $name     = preg_replace('/^(?:Deprecation|Breaking|Feature|Important)-\d+-/', '', $basename) ?? $basename;
-        $name     = str_replace('-', '', ucwords($name, '-'));
+        $name     = str_replace(['-', '_', '.'], ' ', $name);
+        $name     = ucwords($name);
+        $name     = preg_replace('/[^A-Za-z0-9]/', '', $name) ?? $name;
 
         return $name . 'Rector';
     }
