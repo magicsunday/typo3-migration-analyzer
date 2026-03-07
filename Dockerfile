@@ -42,6 +42,7 @@ ENV COMPOSER_ALLOW_SUPERUSER=1
 
 RUN APP_ENV=prod APP_SECRET=docker-build-secret DEFAULT_URI=http://localhost \
     composer install --no-dev --optimize-autoloader --no-interaction && \
+    php bin/console asset-map:compile --env=prod && \
     rm -f /usr/local/bin/composer
 
 # Fix permissions for Symfony var/ directory
