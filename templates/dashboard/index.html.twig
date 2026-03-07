@@ -89,7 +89,9 @@
                 <div class="stat-value">{{ coverage.coveragePercent|number_format(1) }}%</div>
             </div>
             <div class="card-body">
-                <h5 class="card-title">Matcher-Coverage</h5>
+                <h5 class="card-title">
+                    <a href="{{ path('coverage_report') }}" class="text-decoration-none text-reset">Matcher-Coverage</a>
+                </h5>
             </div>
             <div class="card-footer">
                 <small class="text-muted">Anteil der RST-Dokumente, für die bereits ein passender Extension-Scanner-Matcher existiert.</small>
@@ -105,7 +107,9 @@
                 <div class="stat-value">{{ coverage.uncovered|length }}</div>
             </div>
             <div class="card-body">
-                <h5 class="card-title">Ohne Matcher</h5>
+                <h5 class="card-title">
+                    <a href="{{ path('coverage_report') }}" class="text-decoration-none text-reset">Ohne Matcher</a>
+                </h5>
             </div>
             <div class="card-footer">
                 <small class="text-muted">Dokumente ohne zugehörigen Matcher &mdash; diese Änderungen werden vom Extension Scanner nicht erkannt.</small>
@@ -118,7 +122,9 @@
 <div class="card border-0 shadow-sm">
     <div class="card-body">
         <div class="d-flex justify-content-between align-items-center mb-2">
-            <h6 class="card-title mb-0">Matcher-Coverage</h6>
+            <h6 class="card-title mb-0">
+                <a href="{{ path('coverage_report') }}" class="text-decoration-none">Matcher-Coverage</a>
+            </h6>
             <span class="text-muted small">{{ coverage.covered|length }} / {{ coverage.totalDocuments }} Dokumente abgedeckt</span>
         </div>
         <div class="progress progress-thick">
