@@ -1,5 +1,10 @@
 name: typo3-migration-analyzer
 
+# Persistent volumes for data storage
+volumes:
+    # Stores the application files
+    app:
+
 services:
     # PHP-FPM service
     # Runs the Symfony application with all parsed RST documents and matcher configs
@@ -18,10 +23,7 @@ services:
         volumes:
             - /etc/timezone:/etc/timezone:ro
             - /etc/localtime:/etc/localtime:ro
-            - ./templates:/var/www/templates:ro
-            - ./assets:/var/www/assets:ro
-            - ./config:/var/www/config:ro
-            - ./src:/var/www/src:ro
+            - app:/var/www
         networks:
             - default
 
@@ -30,17 +32,19 @@ services:
     nginx:
         depends_on:
             - phpfpm
-        build:
-            context: .
-            dockerfile: ./Dockerfile
-            target: nginx-build
+        image: nginx:stable-alpine
         environment:
             - ENFORCE_HTTPS
         restart: unless-stopped
         volumes:
             - /etc/timezone:/etc/timezone:ro
             - /etc/localtime:/etc/localtime:ro
-            - ./public/libs:/var/www/public/libs:ro
+            - app:/var/www:ro
+            - ./rootfs/etc/nginx/conf.d/default.conf:/etc/nginx/conf.d/default.conf:ro
+            - ./rootfs/etc/nginx/includes/enforce-https.conf:/etc/nginx/includes/enforce-https.conf:ro
+            - ./rootfs/etc/nginx/includes/security-headers-map.conf:/etc/nginx/includes/security-headers-map.conf:ro
+            - ./rootfs/etc/nginx/includes/security-headers.conf:/etc/nginx/includes/security-headers.conf:ro
+            - ./rootfs/etc/nginx/templates:/etc/nginx/templates:ro
         networks:
             - default
 

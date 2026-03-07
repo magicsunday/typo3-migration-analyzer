@@ -47,17 +47,3 @@ RUN APP_ENV=prod APP_SECRET=docker-build-secret DEFAULT_URI=http://localhost \
 
 # Fix permissions for Symfony var/ directory
 RUN chown -R www-data:www-data var/
-
-
-#########
-# NGINX #
-#########
-FROM nginx:stable-alpine AS nginx-build
-
-# Copy public directory from PHP build (includes compiled assets)
-COPY --from=php-build /var/www/public /var/www/public
-
-# Copy nginx configuration
-COPY rootfs/etc/nginx/conf.d/default.conf /etc/nginx/conf.d/default.conf
-COPY rootfs/etc/nginx/includes/ /etc/nginx/includes/
-COPY rootfs/etc/nginx/templates/ /etc/nginx/templates/
