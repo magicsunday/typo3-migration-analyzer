@@ -18,6 +18,10 @@ services:
         volumes:
             - /etc/timezone:/etc/timezone:ro
             - /etc/localtime:/etc/localtime:ro
+            - ./templates:/var/www/templates:ro
+            - ./assets:/var/www/assets:ro
+            - ./config:/var/www/config:ro
+            - ./src:/var/www/src:ro
         networks:
             - default
 
@@ -36,6 +40,7 @@ services:
         volumes:
             - /etc/timezone:/etc/timezone:ro
             - /etc/localtime:/etc/localtime:ro
+            - ./public/libs:/var/www/public/libs:ro
         networks:
             - default
 
