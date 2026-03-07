@@ -97,7 +97,7 @@
             "importmap:install": "symfony-cmd"
         },
         "ci:cgl": [
-            "php-cs-fixer fix --config .php-cs-fixer.dist.php --diff --verbose"
+            "php-cs-fixer fix --config .php-cs-fixer.dist.php --diff --verbose --sequential"
         ],
         "ci:rector": [
             "rector process --config rector.php"

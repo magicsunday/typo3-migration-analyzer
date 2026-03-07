@@ -18,6 +18,14 @@ use App\Dto\MigrationMapping;
 use App\Dto\RectorRule;
 use App\Dto\RectorRuleType;
 use App\Dto\RstDocument;
+use Rector\Config\RectorConfig;
+use Rector\Renaming\Rector\ClassConstFetch\RenameClassConstFetchRector;
+use Rector\Renaming\Rector\MethodCall\RenameMethodRector;
+use Rector\Renaming\Rector\Name\RenameClassRector;
+use Rector\Renaming\Rector\StaticCall\RenameStaticMethodRector;
+use Rector\Renaming\ValueObject\MethodCallRename;
+use Rector\Renaming\ValueObject\RenameClassAndConstFetch;
+use Rector\Renaming\ValueObject\RenameStaticMethod;
 
 use function array_filter;
 use function array_unique;
@@ -44,7 +52,7 @@ final readonly class RectorRuleGenerator
      *
      * @var array<string, array{string, string}>
      */
-    private const NODE_TYPE_MAP = [
+    private const array NODE_TYPE_MAP = [
         'class_name'      => ['Node\Name\FullyQualified', 'FullyQualified'],
         'instance_method' => ['Node\Expr\MethodCall', 'MethodCall'],
         'static_method'   => ['Node\Expr\StaticCall', 'StaticCall'],
@@ -145,7 +153,7 @@ final readonly class RectorRuleGenerator
             return '';
         }
 
-        $imports = ['Rector\Config\RectorConfig'];
+        $imports = [RectorConfig::class];
         $groups  = [];
 
         foreach ($configRules as $rule) {
@@ -199,7 +207,7 @@ final readonly class RectorRuleGenerator
         return match ($rule->type) {
             RectorRuleType::RenameClass => [
                 'RenameClassRector',
-                ['Rector\Renaming\Rector\Name\RenameClassRector'],
+                [RenameClassRector::class],
                 sprintf(
                     "'%s' => '%s'",
                     $this->escapePhpString($rule->source->className),
@@ -209,8 +217,8 @@ final readonly class RectorRuleGenerator
             RectorRuleType::RenameMethod => [
                 'RenameMethodRector',
                 [
-                    'Rector\Renaming\Rector\MethodCall\RenameMethodRector',
-                    'Rector\Renaming\ValueObject\MethodCallRename',
+                    RenameMethodRector::class,
+                    MethodCallRename::class,
                 ],
                 sprintf(
                     "new MethodCallRename('%s', '%s', '%s')",
@@ -222,8 +230,8 @@ final readonly class RectorRuleGenerator
             RectorRuleType::RenameStaticMethod => [
                 'RenameStaticMethodRector',
                 [
-                    'Rector\Renaming\Rector\StaticCall\RenameStaticMethodRector',
-                    'Rector\Renaming\ValueObject\RenameStaticMethod',
+                    RenameStaticMethodRector::class,
+                    RenameStaticMethod::class,
                 ],
                 sprintf(
                     "new RenameStaticMethod('%s', '%s', '%s', '%s')",
@@ -236,8 +244,8 @@ final readonly class RectorRuleGenerator
             RectorRuleType::RenameClassConstant => [
                 'RenameClassConstFetchRector',
                 [
-                    'Rector\Renaming\Rector\ClassConstFetch\RenameClassConstFetchRector',
-                    'Rector\Renaming\ValueObject\RenameClassAndConstFetch',
+                    RenameClassConstFetchRector::class,
+                    RenameClassAndConstFetch::class,
                 ],
                 sprintf(
                     "new RenameClassAndConstFetch('%s', '%s', '%s', '%s')",

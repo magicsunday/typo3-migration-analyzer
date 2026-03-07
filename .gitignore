@@ -33,7 +33,3 @@ phpstan-baseline.neon
 ###> docker ###
 /.typo3-dummy
 ###< docker ###
-
-###> typo3/cms-composer-installers ###
-/public/_assets/
-###< typo3/cms-composer-installers ###

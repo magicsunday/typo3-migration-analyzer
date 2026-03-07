@@ -11,7 +11,6 @@ declare(strict_types=1);
 
 namespace App\Tests\Unit\Scanner;
 
-use App\Dto\ScanResult;
 use App\Scanner\ExtensionScanner;
 use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\Test;
@@ -34,7 +33,6 @@ final class ExtensionScannerTest extends TestCase
     {
         $result = $this->scanner->scan($this->fixturePath);
 
-        self::assertInstanceOf(ScanResult::class, $result);
         self::assertGreaterThanOrEqual(2, $result->scannedFiles());
     }
 

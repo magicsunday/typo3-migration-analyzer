@@ -31,7 +31,7 @@ final class MigrationMappingExtractor
      *
      * @var list<array{string, int, int, float}>
      */
-    private const MAPPING_PATTERNS = [
+    private const array MAPPING_PATTERNS = [
         // "Replace :php:`Old` with/by :php:`New`"
         ['/\b[Rr]eplace\b.*?:php:`([^`]+)`.*?\b(?:with|by)\b.*?:php:`([^`]+)`/s', 1, 2, 1.0],
         // ":php:`Old` has been/was renamed to :php:`New`"

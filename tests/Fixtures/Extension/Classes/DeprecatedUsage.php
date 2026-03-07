@@ -9,12 +9,14 @@
 
 namespace TestExtension\Classes;
 
+use TYPO3\CMS\Core\Type\Enumeration;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 
 class DeprecatedUsage
 {
     public function doSomething(): void
     {
-        $instance = GeneralUtility::makeInstance(\TYPO3\CMS\Core\Type\Enumeration::class);
+        /** @phpstan-ignore classConstant.deprecatedClass */
+        GeneralUtility::makeInstance(Enumeration::class);
     }
 }

@@ -16,10 +16,12 @@ use App\Dto\ScanFinding;
 use App\Dto\ScanResult;
 use InvalidArgumentException;
 use PhpParser\NodeTraverser;
+use PhpParser\NodeVisitor;
 use PhpParser\NodeVisitor\NameResolver;
 use PhpParser\ParserFactory;
 use PhpParser\PhpVersion;
 use ReflectionClass;
+use RuntimeException;
 use SplFileObject;
 use Symfony\Component\Finder\Finder;
 use TYPO3\CMS\Install\ExtensionScanner\CodeScannerInterface;
@@ -48,12 +50,13 @@ use TYPO3\CMS\Install\ExtensionScanner\Php\Matcher\PropertyProtectedMatcher;
 use TYPO3\CMS\Install\ExtensionScanner\Php\Matcher\PropertyPublicMatcher;
 use TYPO3\CMS\Install\ExtensionScanner\Php\Matcher\ScalarStringMatcher;
 
-use function array_map;
 use function dirname;
 use function file_get_contents;
+use function is_array;
 use function is_dir;
 use function is_string;
 use function sprintf;
+use function str_replace;
 use function trim;
 
 /**
@@ -146,6 +149,7 @@ final class ExtensionScanner
         // First traverser pass: resolve names (use aliases to FQCN)
         $nameResolverTraverser = new NodeTraverser();
         $nameResolverTraverser->addVisitor(new NameResolver());
+
         $statements = $nameResolverTraverser->traverse($statements);
 
         // Second traverser pass: GeneratorClassesResolver + CodeStatistics + all matchers
@@ -158,7 +162,11 @@ final class ExtensionScanner
         $matchers = $this->createMatchers();
 
         foreach ($matchers as $matcher) {
-            $matcherTraverser->addVisitor($matcher);
+            // All TYPO3 matchers extend AbstractCoreMatcher (NodeVisitorAbstract)
+            // but CodeScannerInterface doesn't declare NodeVisitor
+            if ($matcher instanceof NodeVisitor) {
+                $matcherTraverser->addVisitor($matcher);
+            }
         }
 
         $matcherTraverser->traverse($statements);
@@ -169,16 +177,16 @@ final class ExtensionScanner
         $findings = [];
 
         foreach ($matchers as $matcher) {
-            foreach ($matcher->getMatches() as $match) {
+            /** @var array<int, array{line: int, message: string, indicator: string, restFiles?: list<string>}> $matches */
+            $matches = $matcher->getMatches();
+
+            foreach ($matches as $match) {
                 $findings[] = new ScanFinding(
-                    line: (int) $match['line'],
-                    message: (string) $match['message'],
-                    indicator: (string) $match['indicator'],
-                    lineContent: $this->getLineFromFile($absoluteFilePath, (int) $match['line']),
-                    restFiles: array_map(
-                        static fn (mixed $file): string => (string) $file,
-                        $match['restFiles'] ?? [],
-                    ),
+                    line: $match['line'],
+                    message: $match['message'],
+                    indicator: $match['indicator'],
+                    lineContent: $this->getLineFromFile($absoluteFilePath, $match['line']),
+                    restFiles: $match['restFiles'] ?? [],
                 );
             }
         }
@@ -206,6 +214,12 @@ final class ExtensionScanner
             $configFilePath = $configDirectory . '/' . $configFile;
             $configuration  = require $configFilePath;
 
+            if (!is_array($configuration)) {
+                throw new RuntimeException(
+                    sprintf('Configuration file "%s" must return an array.', $configFilePath),
+                );
+            }
+
             $matchers[] = new $matcherClass($configuration);
         }
 
@@ -220,6 +234,10 @@ final class ExtensionScanner
         $reflection    = new ReflectionClass(ClassNameMatcher::class);
         $classFilePath = $reflection->getFileName();
 
+        if ($classFilePath === false) {
+            throw new RuntimeException('Cannot determine file path of ClassNameMatcher.');
+        }
+
         // ClassNameMatcher lives in .../Classes/ExtensionScanner/Php/Matcher/ClassNameMatcher.php
         // Config files live in .../Configuration/ExtensionScanner/Php/
         return dirname($classFilePath, 5) . '/Configuration/ExtensionScanner/Php';
@@ -233,6 +251,8 @@ final class ExtensionScanner
         $file = new SplFileObject($filePath);
         $file->seek($lineNumber - 1);
 
-        return trim((string) $file->current());
+        $line = $file->current();
+
+        return is_string($line) ? trim($line) : '';
     }
 }
