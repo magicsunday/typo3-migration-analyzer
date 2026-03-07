@@ -7,6 +7,8 @@
     <li class="breadcrumb-item active">Coverage-Report</li>
 {% endblock %}
 
+{% macro progress_color(percent) %}{{ percent >= 80 ? 'bg-success' : (percent >= 50 ? 'bg-warning' : 'bg-danger') }}{% endmacro %}
+
 {% block body %}
 <div class="d-flex justify-content-between align-items-center mb-4">
     <div>
@@ -20,7 +22,7 @@
     <div class="card-body">
         <div class="d-flex justify-content-between align-items-center mb-2">
             <h6 class="card-title mb-0">
-                <span class="h4 mb-0 {{ coverage.coveragePercent >= 80 ? 'text-success' : (coverage.coveragePercent >= 50 ? 'text-warning' : 'text-danger') }}">
+                <span class="h4 mb-0 {{ _self.progress_color(coverage.coveragePercent)|trim|replace({'bg-': 'text-'}) }}">
                     {{ coverage.coveragePercent|number_format(1) }}%
                 </span>
                 <span class="text-muted ms-2">Gesamt-Coverage</span>
@@ -28,7 +30,7 @@
             <span class="text-muted small">{{ coverage.covered|length }} von {{ coverage.totalDocuments }} Dokumenten abgedeckt</span>
         </div>
         <div class="progress" style="height: 8px;">
-            <div class="progress-bar {{ coverage.coveragePercent >= 80 ? 'bg-success' : (coverage.coveragePercent >= 50 ? 'bg-warning' : 'bg-danger') }}"
+            <div class="progress-bar {{ _self.progress_color(coverage.coveragePercent)|trim }}"
                  role="progressbar"
                  style="width: {{ coverage.coveragePercent }}%"
                  aria-valuenow="{{ coverage.coveragePercent }}"
@@ -55,7 +57,7 @@
                         <span class="text-muted small">{{ item.covered }}/{{ item.total }} ({{ item.percent|number_format(1) }}%)</span>
                     </div>
                     <div class="progress" style="height: 8px;">
-                        <div class="progress-bar {{ item.percent >= 80 ? 'bg-success' : (item.percent >= 50 ? 'bg-warning' : 'bg-danger') }}"
+                        <div class="progress-bar {{ _self.progress_color(item.percent)|trim }}"
                              style="width: {{ item.percent }}%"></div>
                     </div>
                 </div>
@@ -78,7 +80,7 @@
                         <span class="text-muted small">{{ item.covered }}/{{ item.total }} ({{ item.percent|number_format(1) }}%)</span>
                     </div>
                     <div class="progress" style="height: 8px;">
-                        <div class="progress-bar {{ item.percent >= 80 ? 'bg-success' : (item.percent >= 50 ? 'bg-warning' : 'bg-danger') }}"
+                        <div class="progress-bar {{ _self.progress_color(item.percent)|trim }}"
                              style="width: {{ item.percent }}%"></div>
                     </div>
                 </div>
@@ -101,7 +103,7 @@
                         <span class="text-muted small">{{ item.covered }}/{{ item.total }} ({{ item.percent|number_format(1) }}%)</span>
                     </div>
                     <div class="progress" style="height: 8px;">
-                        <div class="progress-bar {{ item.percent >= 80 ? 'bg-success' : (item.percent >= 50 ? 'bg-warning' : 'bg-danger') }}"
+                        <div class="progress-bar {{ _self.progress_color(item.percent)|trim }}"
                              style="width: {{ item.percent }}%"></div>
                     </div>
                 </div>
@@ -125,7 +127,7 @@
                     </div>
                     <div class="progress" style="height: 8px;">
                         <div class="progress-bar bg-primary"
-                             style="width: {{ (item.total / coverage.totalDocuments * 100)|number_format(1) }}%"></div>
+                             style="width: {{ coverage.totalDocuments > 0 ? (item.total / coverage.totalDocuments * 100)|number_format(1) : 0 }}%"></div>
                     </div>
                 </div>
                 {% endfor %}
@@ -166,6 +168,71 @@
                 <div class="h3 mb-1 text-info">{{ coverage.totalMatchers }}</div>
                 <span class="text-muted small">Matcher-Eintr&auml;ge</span>
             </div>
+        </div>
+    </div>
+</div>
+
+{# Uncovered documents detail #}
+<div class="card border-0 shadow-sm mt-4">
+    <div class="card-header bg-transparent d-flex justify-content-between align-items-center">
+        <h6 class="card-title mb-0">
+            <i class="bi bi-x-circle me-1"></i>Nicht abgedeckte Dokumente
+            <span class="badge rounded-pill text-bg-danger ms-1">{{ coverage.uncovered|length }}</span>
+        </h6>
+        <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#uncoveredTable">
+            <i class="bi bi-chevron-down"></i>
+        </button>
+    </div>
+    <div class="collapse" id="uncoveredTable">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Typ</th>
+                        <th>Version</th>
+                        <th>Titel</th>
+                        <th>Scan-Status</th>
+                        <th class="text-center">Referenzen</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for doc in coverage.uncovered %}
+                    <tr>
+                        <td>
+                            {% if doc.type.value == 'deprecation' %}
+                                <span class="badge text-bg-warning">Deprecation</span>
+                            {% elseif doc.type.value == 'breaking' %}
+                                <span class="badge text-bg-danger">Breaking</span>
+                            {% else %}
+                                <span class="badge text-bg-secondary">{{ doc.type.value }}</span>
+                            {% endif %}
+                        </td>
+                        <td><span class="badge text-bg-light text-dark border">{{ doc.version }}</span></td>
+                        <td>
+                            <a href="{{ path('deprecation_detail', {filename: doc.filename}) }}" class="text-decoration-none fw-medium">
+                                {{ doc.title }}
+                            </a>
+                        </td>
+                        <td>
+                            {% if doc.scanStatus.value == 'fully_scanned' %}
+                                <span class="badge text-bg-success">Fully Scanned</span>
+                            {% elseif doc.scanStatus.value == 'partially_scanned' %}
+                                <span class="badge text-bg-warning">Partially</span>
+                            {% else %}
+                                <span class="badge text-bg-secondary">Not Scanned</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-center">
+                            {% if doc.codeReferences|length > 0 %}
+                                <span class="badge rounded-pill text-bg-primary">{{ doc.codeReferences|length }}</span>
+                            {% else %}
+                                <span class="text-muted">&mdash;</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         </div>
     </div>
 </div>
