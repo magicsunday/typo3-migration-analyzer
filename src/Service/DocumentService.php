@@ -13,6 +13,8 @@ use App\Parser\RstFileLocator;
 use Symfony\Contracts\Cache\CacheInterface;
 use Symfony\Contracts\Cache\ItemInterface;
 
+use function count;
+
 final readonly class DocumentService
 {
     private const VERSIONS = ['12.0', '12.1', '12.2', '12.3', '12.4', '12.4.x', '13.0', '13.1', '13.2', '13.3', '13.4', '13.4.x'];
@@ -59,17 +61,33 @@ final readonly class DocumentService
 
     public function getCoverage(): CoverageResult
     {
-        return $this->coverageAnalyzer->analyze($this->getDocuments(), $this->getMatchers());
+        return $this->cache->get('coverage_result', function (ItemInterface $item): CoverageResult {
+            $item->expiresAfter(3600);
+
+            return $this->coverageAnalyzer->analyze($this->getDocuments(), $this->getMatchers());
+        });
     }
 
     public function findDocumentByFilename(string $filename): ?RstDocument
     {
-        foreach ($this->getDocuments() as $doc) {
-            if ($doc->filename === $filename) {
-                return $doc;
-            }
-        }
+        return $this->getDocumentIndex()[$filename] ?? null;
+    }
 
-        return null;
+    /**
+     * @return array<string, RstDocument>
+     */
+    private function getDocumentIndex(): array
+    {
+        return $this->cache->get('rst_documents_index', function (ItemInterface $item): array {
+            $item->expiresAfter(3600);
+
+            $index = [];
+
+            foreach ($this->getDocuments() as $doc) {
+                $index[$doc->filename] = $doc;
+            }
+
+            return $index;
+        });
     }
 }

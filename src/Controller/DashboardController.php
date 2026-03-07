@@ -10,24 +10,26 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 
+use function array_filter;
+use function count;
+
 final class DashboardController extends AbstractController
 {
     #[Route('/', name: 'dashboard')]
     public function index(DocumentService $documentService): Response
     {
         $documents = $documentService->getDocuments();
-        $matchers = $documentService->getMatchers();
-        $coverage = $documentService->getCoverage();
+        $coverage  = $documentService->getCoverage();
 
-        $deprecations = array_filter($documents, static fn ($d) => DocumentType::Deprecation === $d->type);
-        $breaking = array_filter($documents, static fn ($d) => DocumentType::Breaking === $d->type);
+        $deprecations = array_filter($documents, static fn ($d) => $d->type === DocumentType::Deprecation);
+        $breaking     = array_filter($documents, static fn ($d) => $d->type === DocumentType::Breaking);
 
         return $this->render('dashboard/index.html.twig', [
-            'totalDocuments' => \count($documents),
-            'totalDeprecations' => \count($deprecations),
-            'totalBreaking' => \count($breaking),
-            'totalMatchers' => \count($matchers),
-            'coverage' => $coverage,
+            'totalDocuments'    => count($documents),
+            'totalDeprecations' => count($deprecations),
+            'totalBreaking'     => count($breaking),
+            'totalMatchers'     => $coverage->totalMatchers,
+            'coverage'          => $coverage,
         ]);
     }
 }
