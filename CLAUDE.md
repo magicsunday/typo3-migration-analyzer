@@ -36,6 +36,28 @@
 - Commit-Format: Beschreibender Text ohne Prefix-Convention, KEIN Co-Authored-By
 - Immer korrekte deutsche Umlaute (ä, ö, ü, ß) verwenden, keine ASCII-Ersetzungen
 
+## Coding-Richtlinien (PHP 8.4+)
+- Interfaces verwenden wo sinnvoll
+- Kein `@deprecated` — wenn etwas entfällt, direkt entfernen
+- Tests für jede Klasse schreiben
+- Keine `mixed`-Typen und `empty()`-Aufrufe
+- `array_find`, `array_any` statt `foreach` wenn möglich
+- Typdeklaration für Klassenkonstanten
+- Redundante Type-Casts entfernen, wenn Typ bereits bekannt
+- Unnötige geschweifte Klammern zur String-Interpolation entfernen
+- Keine verschachtelten ternären Operatoren (Wartbarkeit)
+- Null-Pointer-Ausnahmen prüfen und behandeln
+- Fully-qualified Function-Calls durch `use function` Import ersetzen
+- Klassen als `readonly` markieren wenn nur readonly-Properties, redundante `readonly`-Modifier entfernen
+- Redundante Default-Argumente in Methodenaufrufen entfernen
+- Statische Methoden nicht dynamisch (`->`) aufrufen
+- Ungenutzte Methoden/Klassen prüfen und entfernen
+- Immer nur eine Klasse je PHP-Datei
+- Klassen/Methoden mit englischem PHPDoc-Block versehen (Beschreibung + Parameter)
+- Erklärende Inline-Kommentare an komplexen Code-Stellen in Englisch
+- Aussagekräftige Variablen- und Konstantennamen
+- Konstanten verwenden wo sinnvoll
+
 ## Server starten
 ```bash
 php -S localhost:8000 -t public/
