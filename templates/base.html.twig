@@ -38,6 +38,11 @@
                     </a>
                 </li>
                 <li>
+                    <a href="{{ path('coverage_report') }}" class="nav-link text-white {{ app.request.attributes.get('_route') starts with 'coverage' ? 'active bg-typo3' : '' }}">
+                        <i class="bi bi-bar-chart me-2"></i>Coverage-Report
+                    </a>
+                </li>
+                <li>
                     <a href="{{ path('scan_index') }}" class="nav-link text-white {{ app.request.attributes.get('_route') starts with 'scan' ? 'active bg-typo3' : '' }}">
                         <i class="bi bi-cpu me-2"></i>Extension scannen
                     </a>

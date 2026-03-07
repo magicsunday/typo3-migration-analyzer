@@ -1,0 +1,172 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Coverage-Report - TYPO3 Migration Analyzer{% endblock %}
+
+{% block breadcrumb %}
+    <li class="breadcrumb-item"><a href="{{ path('dashboard') }}">Dashboard</a></li>
+    <li class="breadcrumb-item active">Coverage-Report</li>
+{% endblock %}
+
+{% block body %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h3 mb-1">Coverage-Report</h1>
+        <p class="text-muted mb-0">Detaillierte Aufschl&uuml;sselung der Matcher-Abdeckung</p>
+    </div>
+</div>
+
+{# Overall coverage card #}
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <h6 class="card-title mb-0">
+                <span class="h4 mb-0 {{ coverage.coveragePercent >= 80 ? 'text-success' : (coverage.coveragePercent >= 50 ? 'text-warning' : 'text-danger') }}">
+                    {{ coverage.coveragePercent|number_format(1) }}%
+                </span>
+                <span class="text-muted ms-2">Gesamt-Coverage</span>
+            </h6>
+            <span class="text-muted small">{{ coverage.covered|length }} von {{ coverage.totalDocuments }} Dokumenten abgedeckt</span>
+        </div>
+        <div class="progress" style="height: 8px;">
+            <div class="progress-bar {{ coverage.coveragePercent >= 80 ? 'bg-success' : (coverage.coveragePercent >= 50 ? 'bg-warning' : 'bg-danger') }}"
+                 role="progressbar"
+                 style="width: {{ coverage.coveragePercent }}%"
+                 aria-valuenow="{{ coverage.coveragePercent }}"
+                 aria-valuemin="0"
+                 aria-valuemax="100">
+            </div>
+        </div>
+    </div>
+</div>
+
+{# Breakdown cards 2x2 grid #}
+<div class="row g-4 mb-4">
+    {# By Version #}
+    <div class="col-lg-6">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-transparent">
+                <h6 class="mb-0"><i class="bi bi-tag me-2"></i>Nach Version</h6>
+            </div>
+            <div class="card-body">
+                {% for item in coverage.byVersion %}
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between mb-1">
+                        <span class="fw-medium">{{ item.label }}</span>
+                        <span class="text-muted small">{{ item.covered }}/{{ item.total }} ({{ item.percent|number_format(1) }}%)</span>
+                    </div>
+                    <div class="progress" style="height: 8px;">
+                        <div class="progress-bar {{ item.percent >= 80 ? 'bg-success' : (item.percent >= 50 ? 'bg-warning' : 'bg-danger') }}"
+                             style="width: {{ item.percent }}%"></div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    {# By Type #}
+    <div class="col-lg-6">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-transparent">
+                <h6 class="mb-0"><i class="bi bi-collection me-2"></i>Nach Typ</h6>
+            </div>
+            <div class="card-body">
+                {% for item in coverage.byType %}
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between mb-1">
+                        <span class="fw-medium">{{ item.label }}</span>
+                        <span class="text-muted small">{{ item.covered }}/{{ item.total }} ({{ item.percent|number_format(1) }}%)</span>
+                    </div>
+                    <div class="progress" style="height: 8px;">
+                        <div class="progress-bar {{ item.percent >= 80 ? 'bg-success' : (item.percent >= 50 ? 'bg-warning' : 'bg-danger') }}"
+                             style="width: {{ item.percent }}%"></div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    {# By Scan Status #}
+    <div class="col-lg-6">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-transparent">
+                <h6 class="mb-0"><i class="bi bi-shield-check me-2"></i>Nach Scan-Status</h6>
+            </div>
+            <div class="card-body">
+                {% for item in coverage.byScanStatus %}
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between mb-1">
+                        <span class="fw-medium">{{ item.label }}</span>
+                        <span class="text-muted small">{{ item.covered }}/{{ item.total }} ({{ item.percent|number_format(1) }}%)</span>
+                    </div>
+                    <div class="progress" style="height: 8px;">
+                        <div class="progress-bar {{ item.percent >= 80 ? 'bg-success' : (item.percent >= 50 ? 'bg-warning' : 'bg-danger') }}"
+                             style="width: {{ item.percent }}%"></div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    {# By Matcher Type #}
+    <div class="col-lg-6">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-transparent">
+                <h6 class="mb-0"><i class="bi bi-puzzle me-2"></i>Nach Matcher-Typ</h6>
+            </div>
+            <div class="card-body">
+                {% for item in coverage.byMatcherType %}
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between mb-1">
+                        <span class="fw-medium">{{ item.label }}</span>
+                        <span class="text-muted small">{{ item.total }} Dokumente</span>
+                    </div>
+                    <div class="progress" style="height: 8px;">
+                        <div class="progress-bar bg-primary"
+                             style="width: {{ (item.total / coverage.totalDocuments * 100)|number_format(1) }}%"></div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{# Summary stats row #}
+<div class="row g-4">
+    <div class="col-sm-6 col-xl-3">
+        <div class="card border-0 shadow-sm text-center h-100">
+            <div class="card-body">
+                <div class="h3 mb-1 text-primary">{{ coverage.totalDocuments }}</div>
+                <span class="text-muted small">Dokumente gesamt</span>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="card border-0 shadow-sm text-center h-100">
+            <div class="card-body">
+                <div class="h3 mb-1 text-success">{{ coverage.covered|length }}</div>
+                <span class="text-muted small">Abgedeckt</span>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="card border-0 shadow-sm text-center h-100">
+            <div class="card-body">
+                <div class="h3 mb-1 text-danger">{{ coverage.uncovered|length }}</div>
+                <span class="text-muted small">Nicht abgedeckt</span>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="card border-0 shadow-sm text-center h-100">
+            <div class="card-body">
+                <div class="h3 mb-1 text-info">{{ coverage.totalMatchers }}</div>
+                <span class="text-muted small">Matcher-Eintr&auml;ge</span>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
