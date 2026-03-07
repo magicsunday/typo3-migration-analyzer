@@ -4,7 +4,15 @@ declare(strict_types=1);
 
 namespace App\Dto;
 
-readonly class CodeReference
+use function explode;
+use function ltrim;
+use function preg_match;
+use function rtrim;
+use function str_contains;
+use function str_ends_with;
+use function str_starts_with;
+
+final readonly class CodeReference
 {
     public function __construct(
         public string $className,
@@ -63,13 +71,16 @@ readonly class CodeReference
 
         // Static member: Class::member
         if (str_contains($value, '::')) {
-            $parts = explode('::', $value, 2);
+            $parts     = explode('::', $value, 2);
             $className = $parts[0];
             $memberRaw = $parts[1];
-            $member = rtrim($memberRaw, '()');
 
-            // Class constant: all uppercase (with underscores/digits)
-            if (preg_match('/^[A-Z][A-Z0-9_]*$/', $member)) {
+            // Explicit method call indicated by trailing parentheses
+            $isMethodCall = str_ends_with($memberRaw, '()');
+            $member       = rtrim($memberRaw, '()');
+
+            // Class constant: all uppercase (with underscores/digits) and no parentheses
+            if (!$isMethodCall && preg_match('/^[A-Z][A-Z0-9_]*$/', $member)) {
                 return new self(
                     className: $className,
                     member: $member,

@@ -10,8 +10,27 @@ use App\Dto\RstDocument;
 use App\Dto\ScanStatus;
 use RuntimeException;
 
-class RstParser
+use function array_filter;
+use function array_map;
+use function array_values;
+use function basename;
+use function count;
+use function explode;
+use function file_get_contents;
+use function implode;
+use function in_array;
+use function preg_match;
+use function preg_match_all;
+use function preg_quote;
+use function sprintf;
+use function str_starts_with;
+use function trim;
+
+final class RstParser
 {
+    /** Valid RST section underline characters: = - ` : . ' " ~ ^ _ * + # */
+    private const RST_UNDERLINE_PATTERN = '/^[=\-`:\.\'"~^_*+#]{3,}$/';
+
     private const SCAN_STATUS_TAGS = [
         'FullyScanned',
         'PartiallyScanned',
@@ -92,9 +111,9 @@ class RstParser
         // Find the section header (case-insensitive match)
         for ($i = 0; $i < $lineCount; ++$i) {
             if (
-                preg_match('/^'.preg_quote($sectionName, '/').'$/i', trim($lines[$i]))
+                preg_match('/^' . preg_quote($sectionName, '/') . '$/i', trim($lines[$i]))
                 && isset($lines[$i + 1])
-                && preg_match('/^={3,}$/', trim($lines[$i + 1]))
+                && preg_match(self::RST_UNDERLINE_PATTERN, trim($lines[$i + 1]))
             ) {
                 // Section content starts after the underline
                 $sectionStart = $i + 2;
@@ -110,10 +129,10 @@ class RstParser
         $sectionLines = [];
 
         for ($i = $sectionStart; $i < $lineCount; ++$i) {
-            // Check if this line is a new section header (line followed by === underline)
+            // Check if this line is a new section header (line followed by underline)
             if (
                 isset($lines[$i + 1])
-                && preg_match('/^={3,}$/', trim($lines[$i + 1]))
+                && preg_match(self::RST_UNDERLINE_PATTERN, trim($lines[$i + 1]))
                 && '' !== trim($lines[$i])
             ) {
                 break;
@@ -167,43 +186,56 @@ class RstParser
     }
 
     /**
+     * Collect all tags from every `.. index::` directive in the content.
+     *
+     * @return list<string>
+     */
+    private function collectAllIndexTags(string $content): array
+    {
+        if (!preg_match_all('/\.\.\s+index::\s*(.+)$/m', $content, $matches)) {
+            return [];
+        }
+
+        $tags = [];
+
+        foreach ($matches[1] as $tagLine) {
+            foreach (array_map('trim', explode(',', $tagLine)) as $tag) {
+                if ('' !== $tag) {
+                    $tags[] = $tag;
+                }
+            }
+        }
+
+        return $tags;
+    }
+
+    /**
      * @return list<string>
      */
     private function extractIndexTags(string $content): array
     {
-        if (!preg_match('/\.\.\s+index::\s*(.+)$/m', $content, $matches)) {
-            return [];
-        }
-
-        $rawTags = array_map('trim', explode(',', $matches[1]));
-
         return array_values(
             array_filter(
-                $rawTags,
-                static fn (string $tag): bool => '' !== $tag && !\in_array($tag, self::SCAN_STATUS_TAGS, true),
+                $this->collectAllIndexTags($content),
+                static fn (string $tag): bool => !in_array($tag, self::SCAN_STATUS_TAGS, true),
             ),
         );
     }
 
     private function extractScanStatus(string $content): ScanStatus
     {
-        if (!preg_match('/\.\.\s+index::\s*(.+)$/m', $content, $matches)) {
-            return ScanStatus::NotScanned;
-        }
+        foreach ($this->collectAllIndexTags($content) as $tag) {
+            $status = ScanStatus::tryFrom(
+                match ($tag) {
+                    'FullyScanned'     => 'fully_scanned',
+                    'PartiallyScanned' => 'partially_scanned',
+                    'NotScanned'       => 'not_scanned',
+                    default            => $tag,
+                },
+            );
 
-        $tags = array_map('trim', explode(',', $matches[1]));
-
-        foreach ($tags as $tag) {
-            if ('FullyScanned' === $tag) {
-                return ScanStatus::FullyScanned;
-            }
-
-            if ('PartiallyScanned' === $tag) {
-                return ScanStatus::PartiallyScanned;
-            }
-
-            if ('NotScanned' === $tag) {
-                return ScanStatus::NotScanned;
+            if ($status !== null) {
+                return $status;
             }
         }
 
