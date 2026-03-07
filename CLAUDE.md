@@ -73,8 +73,6 @@ php -S localhost:8000 -t public/
 ### v1.1 — Rector + Extension-Scan
 - Rector-Rule-Skeleton-Generator
 - Eigene Extension scannen (Upload oder Pfad-Angabe)
-- Before/After Code-Vergleichsansicht aus RSTs
-- Coverage-Report mit prozentualer Aufschlüsselung
 
 ### v1.2 — Intelligentere Analyse
 - Argument-Erkennung aus RST-Code-Blöcken (korrekte numberOfMandatoryArguments)
