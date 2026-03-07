@@ -7,7 +7,9 @@
     <li class="breadcrumb-item active">Coverage-Report</li>
 {% endblock %}
 
-{% macro progress_color(percent) %}{{ percent >= 80 ? 'bg-success' : (percent >= 50 ? 'bg-warning' : 'bg-danger') }}{% endmacro %}
+{% macro progress_color(percent) %}
+    {{- percent >= 80 ? 'bg-success' : (percent >= 50 ? 'bg-warning' : 'bg-danger') -}}
+{% endmacro %}
 
 {% block body %}
 <div class="d-flex justify-content-between align-items-center mb-4">
@@ -22,7 +24,7 @@
     <div class="card-body">
         <div class="d-flex justify-content-between align-items-center mb-2">
             <h6 class="card-title mb-0">
-                <span class="h4 mb-0 {{ _self.progress_color(coverage.coveragePercent)|trim|replace({'bg-': 'text-'}) }}">
+                <span class="h4 mb-0 {{ _self.progress_color(coverage.coveragePercent)|replace({'bg-': 'text-'}) }}">
                     {{ coverage.coveragePercent|number_format(1) }}%
                 </span>
                 <span class="text-muted ms-2">Gesamt-Coverage</span>
@@ -30,7 +32,7 @@
             <span class="text-muted small">{{ coverage.covered|length }} von {{ coverage.totalDocuments }} Dokumenten abgedeckt</span>
         </div>
         <div class="progress" style="height: 8px;">
-            <div class="progress-bar {{ _self.progress_color(coverage.coveragePercent)|trim }}"
+            <div class="progress-bar {{ _self.progress_color(coverage.coveragePercent) }}"
                  role="progressbar"
                  style="width: {{ coverage.coveragePercent }}%"
                  aria-valuenow="{{ coverage.coveragePercent }}"
@@ -57,7 +59,7 @@
                         <span class="text-muted small">{{ item.covered }}/{{ item.total }} ({{ item.percent|number_format(1) }}%)</span>
                     </div>
                     <div class="progress" style="height: 8px;">
-                        <div class="progress-bar {{ _self.progress_color(item.percent)|trim }}"
+                        <div class="progress-bar {{ _self.progress_color(item.percent) }}"
                              style="width: {{ item.percent }}%"></div>
                     </div>
                 </div>
@@ -80,7 +82,7 @@
                         <span class="text-muted small">{{ item.covered }}/{{ item.total }} ({{ item.percent|number_format(1) }}%)</span>
                     </div>
                     <div class="progress" style="height: 8px;">
-                        <div class="progress-bar {{ _self.progress_color(item.percent)|trim }}"
+                        <div class="progress-bar {{ _self.progress_color(item.percent) }}"
                              style="width: {{ item.percent }}%"></div>
                     </div>
                 </div>
@@ -103,7 +105,7 @@
                         <span class="text-muted small">{{ item.covered }}/{{ item.total }} ({{ item.percent|number_format(1) }}%)</span>
                     </div>
                     <div class="progress" style="height: 8px;">
-                        <div class="progress-bar {{ _self.progress_color(item.percent)|trim }}"
+                        <div class="progress-bar {{ _self.progress_color(item.percent) }}"
                              style="width: {{ item.percent }}%"></div>
                     </div>
                 </div>

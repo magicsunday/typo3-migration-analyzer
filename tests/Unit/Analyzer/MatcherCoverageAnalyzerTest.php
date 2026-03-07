@@ -269,9 +269,13 @@ final class MatcherCoverageAnalyzerTest extends TestCase
 
         self::assertNotNull($methodBreakdown);
         self::assertSame(1, $methodBreakdown->total);
+        self::assertSame(1, $methodBreakdown->covered);
+        self::assertSame(100.0, $methodBreakdown->percent);
 
         self::assertNotNull($classBreakdown);
         self::assertSame(1, $classBreakdown->total);
+        self::assertSame(1, $classBreakdown->covered);
+        self::assertSame(100.0, $classBreakdown->percent);
     }
 
     private function createDocument(string $filename): RstDocument
