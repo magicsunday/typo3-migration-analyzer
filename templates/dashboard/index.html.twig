@@ -27,6 +27,9 @@
                     <div class="stat-label">RST-Dokumente</div>
                 </div>
             </div>
+            <div class="card-footer bg-transparent border-top-0 pt-0">
+                <small class="text-muted">Gesamtzahl aller geparseten Deprecation- und Breaking-Change-Dokumente aus dem TYPO3 Changelog.</small>
+            </div>
         </div>
     </div>
     <div class="col-sm-6 col-xl-4">
@@ -39,6 +42,9 @@
                     <div class="stat-value">{{ totalDeprecations }}</div>
                     <div class="stat-label">Deprecations</div>
                 </div>
+            </div>
+            <div class="card-footer bg-transparent border-top-0 pt-0">
+                <small class="text-muted">Als veraltet markierte APIs, die in einer zukuenftigen Version entfernt werden. Code sollte zeitnah migriert werden.</small>
             </div>
         </div>
     </div>
@@ -53,6 +59,9 @@
                     <div class="stat-label">Breaking Changes</div>
                 </div>
             </div>
+            <div class="card-footer bg-transparent border-top-0 pt-0">
+                <small class="text-muted">Bereits entfernte oder geaenderte APIs, die zu Fehlern fuehren, wenn bestehender Code nicht angepasst wird.</small>
+            </div>
         </div>
     </div>
     <div class="col-sm-6 col-xl-4">
@@ -65,6 +74,9 @@
                     <div class="stat-value">{{ totalMatchers }}</div>
                     <div class="stat-label">Matcher-Eintraege</div>
                 </div>
+            </div>
+            <div class="card-footer bg-transparent border-top-0 pt-0">
+                <small class="text-muted">Konfigurierte Regeln im TYPO3 Extension Scanner, die betroffenen Code in Extensions automatisch erkennen.</small>
             </div>
         </div>
     </div>
@@ -79,6 +91,9 @@
                     <div class="stat-label">Matcher-Coverage</div>
                 </div>
             </div>
+            <div class="card-footer bg-transparent border-top-0 pt-0">
+                <small class="text-muted">Anteil der RST-Dokumente, fuer die bereits ein passender Extension-Scanner-Matcher existiert.</small>
+            </div>
         </div>
     </div>
     <div class="col-sm-6 col-xl-4">
@@ -91,6 +106,9 @@
                     <div class="stat-value">{{ coverage.uncovered|length }}</div>
                     <div class="stat-label">Ohne Matcher</div>
                 </div>
+            </div>
+            <div class="card-footer bg-transparent border-top-0 pt-0">
+                <small class="text-muted">Dokumente ohne zugehoerigen Matcher &mdash; diese Aenderungen werden vom Extension Scanner nicht erkannt.</small>
             </div>
         </div>
     </div>
@@ -112,6 +130,7 @@
                  aria-valuemax="100">
             </div>
         </div>
+        <small class="text-muted mt-2 d-block">Der Fortschrittsbalken zeigt, wie viele der dokumentierten Aenderungen durch bestehende Matcher-Regeln abgedeckt sind. Ziel ist 100% &mdash; jede nicht abgedeckte Aenderung kann in Extensions unentdeckt bleiben.</small>
     </div>
 </div>
 {% endblock %}
