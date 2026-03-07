@@ -7,7 +7,7 @@
 - Repo: https://github.com/magicsunday/typo3-migration-analyzer
 
 ## Tech Stack
-- PHP 8.3+, Symfony 7.2, Twig, Turbo/Stimulus, AssetMapper
+- PHP 8.4+, Symfony 7.2, Twig, Turbo/Stimulus, AssetMapper
 - symfony/property-info + symfony/property-access für Introspection
 - typo3/cms-core + typo3/cms-install als Composer-Dependency (Datenquelle)
 - PHPUnit, PHPStan Level max, PHP-CS-Fixer (@PER-CS2x0 + @Symfony)
@@ -36,7 +36,7 @@
 - Commit-Format: Beschreibender Text ohne Prefix-Convention, KEIN Co-Authored-By
 - Immer korrekte deutsche Umlaute (ä, ö, ü, ß) verwenden, keine ASCII-Ersetzungen
 
-## Coding-Richtlinien (PHP 8.4+)
+## Coding-Richtlinien (PHP 8.4+ — aktiv PHP 8.4 Sprachfeatures nutzen)
 - Interfaces verwenden wo sinnvoll
 - Kein `@deprecated` — wenn etwas entfällt, direkt entfernen
 - Tests für jede Klasse schreiben
