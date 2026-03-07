@@ -1,0 +1,12 @@
+# Direct Port Access Configuration
+#
+# Exposes the application on a local port for direct access
+# without a reverse proxy.
+#
+# Usage:
+#   COMPOSE_FILE=compose.yaml:compose.ports.yaml
+
+services:
+    nginx:
+        ports:
+            - "${HTTP_PORT:-8080}:80"

@@ -33,8 +33,6 @@ services:
         environment:
             - ENFORCE_HTTPS
         restart: unless-stopped
-        ports:
-            - "${HTTP_PORT:-8080}:80"
         volumes:
             - /etc/timezone:/etc/timezone:ro
             - /etc/localtime:/etc/localtime:ro

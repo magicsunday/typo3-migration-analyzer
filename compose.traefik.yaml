@@ -16,8 +16,6 @@ services:
 
     # Configure Nginx for Traefik integration
     nginx:
-        # When using Traefik, do not expose host ports directly
-        ports: []
         labels:
             # Enable Traefik for this container
             - traefik.enable=true
