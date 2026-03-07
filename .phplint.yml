@@ -5,3 +5,6 @@ extensions:
     - php
 exclude:
     - .build
+    - node_modules
+    - var
+    - vendor

@@ -55,7 +55,7 @@ final readonly class CodeReference
         }
 
         // Instance member: Class->method() or Class->$property
-        if (preg_match('/^(.+)->(.+)$/', $value, $matches)) {
+        if (preg_match('/^(.+)->(.+)$/', $value, $matches) === 1) {
             $className = $matches[1];
             $memberRaw = $matches[2];
 
@@ -87,7 +87,7 @@ final readonly class CodeReference
             $member       = rtrim($memberRaw, '()');
 
             // Class constant: all uppercase (with underscores/digits) and no parentheses
-            if (!$isMethodCall && preg_match('/^[A-Z][A-Z0-9_]*$/', $member)) {
+            if (!$isMethodCall && preg_match('/^[A-Z][A-Z0-9_]*$/', $member) === 1) {
                 return new self(
                     className: $className,
                     member: $member,

@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Unit\Dto;
 
+use TYPO3\CMS\Core\Utility\GeneralUtility;
 use App\Dto\CodeReference;
 use App\Dto\CodeReferenceType;
 use App\Dto\DocumentType;
@@ -25,7 +26,7 @@ final class RstDocumentTest extends TestCase
     public function constructionWithAllParameters(): void
     {
         $codeReference = new CodeReference(
-            className: 'TYPO3\CMS\Core\Utility\GeneralUtility',
+            className: GeneralUtility::class,
             member: 'hmac',
             type: CodeReferenceType::StaticMethod,
         );

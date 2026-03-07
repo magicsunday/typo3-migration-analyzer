@@ -31,6 +31,9 @@ phpstan-baseline.neon
 ###> build ###
 /.build/
 /coverage/
+/node_modules/
+/package.json
+/package-lock.json
 ###< build ###
 
 ###> docker ###

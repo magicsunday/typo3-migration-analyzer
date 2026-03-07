@@ -11,6 +11,8 @@ declare(strict_types=1);
 
 namespace App\Tests\Unit\Parser;
 
+use App\Dto\CodeReference;
+use TYPO3\CMS\Core\DataHandling\DataHandler;
 use App\Dto\CodeReferenceType;
 use App\Dto\DocumentType;
 use App\Dto\ScanStatus;
@@ -70,7 +72,7 @@ final class RstParserTest extends TestCase
         self::assertCount(3, $document->codeReferences);
 
         $classNames = array_map(
-            static fn ($ref) => $ref->className,
+            static fn (CodeReference $ref): string => $ref->className,
             $document->codeReferences,
         );
 
@@ -150,13 +152,13 @@ final class RstParserTest extends TestCase
 
         $propertyRefs = array_filter(
             $document->codeReferences,
-            static fn ($ref) => $ref->type === CodeReferenceType::Property,
+            static fn (CodeReference $ref): bool => $ref->type === CodeReferenceType::Property,
         );
 
         self::assertCount(1, $propertyRefs);
 
         $propertyRef = array_values($propertyRefs)[0];
-        self::assertSame('TYPO3\CMS\Core\DataHandling\DataHandler', $propertyRef->className);
+        self::assertSame(DataHandler::class, $propertyRef->className);
         self::assertSame('recUpdateAccessCache', $propertyRef->member);
     }
 

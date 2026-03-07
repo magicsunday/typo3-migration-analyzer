@@ -32,10 +32,10 @@ use function str_replace;
  * Combines migration text mappings (via MigrationMappingExtractor) with code references
  * to produce config-based rules for simple renames and skeleton rules for complex changes.
  */
-final class RectorRuleGenerator
+final readonly class RectorRuleGenerator
 {
     public function __construct(
-        private readonly MigrationMappingExtractor $extractor,
+        private MigrationMappingExtractor $extractor,
     ) {
     }
 
@@ -54,7 +54,7 @@ final class RectorRuleGenerator
         foreach ($mappings as $mapping) {
             $ruleType = $this->resolveConfigType($mapping);
 
-            if ($ruleType === null) {
+            if (!$ruleType instanceof RectorRuleType) {
                 continue;
             }
 

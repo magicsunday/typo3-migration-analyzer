@@ -11,6 +11,9 @@ declare(strict_types=1);
 
 namespace App\Tests\Unit\Dto;
 
+use TYPO3\CMS\Core\Type\Enumeration;
+use TYPO3\CMS\Core\Utility\GeneralUtility;
+use TYPO3\CMS\Extbase\Property\TypeConverter\AbstractTypeConverter;
 use App\Dto\CodeReference;
 use App\Dto\CodeReferenceType;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -22,10 +25,10 @@ final class CodeReferenceTest extends TestCase
     #[Test]
     public function fromPhpRoleParsesStaticMethod(): void
     {
-        $ref = CodeReference::fromPhpRole('TYPO3\CMS\Core\Utility\GeneralUtility::hmac()');
+        $ref = CodeReference::fromPhpRole(GeneralUtility::class . '::hmac()');
 
         self::assertNotNull($ref);
-        self::assertSame('TYPO3\CMS\Core\Utility\GeneralUtility', $ref->className);
+        self::assertSame(GeneralUtility::class, $ref->className);
         self::assertSame('hmac', $ref->member);
         self::assertSame(CodeReferenceType::StaticMethod, $ref->type);
     }
@@ -44,10 +47,10 @@ final class CodeReferenceTest extends TestCase
     #[Test]
     public function fromPhpRoleParsesClassName(): void
     {
-        $ref = CodeReference::fromPhpRole('TYPO3\CMS\Core\Type\Enumeration');
+        $ref = CodeReference::fromPhpRole(Enumeration::class); // @phpstan-ignore classConstant.deprecatedClass
 
         self::assertNotNull($ref);
-        self::assertSame('TYPO3\CMS\Core\Type\Enumeration', $ref->className);
+        self::assertSame(Enumeration::class, $ref->className); // @phpstan-ignore classConstant.deprecatedClass
         self::assertNull($ref->member);
         self::assertSame(CodeReferenceType::ClassName, $ref->type);
     }
@@ -58,7 +61,7 @@ final class CodeReferenceTest extends TestCase
         $ref = CodeReference::fromPhpRole('TYPO3\CMS\Extbase\Property\TypeConverter\AbstractTypeConverter->$sourceTypes');
 
         self::assertNotNull($ref);
-        self::assertSame('TYPO3\CMS\Extbase\Property\TypeConverter\AbstractTypeConverter', $ref->className);
+        self::assertSame(AbstractTypeConverter::class, $ref->className);
         self::assertSame('sourceTypes', $ref->member);
         self::assertSame(CodeReferenceType::Property, $ref->type);
     }
@@ -89,10 +92,10 @@ final class CodeReferenceTest extends TestCase
     #[Test]
     public function fromPhpRoleStripsLeadingBackslash(): void
     {
-        $ref = CodeReference::fromPhpRole('\TYPO3\CMS\Core\Utility\GeneralUtility::hmac()');
+        $ref = CodeReference::fromPhpRole(GeneralUtility::class . '::hmac()');
 
         self::assertNotNull($ref);
-        self::assertSame('TYPO3\CMS\Core\Utility\GeneralUtility', $ref->className);
+        self::assertSame(GeneralUtility::class, $ref->className);
         self::assertSame('hmac', $ref->member);
         self::assertSame(CodeReferenceType::StaticMethod, $ref->type);
     }

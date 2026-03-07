@@ -24,8 +24,15 @@
 
 ## Entwicklungsprinzipien
 - TDD (Test-Driven Development)
-- KISS, SOLID, DRY, YAGNI
+- KISS (Keep it simple, stupid!)
+- SOLID (Single responsibility principle, Open-closed principle, Liskov substitution principle, Interface segregation principle, Dependency inversion principle)
+- DRY (Don't repeat yourself)
+- YAGNI (You aren't gonna need it)
+- GRASP (General Responsibility Assignment Software Patterns)
+- Law of Demeter, Separation of Concerns, Convention over Configuration
 - Fein-granulare Commits
+- Vor jedem Commit: `composer ci:cgl` und `composer ci:rector` ausführen, Änderungen übernehmen
+- Vor jedem Commit MUSS `composer ci:test` grün sein
 - Commit-Format: Beschreibender Text ohne Prefix-Convention, KEIN Co-Authored-By
 - Immer korrekte deutsche Umlaute (ä, ö, ü, ß) verwenden, keine ASCII-Ersetzungen
 

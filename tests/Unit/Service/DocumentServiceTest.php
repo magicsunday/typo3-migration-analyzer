@@ -12,7 +12,6 @@ declare(strict_types=1);
 namespace App\Tests\Unit\Service;
 
 use App\Analyzer\MatcherCoverageAnalyzer;
-use App\Dto\CoverageResult;
 use App\Parser\MatcherConfigParser;
 use App\Parser\RstFileLocator;
 use App\Parser\RstParser;
@@ -53,7 +52,6 @@ final class DocumentServiceTest extends TestCase
 
         $coverage = $service->getCoverage();
 
-        self::assertInstanceOf(CoverageResult::class, $coverage);
         self::assertGreaterThanOrEqual(0.0, $coverage->coveragePercent);
         self::assertLessThanOrEqual(100.0, $coverage->coveragePercent);
     }

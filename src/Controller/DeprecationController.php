@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Dto\RstDocument;
 use App\Dto\DocumentType;
 use App\Dto\ScanStatus;
 use App\Service\DocumentService;
@@ -46,7 +47,7 @@ final class DeprecationController extends AbstractController
             if ($filterType !== null) {
                 $documents = array_filter(
                     $documents,
-                    static fn ($doc) => $doc->type === $filterType,
+                    static fn (RstDocument $doc): bool => $doc->type === $filterType,
                 );
             }
         }
@@ -55,7 +56,7 @@ final class DeprecationController extends AbstractController
             $filterVersion = $filters['version'];
             $documents     = array_filter(
                 $documents,
-                static fn ($doc) => $doc->version === $filterVersion,
+                static fn (RstDocument $doc): bool => $doc->version === $filterVersion,
             );
         }
 
@@ -72,7 +73,7 @@ final class DeprecationController extends AbstractController
             if ($scanStatus !== null) {
                 $documents = array_filter(
                     $documents,
-                    static fn ($doc) => $doc->scanStatus === $scanStatus,
+                    static fn (RstDocument $doc): bool => $doc->scanStatus === $scanStatus,
                 );
             }
         }
@@ -81,7 +82,7 @@ final class DeprecationController extends AbstractController
             $query     = mb_strtolower($filters['q']);
             $documents = array_filter(
                 $documents,
-                static fn ($doc) => str_contains(mb_strtolower($doc->title), $query)
+                static fn (RstDocument $doc): bool => str_contains(mb_strtolower($doc->title), $query)
                     || str_contains(mb_strtolower($doc->filename), $query),
             );
         }
@@ -100,7 +101,7 @@ final class DeprecationController extends AbstractController
     {
         $doc = $documentService->findDocumentByFilename($filename);
 
-        if ($doc === null) {
+        if (!$doc instanceof RstDocument) {
             throw $this->createNotFoundException(sprintf('Document "%s" not found.', $filename));
         }
 

@@ -55,7 +55,7 @@ final class MatcherCoverageAnalyzer
         // 4. Calculate percentage
         $totalDocuments  = count($documents);
         $coveragePercent = $totalDocuments > 0
-            ? (float) (count($covered) / $totalDocuments * 100.0)
+            ? count($covered) / $totalDocuments * 100.0
             : 0.0;
 
         // 5. Build breakdowns by version and type
@@ -108,7 +108,7 @@ final class MatcherCoverageAnalyzer
 
         foreach ($groups as $label => $counts) {
             $percent = $counts['total'] > 0
-                ? (float) ($counts['covered'] / $counts['total'] * 100.0)
+                ? $counts['covered'] / $counts['total'] * 100.0
                 : 0.0;
 
             $breakdowns[] = new CoverageBreakdown(

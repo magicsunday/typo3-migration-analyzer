@@ -12,7 +12,6 @@ declare(strict_types=1);
 namespace App\Tests\Unit\Analyzer;
 
 use App\Analyzer\MatcherCoverageAnalyzer;
-use App\Dto\CoverageResult;
 use App\Dto\DocumentType;
 use App\Dto\MatcherEntry;
 use App\Dto\MatcherType;
@@ -43,7 +42,6 @@ final class MatcherCoverageAnalyzerTest extends TestCase
 
         $result = $this->analyzer->analyze([$document], [$matcher]);
 
-        self::assertInstanceOf(CoverageResult::class, $result);
         self::assertCount(1, $result->covered);
         self::assertCount(0, $result->uncovered);
         self::assertSame($document, $result->covered[0]);
@@ -59,7 +57,6 @@ final class MatcherCoverageAnalyzerTest extends TestCase
 
         $result = $this->analyzer->analyze([$document], []);
 
-        self::assertInstanceOf(CoverageResult::class, $result);
         self::assertCount(0, $result->covered);
         self::assertCount(1, $result->uncovered);
         self::assertSame($document, $result->uncovered[0]);

@@ -92,7 +92,7 @@ final class RstParser
 
     private function extractIssueId(string $content): int
     {
-        if (preg_match('/:issue:`(\d+)`/', $content, $matches)) {
+        if (preg_match('/:issue:`(\d+)`/', $content, $matches) === 1) {
             return (int) $matches[1];
         }
 
@@ -101,7 +101,7 @@ final class RstParser
 
     private function extractTitle(string $content): string
     {
-        if (preg_match('/^(Deprecation|Breaking|Feature|Important):\s+#\d+\s+-\s+(.+)$/m', $content, $matches)) {
+        if (preg_match('/^(Deprecation|Breaking|Feature|Important):\s+#\d+\s+-\s+(.+)$/m', $content, $matches) === 1) {
             return $matches[0];
         }
 
@@ -118,9 +118,9 @@ final class RstParser
         // Find the section header (case-insensitive match)
         for ($i = 0; $i < $lineCount; ++$i) {
             if (
-                preg_match('/^' . preg_quote($sectionName, '/') . '$/i', trim($lines[$i]))
+                preg_match('/^' . preg_quote($sectionName, '/') . '$/i', trim($lines[$i])) === 1
                 && isset($lines[$i + 1])
-                && preg_match(self::RST_UNDERLINE_PATTERN, trim($lines[$i + 1]))
+                && preg_match(self::RST_UNDERLINE_PATTERN, trim($lines[$i + 1])) === 1
             ) {
                 // Section content starts after the underline
                 $sectionStart = $i + 2;
@@ -140,14 +140,14 @@ final class RstParser
             // Check if this line is a new section header (line followed by underline)
             if (
                 isset($lines[$i + 1])
-                && preg_match(self::RST_UNDERLINE_PATTERN, trim($lines[$i + 1]))
+                && preg_match(self::RST_UNDERLINE_PATTERN, trim($lines[$i + 1])) === 1
                 && trim($lines[$i]) !== ''
             ) {
                 break;
             }
 
             // Also stop at index directives
-            if (preg_match('/^\.\.\s+index::/', trim($lines[$i]))) {
+            if (preg_match('/^\.\.\s+index::/', trim($lines[$i])) === 1) {
                 break;
             }
 
@@ -165,7 +165,7 @@ final class RstParser
      */
     private function extractCodeReferences(string $content): array
     {
-        if (!preg_match_all('/:php:`([^`]+)`/', $content, $matches)) {
+        if (preg_match_all('/:php:`([^`]+)`/', $content, $matches) === 0) {
             return [];
         }
 
@@ -175,7 +175,7 @@ final class RstParser
         foreach ($matches[1] as $phpRoleValue) {
             $ref = CodeReference::fromPhpRole($phpRoleValue);
 
-            if ($ref === null) {
+            if (!$ref instanceof CodeReference) {
                 continue;
             }
 
@@ -200,14 +200,14 @@ final class RstParser
      */
     private function collectAllIndexTags(string $content): array
     {
-        if (!preg_match_all('/\.\.\s+index::\s*(.+)$/m', $content, $matches)) {
+        if (preg_match_all('/\.\.\s+index::\s*(.+)$/m', $content, $matches) === 0) {
             return [];
         }
 
         $tags = [];
 
         foreach ($matches[1] as $tagLine) {
-            foreach (array_map('trim', explode(',', $tagLine)) as $tag) {
+            foreach (array_map(trim(...), explode(',', $tagLine)) as $tag) {
                 if ($tag !== '') {
                     $tags[] = $tag;
                 }

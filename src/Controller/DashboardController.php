@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Dto\RstDocument;
 use App\Dto\DocumentType;
 use App\Service\DocumentService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -28,8 +29,8 @@ final class DashboardController extends AbstractController
         $documents = $documentService->getDocuments();
         $coverage  = $documentService->getCoverage();
 
-        $deprecations = array_filter($documents, static fn ($d) => $d->type === DocumentType::Deprecation);
-        $breaking     = array_filter($documents, static fn ($d) => $d->type === DocumentType::Breaking);
+        $deprecations = array_filter($documents, static fn (RstDocument $d): bool => $d->type === DocumentType::Deprecation);
+        $breaking     = array_filter($documents, static fn (RstDocument $d): bool => $d->type === DocumentType::Breaking);
 
         return $this->render('dashboard/index.html.twig', [
             'totalDocuments'    => count($documents),

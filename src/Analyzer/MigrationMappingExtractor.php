@@ -63,8 +63,11 @@ final class MigrationMappingExtractor
             foreach ($matches as $match) {
                 $source = CodeReference::fromPhpRole($match[$sourceGroup]);
                 $target = CodeReference::fromPhpRole($match[$targetGroup]);
+                if (!$source instanceof CodeReference) {
+                    continue;
+                }
 
-                if ($source === null || $target === null) {
+                if (!$target instanceof CodeReference) {
                     continue;
                 }
 

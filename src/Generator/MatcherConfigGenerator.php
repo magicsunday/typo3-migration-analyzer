@@ -60,9 +60,7 @@ final class MatcherConfigGenerator
             $output .= $this->renderEntry($entry);
         }
 
-        $output .= "];\n";
-
-        return $output;
+        return $output . "];\n";
     }
 
     private function resolveMatcherType(CodeReference $codeReference): MatcherType
@@ -124,9 +122,8 @@ final class MatcherConfigGenerator
         }
 
         $output .= "        ],\n";
-        $output .= "    ],\n";
 
-        return $output;
+        return $output . "    ],\n";
     }
 
     private function escapePhpString(string $value): string

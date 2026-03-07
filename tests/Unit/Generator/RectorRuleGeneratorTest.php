@@ -25,7 +25,6 @@ use PHPUnit\Framework\TestCase;
 
 use function array_filter;
 use function array_values;
-use function count;
 
 final class RectorRuleGeneratorTest extends TestCase
 {
@@ -173,7 +172,7 @@ final class RectorRuleGeneratorTest extends TestCase
 
         $rules = $this->generator->generate($doc);
 
-        self::assertSame(0, count($this->filterConfig($rules)));
+        self::assertCount(0, $this->filterConfig($rules));
     }
 
     #[Test]

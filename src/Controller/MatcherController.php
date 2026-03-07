@@ -127,7 +127,7 @@ final class MatcherController extends AbstractController
     {
         $doc = $this->documentService->findDocumentByFilename($filename);
 
-        if ($doc === null) {
+        if (!$doc instanceof RstDocument) {
             throw $this->createNotFoundException(sprintf('Document "%s" not found.', $filename));
         }
 

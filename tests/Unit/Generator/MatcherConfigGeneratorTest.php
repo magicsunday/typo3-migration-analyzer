@@ -11,6 +11,8 @@ declare(strict_types=1);
 
 namespace App\Tests\Unit\Generator;
 
+use TYPO3\CMS\Core\Utility\GeneralUtility;
+use TYPO3\CMS\Core\DataHandling\DataHandler;
 use App\Dto\CodeReference;
 use App\Dto\CodeReferenceType;
 use App\Dto\DocumentType;
@@ -87,7 +89,7 @@ final class MatcherConfigGeneratorTest extends TestCase
             filename: 'Deprecation-34567-StaticMethodRemoved.rst',
             codeReferences: [
                 new CodeReference(
-                    className: 'TYPO3\CMS\Core\Utility\GeneralUtility',
+                    className: GeneralUtility::class,
                     member: 'hmac',
                     type: CodeReferenceType::StaticMethod,
                 ),
@@ -97,7 +99,7 @@ final class MatcherConfigGeneratorTest extends TestCase
         $entries = $this->generator->generate($document);
 
         self::assertCount(1, $entries);
-        self::assertSame('TYPO3\CMS\Core\Utility\GeneralUtility::hmac', $entries[0]->identifier);
+        self::assertSame(GeneralUtility::class . '::hmac', $entries[0]->identifier);
         self::assertSame(MatcherType::MethodCallStatic, $entries[0]->matcherType);
         self::assertSame(['Deprecation-34567-StaticMethodRemoved.rst'], $entries[0]->restFiles);
         self::assertSame([
@@ -113,7 +115,7 @@ final class MatcherConfigGeneratorTest extends TestCase
             filename: 'Breaking-45678-PropertyRemoved.rst',
             codeReferences: [
                 new CodeReference(
-                    className: 'TYPO3\CMS\Core\DataHandling\DataHandler',
+                    className: DataHandler::class,
                     member: 'recUpdateAccessCache',
                     type: CodeReferenceType::Property,
                 ),
