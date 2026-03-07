@@ -176,6 +176,109 @@ final class RectorRuleGeneratorTest extends TestCase
         self::assertSame(0, count($this->filterConfig($rules)));
     }
 
+    #[Test]
+    public function renderConfigForClassRename(): void
+    {
+        $rules = [
+            new RectorRule(
+                RectorRuleType::RenameClass,
+                new CodeReference('TYPO3\CMS\Core\OldClass', null, CodeReferenceType::ClassName),
+                new CodeReference('TYPO3\CMS\Core\NewClass', null, CodeReferenceType::ClassName),
+                'Test',
+                'Test.rst',
+            ),
+        ];
+
+        $output = $this->generator->renderConfig($rules);
+
+        self::assertStringContainsString('declare(strict_types=1);', $output);
+        self::assertStringContainsString('use Rector\Config\RectorConfig;', $output);
+        self::assertStringContainsString('RenameClassRector::class', $output);
+        self::assertStringContainsString("'TYPO3\\CMS\\Core\\OldClass' => 'TYPO3\\CMS\\Core\\NewClass'", $output);
+    }
+
+    #[Test]
+    public function renderConfigForMethodRename(): void
+    {
+        $rules = [
+            new RectorRule(
+                RectorRuleType::RenameMethod,
+                new CodeReference('TYPO3\CMS\Core\Foo', 'oldMethod', CodeReferenceType::InstanceMethod),
+                new CodeReference('TYPO3\CMS\Core\Foo', 'newMethod', CodeReferenceType::InstanceMethod),
+                'Test',
+                'Test.rst',
+            ),
+        ];
+
+        $output = $this->generator->renderConfig($rules);
+
+        self::assertStringContainsString('RenameMethodRector::class', $output);
+        self::assertStringContainsString('MethodCallRename', $output);
+        self::assertStringContainsString("'TYPO3\\CMS\\Core\\Foo'", $output);
+        self::assertStringContainsString("'oldMethod'", $output);
+        self::assertStringContainsString("'newMethod'", $output);
+    }
+
+    #[Test]
+    public function renderConfigForStaticMethodRename(): void
+    {
+        $rules = [
+            new RectorRule(
+                RectorRuleType::RenameStaticMethod,
+                new CodeReference('TYPO3\CMS\Core\Old', 'calc', CodeReferenceType::StaticMethod),
+                new CodeReference('TYPO3\CMS\Core\New', 'compute', CodeReferenceType::StaticMethod),
+                'Test',
+                'Test.rst',
+            ),
+        ];
+
+        $output = $this->generator->renderConfig($rules);
+
+        self::assertStringContainsString('RenameStaticMethodRector::class', $output);
+        self::assertStringContainsString('RenameStaticMethod(', $output);
+    }
+
+    #[Test]
+    public function renderConfigForConstantRename(): void
+    {
+        $rules = [
+            new RectorRule(
+                RectorRuleType::RenameClassConstant,
+                new CodeReference('TYPO3\CMS\Core\Conf', 'OLD_CONST', CodeReferenceType::ClassConstant),
+                new CodeReference('TYPO3\CMS\Core\Conf', 'NEW_CONST', CodeReferenceType::ClassConstant),
+                'Test',
+                'Test.rst',
+            ),
+        ];
+
+        $output = $this->generator->renderConfig($rules);
+
+        self::assertStringContainsString('RenameClassConstFetchRector::class', $output);
+        self::assertStringContainsString('RenameClassAndConstFetch(', $output);
+    }
+
+    #[Test]
+    public function renderConfigReturnsEmptyStringForNoConfigRules(): void
+    {
+        self::assertSame('', $this->generator->renderConfig([]));
+    }
+
+    #[Test]
+    public function renderConfigSkipsSkeletonRules(): void
+    {
+        $rules = [
+            new RectorRule(
+                RectorRuleType::Skeleton,
+                new CodeReference('TYPO3\CMS\Core\Legacy', null, CodeReferenceType::ClassName),
+                null,
+                'Test',
+                'Test.rst',
+            ),
+        ];
+
+        self::assertSame('', $this->generator->renderConfig($rules));
+    }
+
     /**
      * @param list<CodeReference> $codeReferences
      */
