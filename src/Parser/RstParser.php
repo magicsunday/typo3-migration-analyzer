@@ -33,7 +33,7 @@ use function sprintf;
 use function str_starts_with;
 use function trim;
 
-final class RstParser
+final readonly class RstParser
 {
     /** Valid RST section underline characters: = - ` : . ' " ~ ^ _ * + # */
     private const string RST_UNDERLINE_PATTERN = '/^[=\-`:\.\'"~^_*+#]{3,}$/';
@@ -44,6 +44,11 @@ final class RstParser
         'NotScanned',
     ];
 
+    public function __construct(
+        private CodeBlockExtractor $codeBlockExtractor = new CodeBlockExtractor(),
+    ) {
+    }
+
     public function parseFile(string $filePath, string $version): RstDocument
     {
         $content = @file_get_contents($filePath);
@@ -52,7 +57,8 @@ final class RstParser
             throw new RuntimeException(sprintf('Cannot read file: %s', $filePath));
         }
 
-        $filename = basename($filePath);
+        $filename  = basename($filePath);
+        $migration = $this->extractSection($content, 'Migration');
 
         return new RstDocument(
             type: $this->extractType($filename),
@@ -61,11 +67,12 @@ final class RstParser
             version: $version,
             description: $this->extractSection($content, 'Description') ?? '',
             impact: $this->extractSection($content, 'Impact'),
-            migration: $this->extractSection($content, 'Migration'),
+            migration: $migration,
             codeReferences: $this->extractCodeReferences($content),
             indexTags: $this->extractIndexTags($content),
             scanStatus: $this->extractScanStatus($content),
             filename: $filename,
+            codeBlocks: $this->codeBlockExtractor->extract($migration),
         );
     }
 

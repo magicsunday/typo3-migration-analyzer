@@ -16,6 +16,7 @@ final readonly class RstDocument
     /**
      * @param list<CodeReference> $codeReferences
      * @param list<string>        $indexTags
+     * @param list<CodeBlock>     $codeBlocks
      */
     public function __construct(
         public DocumentType $type,
@@ -29,6 +30,7 @@ final readonly class RstDocument
         public array $indexTags,
         public ScanStatus $scanStatus,
         public string $filename,
+        public array $codeBlocks = [],
     ) {
     }
 }

@@ -125,4 +125,24 @@ final class RstDocumentTest extends TestCase
 
         self::assertSame(DocumentType::Important, $document->type);
     }
+
+    #[Test]
+    public function codeBlocksDefaultsToEmptyArray(): void
+    {
+        $document = new RstDocument(
+            type: DocumentType::Deprecation,
+            issueId: 12345,
+            title: 'Deprecation: #12345 - Test',
+            version: '13.0',
+            description: 'Description',
+            impact: null,
+            migration: null,
+            codeReferences: [],
+            indexTags: [],
+            scanStatus: ScanStatus::NotScanned,
+            filename: 'Deprecation-12345-Test.rst',
+        );
+
+        self::assertSame([], $document->codeBlocks);
+    }
 }
