@@ -1,0 +1,15 @@
+# Development-specific volume configuration
+# These settings override the base configuration to use local directories for development.
+# Local file changes (templates, CSS, PHP) are immediately visible without rebuilding.
+#
+# Usage:
+#   COMPOSE_FILE=compose.yaml:compose.development.yaml
+
+volumes:
+    # Application files volume - maps to the local project directory
+    app:
+        driver: local
+        driver_opts:
+            type: none
+            device: ${PWD}
+            o: bind

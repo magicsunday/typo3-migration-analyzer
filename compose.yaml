@@ -24,9 +24,6 @@ services:
             - /etc/timezone:/etc/timezone:ro
             - /etc/localtime:/etc/localtime:ro
             - app:/var/www
-            - ./templates:/var/www/templates:ro
-            - ./assets:/var/www/assets:ro
-            - ./public/libs:/var/www/public/libs:ro
         networks:
             - default
 
@@ -43,7 +40,7 @@ services:
             - /etc/timezone:/etc/timezone:ro
             - /etc/localtime:/etc/localtime:ro
             - app:/var/www:ro
-            - ./public/libs:/var/www/public/libs:ro
+            - ./rootfs/etc/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
             - ./rootfs/etc/nginx/conf.d/default.conf:/etc/nginx/conf.d/default.conf:ro
             - ./rootfs/etc/nginx/includes/enforce-https.conf:/etc/nginx/includes/enforce-https.conf:ro
             - ./rootfs/etc/nginx/includes/security-headers-map.conf:/etc/nginx/includes/security-headers-map.conf:ro
