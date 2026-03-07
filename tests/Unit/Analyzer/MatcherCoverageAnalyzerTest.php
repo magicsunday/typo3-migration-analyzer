@@ -176,6 +176,62 @@ final class MatcherCoverageAnalyzerTest extends TestCase
         self::assertEqualsWithDelta(33.333, $result->coveragePercent, 0.01);
     }
 
+    #[Test]
+    public function analyzeBuildsScanStatusBreakdown(): void
+    {
+        $fullyScanned = new RstDocument(
+            type: DocumentType::Deprecation,
+            issueId: 1,
+            title: 'Fully scanned',
+            version: '13.0',
+            description: 'Test',
+            impact: null,
+            migration: null,
+            codeReferences: [],
+            indexTags: [],
+            scanStatus: ScanStatus::FullyScanned,
+            filename: 'Deprecation-11111-FullyScanned.rst',
+        );
+
+        $notScanned = new RstDocument(
+            type: DocumentType::Breaking,
+            issueId: 2,
+            title: 'Not scanned',
+            version: '13.0',
+            description: 'Test',
+            impact: null,
+            migration: null,
+            codeReferences: [],
+            indexTags: [],
+            scanStatus: ScanStatus::NotScanned,
+            filename: 'Breaking-22222-NotScanned.rst',
+        );
+
+        $matcher = new MatcherEntry(
+            identifier: 'TYPO3\CMS\Core\Foo->bar',
+            matcherType: MatcherType::MethodCall,
+            restFiles: ['Deprecation-11111-FullyScanned.rst'],
+        );
+
+        $result = $this->analyzer->analyze([$fullyScanned, $notScanned], [$matcher]);
+
+        self::assertNotEmpty($result->byScanStatus);
+        self::assertCount(2, $result->byScanStatus);
+
+        $fullyScannedBreakdown = null;
+
+        foreach ($result->byScanStatus as $breakdown) {
+            if ($breakdown->label === 'Fully scanned') {
+                $fullyScannedBreakdown = $breakdown;
+            }
+        }
+
+        self::assertNotNull($fullyScannedBreakdown);
+        self::assertSame(1, $fullyScannedBreakdown->total);
+        self::assertSame(1, $fullyScannedBreakdown->covered);
+        self::assertSame(100.0, $fullyScannedBreakdown->percent);
+    }
+
     private function createDocument(string $filename): RstDocument
     {
         return new RstDocument(

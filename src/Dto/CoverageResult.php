@@ -18,6 +18,7 @@ final readonly class CoverageResult
      * @param RstDocument[]       $uncovered
      * @param CoverageBreakdown[] $byVersion
      * @param CoverageBreakdown[] $byType
+     * @param CoverageBreakdown[] $byScanStatus
      */
     public function __construct(
         public array $covered,
@@ -27,6 +28,7 @@ final readonly class CoverageResult
         public int $totalMatchers,
         public array $byVersion = [],
         public array $byType = [],
+        public array $byScanStatus = [],
     ) {
     }
 }

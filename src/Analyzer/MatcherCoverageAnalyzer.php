@@ -18,6 +18,7 @@ use App\Dto\RstDocument;
 
 use function count;
 use function ksort;
+use function str_replace;
 use function ucfirst;
 
 final class MatcherCoverageAnalyzer
@@ -59,8 +60,9 @@ final class MatcherCoverageAnalyzer
             : 0.0;
 
         // 5. Build breakdowns by version and type
-        $byVersion = $this->buildBreakdown($documents, $referencedFiles, 'version');
-        $byType    = $this->buildBreakdown($documents, $referencedFiles, 'type');
+        $byVersion    = $this->buildBreakdown($documents, $referencedFiles, 'version');
+        $byType       = $this->buildBreakdown($documents, $referencedFiles, 'type');
+        $byScanStatus = $this->buildBreakdown($documents, $referencedFiles, 'scanStatus');
 
         return new CoverageResult(
             covered: $covered,
@@ -70,11 +72,12 @@ final class MatcherCoverageAnalyzer
             totalMatchers: count($matchers),
             byVersion: $byVersion,
             byType: $byType,
+            byScanStatus: $byScanStatus,
         );
     }
 
     /**
-     * Build coverage breakdown by a document property (version or type).
+     * Build coverage breakdown by a document property (version, type, or scanStatus).
      *
      * @param RstDocument[]       $documents
      * @param array<string, true> $referencedFiles
@@ -87,9 +90,11 @@ final class MatcherCoverageAnalyzer
         $groups = [];
 
         foreach ($documents as $document) {
-            $key = $property === 'type'
-                ? ucfirst($document->type->value)
-                : $document->version;
+            $key = match ($property) {
+                'type'       => ucfirst($document->type->value),
+                'scanStatus' => ucfirst(str_replace('_', ' ', $document->scanStatus->value)),
+                default      => $document->version,
+            };
 
             if (!isset($groups[$key])) {
                 $groups[$key] = ['total' => 0, 'covered' => 0];
