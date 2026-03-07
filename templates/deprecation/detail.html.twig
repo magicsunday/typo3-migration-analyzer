@@ -1,0 +1,45 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ doc.type.value }} #{{ doc.issueId }}{% endblock %}
+
+{% block body %}
+<h1>{{ doc.type.value }}: #{{ doc.issueId }} - {{ doc.title }}</h1>
+<p>
+    Version: <strong>{{ doc.version }}</strong> |
+    Scan: <span class="badge badge--{{ doc.scanStatus.value|lower }}">{{ doc.scanStatus.value }}</span> |
+    Tags: {{ doc.indexTags|join(', ') }}
+</p>
+
+<h2>Description</h2>
+<pre>{{ doc.description }}</pre>
+
+<h2>Impact</h2>
+<pre>{{ doc.impact }}</pre>
+
+<h2>Migration</h2>
+<pre>{{ doc.migration }}</pre>
+
+{% if doc.codeReferences|length > 0 %}
+<h2>Code-Referenzen</h2>
+<table class="data-table">
+    <thead>
+        <tr>
+            <th>Typ</th>
+            <th>Klasse</th>
+            <th>Member</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for ref in doc.codeReferences %}
+        <tr>
+            <td><span class="badge">{{ ref.type.value }}</span></td>
+            <td><code>{{ ref.className }}</code></td>
+            <td>{% if ref.member %}<code>{{ ref.member }}</code>{% else %}-{% endif %}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endif %}
+
+<p style="margin-top:2rem"><a href="{{ path('deprecation_list') }}">&larr; Zurueck zur Liste</a></p>
+{% endblock %}

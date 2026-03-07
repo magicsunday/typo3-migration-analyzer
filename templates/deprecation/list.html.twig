@@ -1,8 +1,53 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Deprecations - TYPO3 Migration Analyzer{% endblock %}
+{% block title %}Deprecations &amp; Breaking Changes{% endblock %}
 
 {% block body %}
-<h1>Deprecations</h1>
-<p>Coming soon.</p>
+<h1>Deprecations &amp; Breaking Changes</h1>
+<p>{{ documents|length }} Dokumente gefunden</p>
+
+<div class="filter-bar">
+    <select onchange="location.href=this.value">
+        <option value="{{ path('deprecation_list', filters|merge({type: ''})) }}">Alle Typen</option>
+        <option value="{{ path('deprecation_list', filters|merge({type: 'Deprecation'})) }}" {{ filters.type == 'Deprecation' ? 'selected' }}>Deprecation</option>
+        <option value="{{ path('deprecation_list', filters|merge({type: 'Breaking'})) }}" {{ filters.type == 'Breaking' ? 'selected' }}>Breaking</option>
+    </select>
+    <select onchange="location.href=this.value">
+        <option value="{{ path('deprecation_list', filters|merge({version: ''})) }}">Alle Versionen</option>
+        {% for v in versions %}
+        <option value="{{ path('deprecation_list', filters|merge({version: v})) }}" {{ filters.version == v ? 'selected' }}>{{ v }}</option>
+        {% endfor %}
+    </select>
+    <select onchange="location.href=this.value">
+        <option value="{{ path('deprecation_list', filters|merge({scan: ''})) }}">Alle Scan-Status</option>
+        <option value="{{ path('deprecation_list', filters|merge({scan: 'FullyScanned'})) }}" {{ filters.scan == 'FullyScanned' ? 'selected' }}>FullyScanned</option>
+        <option value="{{ path('deprecation_list', filters|merge({scan: 'PartiallyScanned'})) }}" {{ filters.scan == 'PartiallyScanned' ? 'selected' }}>PartiallyScanned</option>
+        <option value="{{ path('deprecation_list', filters|merge({scan: 'NotScanned'})) }}" {{ filters.scan == 'NotScanned' ? 'selected' }}>NotScanned</option>
+    </select>
+</div>
+
+<table class="data-table">
+    <thead>
+        <tr>
+            <th>Typ</th>
+            <th>Issue</th>
+            <th>Titel</th>
+            <th>Version</th>
+            <th>Scan-Status</th>
+            <th>Referenzen</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for doc in documents %}
+        <tr>
+            <td><span class="badge badge--{{ doc.type.value|lower }}">{{ doc.type.value }}</span></td>
+            <td>#{{ doc.issueId }}</td>
+            <td><a href="{{ path('deprecation_detail', {filename: doc.filename}) }}">{{ doc.title }}</a></td>
+            <td>{{ doc.version }}</td>
+            <td><span class="badge badge--{{ doc.scanStatus.value|lower }}">{{ doc.scanStatus.value }}</span></td>
+            <td>{{ doc.codeReferences|length }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
 {% endblock %}

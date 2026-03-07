@@ -68,15 +68,15 @@ final class MatcherConfigGenerator
 
     private function buildIdentifier(CodeReference $codeReference): string
     {
-        if ($codeReference->member === null) {
+        if (null === $codeReference->member) {
             return $codeReference->className;
         }
 
         return match ($codeReference->type) {
             CodeReferenceType::InstanceMethod,
-            CodeReferenceType::Property => $codeReference->className . '->' . $codeReference->member,
+            CodeReferenceType::Property => $codeReference->className.'->'.$codeReference->member,
             CodeReferenceType::StaticMethod,
-            CodeReferenceType::ClassConstant => $codeReference->className . '::' . $codeReference->member,
+            CodeReferenceType::ClassConstant => $codeReference->className.'::'.$codeReference->member,
             CodeReferenceType::ClassName => $codeReference->className,
         };
     }
@@ -86,7 +86,7 @@ final class MatcherConfigGenerator
      */
     private function buildAdditionalConfig(MatcherType $matcherType): array
     {
-        if ($matcherType === MatcherType::MethodCall || $matcherType === MatcherType::MethodCallStatic) {
+        if (MatcherType::MethodCall === $matcherType || MatcherType::MethodCallStatic === $matcherType) {
             return [
                 'numberOfMandatoryArguments' => 0,
                 'maximumNumberOfArguments' => 0,
