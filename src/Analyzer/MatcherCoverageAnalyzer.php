@@ -4,9 +4,14 @@ declare(strict_types=1);
 
 namespace App\Analyzer;
 
+use App\Dto\CoverageBreakdown;
 use App\Dto\CoverageResult;
 use App\Dto\MatcherEntry;
 use App\Dto\RstDocument;
+
+use function count;
+use function ksort;
+use function ucfirst;
 
 final class MatcherCoverageAnalyzer
 {
@@ -41,17 +46,72 @@ final class MatcherCoverageAnalyzer
         }
 
         // 4. Calculate percentage
-        $totalDocuments = \count($documents);
+        $totalDocuments  = count($documents);
         $coveragePercent = $totalDocuments > 0
-            ? (float) (\count($covered) / $totalDocuments * 100.0)
+            ? (float) (count($covered) / $totalDocuments * 100.0)
             : 0.0;
+
+        // 5. Build breakdowns by version and type
+        $byVersion = $this->buildBreakdown($documents, $referencedFiles, 'version');
+        $byType    = $this->buildBreakdown($documents, $referencedFiles, 'type');
 
         return new CoverageResult(
             covered: $covered,
             uncovered: $uncovered,
             coveragePercent: $coveragePercent,
             totalDocuments: $totalDocuments,
-            totalMatchers: \count($matchers),
+            totalMatchers: count($matchers),
+            byVersion: $byVersion,
+            byType: $byType,
         );
+    }
+
+    /**
+     * Build coverage breakdown by a document property (version or type).
+     *
+     * @param RstDocument[]        $documents
+     * @param array<string, true>  $referencedFiles
+     *
+     * @return list<CoverageBreakdown>
+     */
+    private function buildBreakdown(array $documents, array $referencedFiles, string $property): array
+    {
+        /** @var array<string, array{total: int, covered: int}> $groups */
+        $groups = [];
+
+        foreach ($documents as $document) {
+            $key = 'type' === $property
+                ? ucfirst($document->type->value)
+                : $document->version;
+
+            if (!isset($groups[$key])) {
+                $groups[$key] = ['total' => 0, 'covered' => 0];
+            }
+
+            ++$groups[$key]['total'];
+
+            if (isset($referencedFiles[$document->filename])) {
+                ++$groups[$key]['covered'];
+            }
+        }
+
+        ksort($groups);
+
+        $breakdowns = [];
+
+        foreach ($groups as $label => $counts) {
+            $percent = $counts['total'] > 0
+                ? (float) ($counts['covered'] / $counts['total'] * 100.0)
+                : 0.0;
+
+            $breakdowns[] = new CoverageBreakdown(
+                label: $label,
+                total: $counts['total'],
+                covered: $counts['covered'],
+                percent: $percent,
+            );
+        }
+
+        return $breakdowns;
     }
 }

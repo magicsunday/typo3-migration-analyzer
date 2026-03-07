@@ -133,4 +133,46 @@
         <small class="text-muted mt-2 d-block">Der Fortschrittsbalken zeigt, wie viele der dokumentierten Änderungen durch bestehende Matcher-Regeln abgedeckt sind. Ziel ist 100% &mdash; jede nicht abgedeckte Änderung kann in Extensions unentdeckt bleiben.</small>
     </div>
 </div>
+
+{# Coverage breakdown #}
+<div class="row g-3 mt-0">
+    <div class="col-lg-6">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <h6 class="card-title mb-3">Coverage nach Version</h6>
+                {% for item in coverage.byVersion %}
+                <div class="mb-2">
+                    <div class="d-flex justify-content-between small mb-1">
+                        <span>{{ item.label }}</span>
+                        <span class="text-muted">{{ item.covered }}/{{ item.total }} ({{ item.percent|number_format(1) }}%)</span>
+                    </div>
+                    <div class="progress" style="height: 6px;">
+                        <div class="progress-bar {{ item.percent >= 80 ? 'bg-success' : (item.percent >= 50 ? 'bg-warning' : 'bg-danger') }}"
+                             style="width: {{ item.percent }}%"></div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <h6 class="card-title mb-3">Coverage nach Typ</h6>
+                {% for item in coverage.byType %}
+                <div class="mb-2">
+                    <div class="d-flex justify-content-between small mb-1">
+                        <span>{{ item.label }}</span>
+                        <span class="text-muted">{{ item.covered }}/{{ item.total }} ({{ item.percent|number_format(1) }}%)</span>
+                    </div>
+                    <div class="progress" style="height: 6px;">
+                        <div class="progress-bar {{ item.percent >= 80 ? 'bg-success' : (item.percent >= 50 ? 'bg-warning' : 'bg-danger') }}"
+                             style="width: {{ item.percent }}%"></div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}

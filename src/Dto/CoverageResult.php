@@ -7,8 +7,10 @@ namespace App\Dto;
 final readonly class CoverageResult
 {
     /**
-     * @param RstDocument[] $covered
-     * @param RstDocument[] $uncovered
+     * @param RstDocument[]       $covered
+     * @param RstDocument[]       $uncovered
+     * @param CoverageBreakdown[] $byVersion
+     * @param CoverageBreakdown[] $byType
      */
     public function __construct(
         public array $covered,
@@ -16,6 +18,8 @@ final readonly class CoverageResult
         public float $coveragePercent,
         public int $totalDocuments,
         public int $totalMatchers,
+        public array $byVersion = [],
+        public array $byType = [],
     ) {
     }
 }
