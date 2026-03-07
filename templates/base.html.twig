@@ -6,6 +6,7 @@
     <title>{% block title %}TYPO3 Migration Analyzer{% endblock %}</title>
     <link href="/libs/bootstrap/css/bootstrap.min.css" rel="stylesheet">
     <link href="/libs/bootstrap-icons/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link href="/libs/highlightjs/atom-one-dark.min.css" rel="stylesheet">
     {% block stylesheets %}{% endblock %}
     {% block javascripts %}
         {% block importmap %}{{ importmap('app') }}{% endblock %}
@@ -74,5 +75,18 @@
     </div>
 
     <script src="/libs/bootstrap/js/bootstrap.bundle.min.js"></script>
+    <script src="/libs/highlightjs/highlight.min.js"></script>
+    <script src="/libs/highlightjs/php.min.js"></script>
+    <script src="/libs/highlightjs/yaml.min.js"></script>
+    <script src="/libs/highlightjs/typescript.min.js"></script>
+    <script>
+    document.addEventListener('turbo:load', function() {
+        document.querySelectorAll('pre code.hljs-code').forEach(function(el) {
+            if (!el.dataset.highlighted) {
+                hljs.highlightElement(el);
+            }
+        });
+    });
+    </script>
 </body>
 </html>
