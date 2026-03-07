@@ -40,26 +40,32 @@
 {# Content sections #}
 <div class="row">
     <div class="col-lg-8">
+        {% if doc.description is not empty %}
         <div class="rst-section">
             <h6 class="text-uppercase text-muted small fw-bold mb-3">
                 <i class="bi bi-card-text me-1"></i>Description
             </h6>
             <pre>{{ doc.description }}</pre>
         </div>
+        {% endif %}
 
+        {% if doc.impact is not empty %}
         <div class="rst-section">
             <h6 class="text-uppercase text-muted small fw-bold mb-3">
                 <i class="bi bi-exclamation-diamond me-1"></i>Impact
             </h6>
             <pre>{{ doc.impact }}</pre>
         </div>
+        {% endif %}
 
+        {% if doc.migration is not empty %}
         <div class="rst-section">
             <h6 class="text-uppercase text-muted small fw-bold mb-3">
                 <i class="bi bi-arrow-right-circle me-1"></i>Migration
             </h6>
             <pre>{{ doc.migration }}</pre>
         </div>
+        {% endif %}
 
         {% if doc.codeBlocks|length > 0 %}
         <div class="rst-section">
