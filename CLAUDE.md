@@ -33,6 +33,7 @@
 - Fein-granulare Commits
 - Vor jedem Commit: `composer ci:cgl` und `composer ci:rector` ausführen, Änderungen übernehmen
 - Vor jedem Commit MUSS `composer ci:test` grün sein
+- Nach jedem Commit: Code-Review durchführen und Findings sofort fixen
 - Commit-Format: Beschreibender Text ohne Prefix-Convention, KEIN Co-Authored-By
 - Immer korrekte deutsche Umlaute (ä, ö, ü, ß) verwenden, keine ASCII-Ersetzungen
 

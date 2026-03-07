@@ -310,9 +310,8 @@ final readonly class RectorRuleGenerator
         $output .= "\n";
         $output .= "        return null;\n";
         $output .= "    }\n";
-        $output .= "}\n";
 
-        return $output;
+        return $output . "}\n";
     }
 
     /**

@@ -70,7 +70,7 @@ final class MatcherController extends AbstractController
             'entries'             => $entries,
             'phpCode'             => $phpCode,
             'rectorConfigRules'   => $rectorConfigRules,
-            'rectorConfigPhp'     => count($rectorConfigRules) > 0 ? $this->rectorGenerator->renderConfig($rectorConfigRules) : null,
+            'rectorConfigPhp'     => $rectorConfigRules !== [] ? $this->rectorGenerator->renderConfig($rectorConfigRules) : null,
             'rectorSkeletonRules' => $rectorSkeletonRules,
             'rectorGenerator'     => $this->rectorGenerator,
         ]);
