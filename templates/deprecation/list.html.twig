@@ -17,11 +17,23 @@
 
 <p class="text-muted mb-4">Übersicht aller dokumentierten Deprecations und Breaking Changes aus dem TYPO3 Changelog. Filtern Sie nach Typ, Version oder Scan-Status, um gezielt die für Ihre Migration relevanten Änderungen zu finden.</p>
 
-{# Filter bar #}
+{# Search + Filter bar #}
 <div class="card border-0 shadow-sm mb-4">
     <div class="card-body">
         <div class="row g-3">
-            <div class="col-sm-6 col-lg-3">
+            <div class="col-12 col-lg-4">
+                <label class="form-label small text-muted">Suche</label>
+                <form method="get" action="{{ path('deprecation_list') }}" class="d-flex gap-2">
+                    {% if filters.type %}<input type="hidden" name="type" value="{{ filters.type }}">{% endif %}
+                    {% if filters.version %}<input type="hidden" name="version" value="{{ filters.version }}">{% endif %}
+                    {% if filters.scan %}<input type="hidden" name="scan" value="{{ filters.scan }}">{% endif %}
+                    <input type="text" name="q" class="form-control form-control-sm" value="{{ filters.q }}" placeholder="Titel oder Dateiname...">
+                    <button type="submit" class="btn btn-sm btn-outline-primary flex-shrink-0">
+                        <i class="bi bi-search"></i>
+                    </button>
+                </form>
+            </div>
+            <div class="col-sm-6 col-lg-2">
                 <label class="form-label small text-muted">Typ</label>
                 <select class="form-select form-select-sm" onchange="location.href=this.value">
                     <option value="{{ path('deprecation_list', filters|merge({type: ''})) }}">Alle Typen</option>
@@ -29,7 +41,7 @@
                     <option value="{{ path('deprecation_list', filters|merge({type: 'Breaking'})) }}" {{ filters.type == 'Breaking' ? 'selected' }}>Breaking</option>
                 </select>
             </div>
-            <div class="col-sm-6 col-lg-3">
+            <div class="col-sm-6 col-lg-2">
                 <label class="form-label small text-muted">Version</label>
                 <select class="form-select form-select-sm" onchange="location.href=this.value">
                     <option value="{{ path('deprecation_list', filters|merge({version: ''})) }}">Alle Versionen</option>
@@ -38,7 +50,7 @@
                     {% endfor %}
                 </select>
             </div>
-            <div class="col-sm-6 col-lg-3">
+            <div class="col-sm-6 col-lg-2">
                 <label class="form-label small text-muted">Scan-Status</label>
                 <select class="form-select form-select-sm" onchange="location.href=this.value">
                     <option value="{{ path('deprecation_list', filters|merge({scan: ''})) }}">Alle</option>
@@ -47,11 +59,11 @@
                     <option value="{{ path('deprecation_list', filters|merge({scan: 'NotScanned'})) }}" {{ filters.scan == 'NotScanned' ? 'selected' }}>Not Scanned</option>
                 </select>
             </div>
-            <div class="col-sm-6 col-lg-3">
+            <div class="col-sm-6 col-lg-2">
                 <label class="form-label small text-muted">&nbsp;</label>
-                {% if filters.type or filters.version or filters.scan %}
+                {% if filters.type or filters.version or filters.scan or filters.q %}
                     <a href="{{ path('deprecation_list') }}" class="btn btn-sm btn-outline-secondary d-block">
-                        <i class="bi bi-x-circle me-1"></i>Filter zurücksetzen
+                        <i class="bi bi-x-circle me-1"></i>Zurücksetzen
                     </a>
                 {% endif %}
             </div>
