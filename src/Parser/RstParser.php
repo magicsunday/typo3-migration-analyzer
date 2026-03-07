@@ -118,9 +118,10 @@ final readonly class RstParser
     private function extractSection(string $content, string $sectionName): ?string
     {
         // Split content into lines
-        $lines        = explode("\n", $content);
-        $lineCount    = count($lines);
-        $sectionStart = null;
+        $lines            = explode("\n", $content);
+        $lineCount        = count($lines);
+        $sectionStart     = null;
+        $sectionUnderline = '';
 
         // Find the section header (case-insensitive match)
         for ($i = 0; $i < $lineCount; ++$i) {
@@ -129,6 +130,9 @@ final readonly class RstParser
                 && isset($lines[$i + 1])
                 && preg_match(self::RST_UNDERLINE_PATTERN, trim($lines[$i + 1])) === 1
             ) {
+                // Remember the underline character to distinguish same-level from sub-sections
+                $sectionUnderline = $lines[$i + 1][0];
+
                 // Section content starts after the underline
                 $sectionStart = $i + 2;
 
@@ -140,15 +144,16 @@ final readonly class RstParser
             return null;
         }
 
-        // Collect lines until the next section header or end of file
+        // Collect lines until the next same-level section header or end of file
         $sectionLines = [];
 
         for ($i = $sectionStart; $i < $lineCount; ++$i) {
-            // Check if this line is a new section header (line followed by underline)
+            // Stop at same-level section headers (same underline character); include subsections
             if (
                 isset($lines[$i + 1])
                 && preg_match(self::RST_UNDERLINE_PATTERN, trim($lines[$i + 1])) === 1
                 && trim($lines[$i]) !== ''
+                && $lines[$i + 1][0] === $sectionUnderline
             ) {
                 break;
             }
