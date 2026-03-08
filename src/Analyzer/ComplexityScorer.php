@@ -36,6 +36,7 @@ final readonly class ComplexityScorer
      */
     private const array REPLACEMENT_KEYWORDS = [
         'replace',
+        'replacing',
         'rename',
         'migrate to',
         'switch to',
@@ -47,6 +48,9 @@ final readonly class ComplexityScorer
         'has been renamed',
         'has been replaced',
         'has been moved',
+        'has been migrated',
+        'is now available',
+        'now uses',
     ];
 
     /**
@@ -104,35 +108,35 @@ final readonly class ComplexityScorer
             return new ComplexityScore(3, 'Code references without mapping', false);
         }
 
-        $migrationText = $document->migration ?? '';
+        $migrationText = trim($document->migration ?? '');
 
-        // Rule 7: Explicitly states no replacement (score 5)
-        if ($migrationText !== '' && $this->hasNoReplacementStatement($migrationText)) {
+        // Rule 7: No or trivially short migration text (score 5)
+        if ($migrationText === '' || mb_strlen($migrationText) <= 10) {
+            return new ComplexityScore(5, 'No migration guidance', false);
+        }
+
+        // Rule 8: Explicitly states no replacement (score 5)
+        if ($this->hasNoReplacementStatement($migrationText)) {
             return new ComplexityScore(5, 'No replacement available', false);
         }
 
-        // Rule 8: Clear replacement keywords + code blocks (score 2)
-        if ($migrationText !== '' && $this->hasClearReplacementInstructions($migrationText) && $document->codeBlocks !== []) {
+        // Rule 9: Clear replacement keywords + code blocks (score 2)
+        if ($this->hasClearReplacementInstructions($migrationText) && $document->codeBlocks !== []) {
             return new ComplexityScore(2, 'Replacement with code example', false);
         }
 
-        // Rule 9: Clear replacement keywords without code blocks (score 3)
-        if ($migrationText !== '' && $this->hasClearReplacementInstructions($migrationText)) {
+        // Rule 10: Clear replacement keywords without code blocks (score 3)
+        if ($this->hasClearReplacementInstructions($migrationText)) {
             return new ComplexityScore(3, 'Replacement described in prose', false);
         }
 
-        // Rule 10: Has code blocks but no replacement keywords (score 3)
-        if ($migrationText !== '' && $document->codeBlocks !== []) {
+        // Rule 11: Has code blocks but no replacement keywords (score 3)
+        if ($document->codeBlocks !== []) {
             return new ComplexityScore(3, 'Code examples without clear mapping', false);
         }
 
-        // Rule 11: Has migration text but nothing actionable (score 4)
-        if ($migrationText !== '' && trim($migrationText) !== '') {
-            return new ComplexityScore(4, 'Migration guidance without clear replacement', false);
-        }
-
-        // Rule 12: No migration text at all (score 5)
-        return new ComplexityScore(5, 'No migration guidance', false);
+        // Rule 12: Has migration text but nothing actionable (score 4)
+        return new ComplexityScore(4, 'Migration guidance without clear replacement', false);
     }
 
     /**

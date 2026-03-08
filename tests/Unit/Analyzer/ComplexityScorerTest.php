@@ -289,6 +289,19 @@ final class ComplexityScorerTest extends TestCase
     }
 
     #[Test]
+    public function scoreTriviallyShortMigrationText(): void
+    {
+        $doc = $this->createDocument(
+            migration: 'None.',
+        );
+
+        $result = $this->scorer->score($doc);
+
+        self::assertSame(5, $result->score);
+        self::assertFalse($result->automatable);
+    }
+
+    #[Test]
     public function scoreMigrationTextWithMigrateToKeyword(): void
     {
         $doc = $this->createDocument(
