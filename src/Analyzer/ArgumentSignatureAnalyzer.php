@@ -13,9 +13,12 @@ namespace App\Analyzer;
 
 use App\Dto\ArgumentCount;
 use App\Dto\CodeBlock;
+use ReflectionException;
+use ReflectionMethod;
 
 use function array_filter;
 use function array_map;
+use function class_exists;
 use function count;
 use function explode;
 use function preg_match;
@@ -59,6 +62,30 @@ final class ArgumentSignatureAnalyzer
         }
 
         return null;
+    }
+
+    /**
+     * Analyze argument counts using PHP reflection on an installed class.
+     *
+     * Falls back to reflection when code block parsing is not possible,
+     * e.g. when the class is available in the vendor directory.
+     */
+    public function analyzeWithReflection(string $className, string $methodName): ?ArgumentCount
+    {
+        if (!class_exists($className)) {
+            return null;
+        }
+
+        try {
+            $reflection = new ReflectionMethod($className, $methodName);
+        } catch (ReflectionException) {
+            return null;
+        }
+
+        return new ArgumentCount(
+            numberOfMandatoryArguments: $reflection->getNumberOfRequiredParameters(),
+            maximumNumberOfArguments: $reflection->isVariadic() ? PHP_INT_MAX : $reflection->getNumberOfParameters(),
+        );
     }
 
     /**

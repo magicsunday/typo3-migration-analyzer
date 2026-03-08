@@ -17,6 +17,7 @@ use App\Dto\CodeBlock;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use TYPO3\CMS\Core\Utility\GeneralUtility;
 
 use const PHP_INT_MAX;
 
@@ -224,5 +225,40 @@ final class ArgumentSignatureAnalyzerTest extends TestCase
         self::assertInstanceOf(ArgumentCount::class, $result);
         self::assertSame(2, $result->numberOfMandatoryArguments);
         self::assertSame(2, $result->maximumNumberOfArguments);
+    }
+
+    #[Test]
+    public function analyzeWithReflectionFallback(): void
+    {
+        $result = $this->analyzer->analyzeWithReflection(
+            GeneralUtility::class,
+            'hmac',
+        );
+
+        self::assertInstanceOf(ArgumentCount::class, $result);
+        self::assertSame(1, $result->numberOfMandatoryArguments);
+        self::assertSame(2, $result->maximumNumberOfArguments);
+    }
+
+    #[Test]
+    public function analyzeWithReflectionReturnsNullForNonExistentClass(): void
+    {
+        $result = $this->analyzer->analyzeWithReflection(
+            'App\\NonExistent\\FakeClass',
+            'someMethod',
+        );
+
+        self::assertNull($result);
+    }
+
+    #[Test]
+    public function analyzeWithReflectionReturnsNullForNonExistentMethod(): void
+    {
+        $result = $this->analyzer->analyzeWithReflection(
+            GeneralUtility::class,
+            'nonExistentMethod',
+        );
+
+        self::assertNull($result);
     }
 }
