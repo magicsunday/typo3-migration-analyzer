@@ -53,6 +53,8 @@ final class MigrationMappingExtractor
         ['/:php:`([^`]+)`.*?\b(?:has been|was|should be|can be)\s+replaced\s+(?:by|with)\b.*?:php:`([^`]+)`/s', 1, 2, 0.9],
         // ":php:`Old` is now available via :php:`New`"
         ['/:php:`([^`]+)`.*?\bis\s+now\s+available\s+via\b.*?:php:`([^`]+)`/s', 1, 2, 0.8],
+        // ":php:`Old` in favor of :php:`New`"
+        ['/:php:`([^`]+)`.*?\bin\s+favor\s+of\b.*?:php:`([^`]+)`/s', 1, 2, 0.9],
         // ":php:`New` instead of :php:`Old`" (without "Use" prefix, reversed: first=new, second=old)
         ['/:php:`([^`]+)`\s+instead\s+of\s+:php:`([^`]+)`/', 2, 1, 0.8],
         // ":php:`Old` deprecated/removed ... Use :php:`New`" (cross-sentence, same paragraph)
@@ -73,12 +75,18 @@ final class MigrationMappingExtractor
      * @var list<array{string, int, int, float}>
      */
     private const array BACKTICK_PATTERNS = [
-        // "`Old` has been renamed/replaced/moved to/by/with `New`" (single line only to avoid cross-bullet matches)
-        ['/`([^`]+)`.{0,60}\b(?:has been|was|is)\s+(?:renamed?|replaced?|moved?)\s+(?:to|by|with)\b.{0,60}`([^`]+)`/', 1, 2, 0.6],
-        // "Replace `Old` with/by `New`" (single line only)
-        ['/\b[Rr]eplace\b.{0,60}`([^`]+)`.{0,40}\b(?:with|by)\b.{0,60}`([^`]+)`/', 1, 2, 0.6],
+        // "`Old` is replaced with/by `New`" (single line, no newline in captures)
+        ['/`([^`\n]+)`.{0,60}\b(?:has been|was|is)\s+(?:renamed?|replaced?|moved?)\s+(?:to|by|with)\b.{0,60}`([^`\n]+)`/', 1, 2, 0.6],
+        // "Replace `Old` with/by `New`" (single line)
+        ['/\b[Rr]eplace\b.{0,60}`([^`\n]+)`.{0,40}\b(?:with|by)\b.{0,60}`([^`\n]+)`/', 1, 2, 0.6],
+        // "`Old` in favor of `New`"
+        ['/`([^`\n]+)`.{0,40}\bin\s+favor\s+of\b.{0,40}`([^`\n]+)`/', 1, 2, 0.6],
+        // "`Old` is removed/deprecated. Use `New` instead" (cross-sentence within same line)
+        ['/`([^`\n]+)`.{0,40}\b(?:is|was)\s+(?:removed|deprecated)\b.{0,60}\b[Uu]se\b\s+`([^`\n]+)`.{0,20}\binstead\b/', 1, 2, 0.6],
+        // "Use `New` instead of `Old`" (reversed)
+        ['/\b[Uu]se\b\s+`([^`\n]+)`.{0,20}\binstead\s+of\b.{0,20}`([^`\n]+)`/', 2, 1, 0.6],
         // "`Old` to `New`" (bare connector)
-        ['/`([^`]+)`\s+to\s+`([^`]+)`/', 1, 2, 0.5],
+        ['/`([^`\n]+)`\s+to\s+`([^`\n]+)`/', 1, 2, 0.5],
     ];
 
     /**
@@ -137,6 +145,11 @@ final class MigrationMappingExtractor
         }
 
         foreach ($matches as $match) {
+            // Skip cross-paragraph matches — they almost always pair unrelated references
+            if (str_contains($match[0], "\n\n")) {
+                continue;
+            }
+
             $this->addMapping($match[$sourceGroup], $match[$targetGroup], $confidence, $mappings, $seen);
         }
     }
@@ -202,6 +215,16 @@ final class MigrationMappingExtractor
             return;
         }
 
+        // When target has no class but source does, inherit the class (e.g. method rename within same class)
+        if ($target->className === '' && $source->className !== '') {
+            $target = new CodeReference(
+                className: $source->className,
+                member: $target->member,
+                type: $target->type,
+                resolutionConfidence: $target->resolutionConfidence,
+            );
+        }
+
         $key = $source->className . '::' . ($source->member ?? '')
             . '->' . $target->className . '::' . ($target->member ?? '');
 
@@ -226,6 +249,11 @@ final class MigrationMappingExtractor
      */
     private function looksLikePhpCode(string $value): bool
     {
+        // Dot notation is JavaScript or TypoScript, not PHP (e.g. Clickmenu.populateData())
+        if (str_contains($value, '.')) {
+            return false;
+        }
+
         // Namespace separator
         if (str_contains($value, '\\')) {
             return true;
