@@ -73,10 +73,10 @@ final class MigrationMappingExtractor
      * @var list<array{string, int, int, float}>
      */
     private const array BACKTICK_PATTERNS = [
-        // "`Old` has been renamed/replaced/moved to/by/with `New`"
-        ['/`([^`]+)`.*?\b(?:has been|was|is)\s+(?:renamed?|replaced?|moved?)\s+(?:to|by|with)\b.*?`([^`]+)`/s', 1, 2, 0.6],
-        // "Replace `Old` with/by `New`"
-        ['/\b[Rr]eplace\b.*?`([^`]+)`.*?\b(?:with|by)\b.*?`([^`]+)`/s', 1, 2, 0.6],
+        // "`Old` has been renamed/replaced/moved to/by/with `New`" (single line only to avoid cross-bullet matches)
+        ['/`([^`]+)`.{0,60}\b(?:has been|was|is)\s+(?:renamed?|replaced?|moved?)\s+(?:to|by|with)\b.{0,60}`([^`]+)`/', 1, 2, 0.6],
+        // "Replace `Old` with/by `New`" (single line only)
+        ['/\b[Rr]eplace\b.{0,60}`([^`]+)`.{0,40}\b(?:with|by)\b.{0,60}`([^`]+)`/', 1, 2, 0.6],
         // "`Old` to `New`" (bare connector)
         ['/`([^`]+)`\s+to\s+`([^`]+)`/', 1, 2, 0.5],
     ];

@@ -132,12 +132,61 @@ final readonly class CodeReference
     /**
      * Parse a non-FQCN value into a CodeReference with reduced confidence.
      *
-     * Handles short class names, unqualified methods, properties, constants, and config keys.
+     * Handles short class names with members, unqualified methods, properties,
+     * constants, and config keys.
      */
     private static function fromNonFqcn(string $value): ?self
     {
         if (in_array(strtolower($value), self::IGNORED_VALUES, true)) {
             return null;
+        }
+
+        // Short class with instance member: ShortClass->method() or ShortClass->$prop
+        if (preg_match('/^([A-Za-z]\w*)(?:->)(.+)$/', $value, $matches) === 1) {
+            $className = $matches[1];
+            $memberRaw = $matches[2];
+
+            if (str_starts_with($memberRaw, '$')) {
+                return new self(
+                    className: $className,
+                    member: ltrim($memberRaw, '$'),
+                    type: CodeReferenceType::Property,
+                    resolutionConfidence: 0.5,
+                );
+            }
+
+            return new self(
+                className: $className,
+                member: rtrim($memberRaw, '()'),
+                type: CodeReferenceType::InstanceMethod,
+                resolutionConfidence: 0.5,
+            );
+        }
+
+        // Short class with static member: ShortClass::method() or ShortClass::CONST
+        if (str_contains($value, '::')) {
+            $parts     = explode('::', $value, 2);
+            $className = $parts[0];
+            $memberRaw = $parts[1];
+
+            $isMethodCall = str_ends_with($memberRaw, '()');
+            $member       = rtrim($memberRaw, '()');
+
+            if (!$isMethodCall && preg_match('/^[A-Z][A-Z0-9_]*$/', $member) === 1) {
+                return new self(
+                    className: $className,
+                    member: $member,
+                    type: CodeReferenceType::ClassConstant,
+                    resolutionConfidence: 0.5,
+                );
+            }
+
+            return new self(
+                className: $className,
+                member: $member,
+                type: CodeReferenceType::StaticMethod,
+                resolutionConfidence: 0.5,
+            );
         }
 
         // Property: $property

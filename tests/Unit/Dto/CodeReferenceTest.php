@@ -253,6 +253,54 @@ final class CodeReferenceTest extends TestCase
     }
 
     #[Test]
+    public function fromPhpRoleParsesShortClassStaticMethod(): void
+    {
+        $ref = CodeReference::fromPhpRole('AbstractRecordList::writeBottom()');
+
+        self::assertNotNull($ref);
+        self::assertSame('AbstractRecordList', $ref->className);
+        self::assertSame('writeBottom', $ref->member);
+        self::assertSame(CodeReferenceType::StaticMethod, $ref->type);
+        self::assertSame(0.5, $ref->resolutionConfidence);
+    }
+
+    #[Test]
+    public function fromPhpRoleParsesShortClassStaticConstant(): void
+    {
+        $ref = CodeReference::fromPhpRole('SomeClass::MY_CONSTANT');
+
+        self::assertNotNull($ref);
+        self::assertSame('SomeClass', $ref->className);
+        self::assertSame('MY_CONSTANT', $ref->member);
+        self::assertSame(CodeReferenceType::ClassConstant, $ref->type);
+        self::assertSame(0.5, $ref->resolutionConfidence);
+    }
+
+    #[Test]
+    public function fromPhpRoleParsesShortClassInstanceMethod(): void
+    {
+        $ref = CodeReference::fromPhpRole('DataMapper->setQuery()');
+
+        self::assertNotNull($ref);
+        self::assertSame('DataMapper', $ref->className);
+        self::assertSame('setQuery', $ref->member);
+        self::assertSame(CodeReferenceType::InstanceMethod, $ref->type);
+        self::assertSame(0.5, $ref->resolutionConfidence);
+    }
+
+    #[Test]
+    public function fromPhpRoleParsesShortClassInstanceProperty(): void
+    {
+        $ref = CodeReference::fromPhpRole('ActionController->$extensionName');
+
+        self::assertNotNull($ref);
+        self::assertSame('ActionController', $ref->className);
+        self::assertSame('extensionName', $ref->member);
+        self::assertSame(CodeReferenceType::Property, $ref->type);
+        self::assertSame(0.5, $ref->resolutionConfidence);
+    }
+
+    #[Test]
     #[DataProvider('providePhpKeywords')]
     public function fromPhpRoleReturnsNullForPhpKeywords(string $keyword): void
     {
