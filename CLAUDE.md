@@ -95,7 +95,7 @@ Detaillierte Architektur und Komponenten-Beschreibungen: `docs/plans/2026-03-07-
 
 ### v1.3 — Extension-Scanner als Service
 - [x] ZIP-Upload (ZipUploadHandler, max 50MB, Validierung, Path-Traversal-Schutz)
-- [ ] Git-URL-Scan (GitRepositoryProvider, `git clone --depth 1`, Cleanup)
+- [x] Git-URL-Scan (GitRepositoryHandler, `git clone --depth 1`, GitHub/GitLab, Cleanup)
 - [x] Erweiterter Findings-Report (Code-Kontext, Gruppierung nach Datei/Stärke/Deprecation, Zusammenfassung)
 - [x] Export: JSON, CSV, Markdown (ScanReportExporter, CSV-Injection-Schutz)
 
@@ -112,6 +112,7 @@ Detaillierte Architektur und Komponenten-Beschreibungen: `docs/plans/2026-03-07-
 - [ ] Composer Plugin: `magicsunday/typo3-migration-check-plugin`
 
 ### v3.0 — Community-Plattform
+- [ ] Private Repository-Unterstützung (GitHub/GitLab Token-Authentifizierung)
 - [ ] Datenbank-Backend (Ergebnisse speichern, historisch vergleichen)
 - [ ] Benutzer-Accounts (eigene Extensions verwalten)
 - [ ] Generierte Matcher/Rules direkt als TYPO3 Core Patch oder typo3-rector PR einreichen
@@ -125,3 +126,4 @@ Detaillierte Architektur und Komponenten-Beschreibungen: `docs/plans/2026-03-07-
 - `docs/plans/2026-03-07-extension-scanner.md` — Extension-Scanner Plan
 - `docs/plans/2026-03-07-before-after-code-comparison.md` — Before/After Vergleich Plan
 - `docs/plans/2026-03-07-coverage-report.md` — Coverage-Report Plan
+- `docs/plans/2026-03-08-git-url-scan.md` — Git-URL-Scan Plan
