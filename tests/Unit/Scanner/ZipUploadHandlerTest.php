@@ -25,6 +25,7 @@ use ZipArchive;
 
 use function file_put_contents;
 use function is_dir;
+use function rmdir;
 use function sys_get_temp_dir;
 use function tempnam;
 use function unlink;
@@ -105,6 +106,27 @@ final class ZipUploadHandlerTest extends TestCase
         $this->handler->cleanup($extractedPath);
 
         self::assertDirectoryDoesNotExist($extractedPath);
+    }
+
+    #[Test]
+    public function extractRejectsZipWithPathTraversal(): void
+    {
+        $zipPath = tempnam(sys_get_temp_dir(), 'traversal-zip-') . '.zip';
+        $zip     = new ZipArchive();
+        $zip->open($zipPath, ZipArchive::CREATE);
+        $zip->addFromString('../../../etc/evil.php', '<?php evil();');
+        $zip->close();
+
+        $file = new UploadedFile($zipPath, 'evil.zip', 'application/zip', null, true);
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('invalid path entries');
+
+        try {
+            $this->handler->extract($file);
+        } finally {
+            unlink($zipPath);
+        }
     }
 
     #[Test]

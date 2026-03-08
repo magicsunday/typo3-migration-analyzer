@@ -24,6 +24,7 @@ use function mb_strtolower;
 use function mkdir;
 use function rmdir;
 use function sprintf;
+use function str_contains;
 use function str_starts_with;
 use function uniqid;
 use function unlink;
@@ -74,6 +75,20 @@ final readonly class ZipUploadHandler
             $this->removeDirectory($extractDir);
 
             throw new RuntimeException('Failed to open ZIP file.');
+        }
+
+        // Validate all entries to prevent path traversal attacks
+        for ($i = 0; $i < $zip->numFiles; ++$i) {
+            $entryName = $zip->getNameIndex($i);
+
+            if ($entryName === false || str_contains($entryName, '..')) {
+                $zip->close();
+                $this->removeDirectory($extractDir);
+
+                throw new InvalidArgumentException(
+                    'ZIP file contains invalid path entries.',
+                );
+            }
         }
 
         $zip->extractTo($extractDir);
