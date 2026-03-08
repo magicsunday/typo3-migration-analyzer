@@ -60,8 +60,13 @@ use function trim;
 /**
  * Scans PHP files of a TYPO3 extension against the TYPO3 Extension Scanner matchers.
  */
-final class ExtensionScanner
+final readonly class ExtensionScanner
 {
+    public function __construct(
+        private CodeContextReader $contextReader = new CodeContextReader(),
+    ) {
+    }
+
     /**
      * Mapping of matcher class names to their configuration file names.
      *
@@ -181,6 +186,7 @@ final class ExtensionScanner
                     indicator: $match['indicator'],
                     lineContent: $this->getLineFromFile($absoluteFilePath, $match['line']),
                     restFiles: $match['restFiles'] ?? [],
+                    contextLines: $this->contextReader->readContext($absoluteFilePath, $match['line']),
                 );
             }
         }

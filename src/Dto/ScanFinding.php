@@ -17,7 +17,8 @@ namespace App\Dto;
 final readonly class ScanFinding
 {
     /**
-     * @param list<string> $restFiles RST filenames associated with this finding
+     * @param list<string>      $restFiles    RST filenames associated with this finding
+     * @param list<ContextLine> $contextLines Source code lines surrounding the finding
      */
     public function __construct(
         public int $line,
@@ -25,6 +26,7 @@ final readonly class ScanFinding
         public string $indicator,
         public string $lineContent,
         public array $restFiles,
+        public array $contextLines = [],
     ) {
     }
 
