@@ -94,7 +94,7 @@ Detaillierte Architektur und Komponenten-Beschreibungen: `docs/plans/2026-03-07-
 - [x] Komplexitäts-Scoring pro Deprecation (Score 1-5, automatisierbar vs. manuell)
 
 ### v1.3 — Extension-Scanner als Service
-- [ ] ZIP-Upload (ZipUploadProvider, max 50MB, Validierung)
+- [x] ZIP-Upload (ZipUploadHandler, max 50MB, Validierung, Path-Traversal-Schutz)
 - [ ] Git-URL-Scan (GitRepositoryProvider, `git clone --depth 1`, Cleanup)
 - [ ] Erweiterter Findings-Report (Code-Kontext, Gruppierung, Zusammenfassung)
 - [ ] Export: JSON, CSV, Markdown
