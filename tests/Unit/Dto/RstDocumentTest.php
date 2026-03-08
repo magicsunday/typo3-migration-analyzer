@@ -27,7 +27,7 @@ final class RstDocumentTest extends TestCase
     {
         $codeReference = new CodeReference(
             className: GeneralUtility::class,
-            member: 'hmac',
+            member: 'fixPermissions',
             type: CodeReferenceType::StaticMethod,
         );
 

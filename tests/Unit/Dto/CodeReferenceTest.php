@@ -16,7 +16,7 @@ use App\Dto\CodeReferenceType;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use TYPO3\CMS\Core\Type\Enumeration;
+use TYPO3\CMS\Core\Resource\FileReference;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Extbase\Property\TypeConverter\AbstractTypeConverter;
 
@@ -25,11 +25,11 @@ final class CodeReferenceTest extends TestCase
     #[Test]
     public function fromPhpRoleParsesStaticMethod(): void
     {
-        $ref = CodeReference::fromPhpRole(GeneralUtility::class . '::hmac()');
+        $ref = CodeReference::fromPhpRole(GeneralUtility::class . '::fixPermissions()');
 
         self::assertNotNull($ref);
         self::assertSame(GeneralUtility::class, $ref->className);
-        self::assertSame('hmac', $ref->member);
+        self::assertSame('fixPermissions', $ref->member);
         self::assertSame(CodeReferenceType::StaticMethod, $ref->type);
     }
 
@@ -47,10 +47,10 @@ final class CodeReferenceTest extends TestCase
     #[Test]
     public function fromPhpRoleParsesClassName(): void
     {
-        $ref = CodeReference::fromPhpRole(Enumeration::class);
+        $ref = CodeReference::fromPhpRole(FileReference::class);
 
         self::assertNotNull($ref);
-        self::assertSame(Enumeration::class, $ref->className);
+        self::assertSame(FileReference::class, $ref->className);
         self::assertNull($ref->member);
         self::assertSame(CodeReferenceType::ClassName, $ref->type);
     }
@@ -92,11 +92,11 @@ final class CodeReferenceTest extends TestCase
     #[Test]
     public function fromPhpRoleStripsLeadingBackslash(): void
     {
-        $ref = CodeReference::fromPhpRole(GeneralUtility::class . '::hmac()');
+        $ref = CodeReference::fromPhpRole(GeneralUtility::class . '::fixPermissions()');
 
         self::assertNotNull($ref);
         self::assertSame(GeneralUtility::class, $ref->className);
-        self::assertSame('hmac', $ref->member);
+        self::assertSame('fixPermissions', $ref->member);
         self::assertSame(CodeReferenceType::StaticMethod, $ref->type);
     }
 

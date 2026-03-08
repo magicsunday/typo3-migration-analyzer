@@ -9,13 +9,12 @@
 
 namespace TestExtension\Classes;
 
-use TYPO3\CMS\Core\Type\Enumeration;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 
 class DeprecatedUsage
 {
     public function doSomething(): void
     {
-        GeneralUtility::makeInstance(Enumeration::class);
+        GeneralUtility::_GP('test');
     }
 }

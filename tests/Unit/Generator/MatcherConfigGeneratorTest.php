@@ -91,7 +91,7 @@ final class MatcherConfigGeneratorTest extends TestCase
             codeReferences: [
                 new CodeReference(
                     className: GeneralUtility::class,
-                    member: 'hmac',
+                    member: 'fixPermissions',
                     type: CodeReferenceType::StaticMethod,
                 ),
             ],
@@ -100,7 +100,7 @@ final class MatcherConfigGeneratorTest extends TestCase
         $entries = $this->generator->generate($document);
 
         self::assertCount(1, $entries);
-        self::assertSame(GeneralUtility::class . '::hmac', $entries[0]->identifier);
+        self::assertSame(GeneralUtility::class . '::fixPermissions', $entries[0]->identifier);
         self::assertSame(MatcherType::MethodCallStatic, $entries[0]->matcherType);
         self::assertSame(['Deprecation-34567-StaticMethodRemoved.rst'], $entries[0]->restFiles);
         self::assertSame([
@@ -336,11 +336,11 @@ final class MatcherConfigGeneratorTest extends TestCase
     public function generateDetectsArgumentsViaReflectionFallback(): void
     {
         $document = $this->createDocument(
-            filename: 'Deprecation-33333-HmacRemoved.rst',
+            filename: 'Deprecation-33333-FixPermissionsRemoved.rst',
             codeReferences: [
                 new CodeReference(
                     className: GeneralUtility::class,
-                    member: 'hmac',
+                    member: 'fixPermissions',
                     type: CodeReferenceType::StaticMethod,
                 ),
             ],

@@ -232,7 +232,7 @@ final class ArgumentSignatureAnalyzerTest extends TestCase
     {
         $result = $this->analyzer->analyzeWithReflection(
             GeneralUtility::class,
-            'hmac',
+            'fixPermissions',
         );
 
         self::assertInstanceOf(ArgumentCount::class, $result);

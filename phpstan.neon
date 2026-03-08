@@ -16,3 +16,4 @@ parameters:
 
     excludePaths:
         - %currentWorkingDirectory%/.build/
+        - %currentWorkingDirectory%/tests/Fixtures/Extension/
