@@ -23,19 +23,55 @@
 {% endfor %}
 
 <div class="card border-0 shadow-sm">
+    <div class="card-header bg-transparent">
+        <ul class="nav nav-tabs card-header-tabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="path-tab" data-bs-toggle="tab"
+                        data-bs-target="#path-pane" type="button" role="tab"
+                        aria-controls="path-pane" aria-selected="true">
+                    <i class="bi bi-folder2-open me-1"></i>Server-Pfad
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="upload-tab" data-bs-toggle="tab"
+                        data-bs-target="#upload-pane" type="button" role="tab"
+                        aria-controls="upload-pane" aria-selected="false">
+                    <i class="bi bi-upload me-1"></i>ZIP-Upload
+                </button>
+            </li>
+        </ul>
+    </div>
     <div class="card-body">
-        <form method="post" action="{{ path('scan_run') }}">
-            <div class="mb-3">
-                <label for="extension_path" class="form-label">Pfad zur Extension</label>
-                <input type="text" class="form-control" id="extension_path" name="extension_path"
-                       placeholder="/var/www/html/packages/my_extension"
-                       required>
-                <div class="form-text">Absoluter Pfad zum Verzeichnis der TYPO3-Extension auf dem Server.</div>
+        <div class="tab-content">
+            <div class="tab-pane fade show active" id="path-pane" role="tabpanel" aria-labelledby="path-tab">
+                <form method="post" action="{{ path('scan_run') }}">
+                    <div class="mb-3">
+                        <label for="extension_path" class="form-label">Pfad zur Extension</label>
+                        <input type="text" class="form-control" id="extension_path" name="extension_path"
+                               placeholder="/var/www/html/packages/my_extension"
+                               required>
+                        <div class="form-text">Absoluter Pfad zum Verzeichnis der TYPO3-Extension auf dem Server.</div>
+                    </div>
+                    <button type="submit" class="btn btn-typo3">
+                        <i class="bi bi-play-circle me-1"></i>Scan starten
+                    </button>
+                </form>
             </div>
-            <button type="submit" class="btn btn-typo3">
-                <i class="bi bi-play-circle me-1"></i>Scan starten
-            </button>
-        </form>
+            <div class="tab-pane fade" id="upload-pane" role="tabpanel" aria-labelledby="upload-tab">
+                <form method="post" action="{{ path('scan_upload') }}" enctype="multipart/form-data">
+                    <div class="mb-3">
+                        <label for="extension_zip" class="form-label">ZIP-Datei der Extension</label>
+                        <input type="file" class="form-control" id="extension_zip" name="extension_zip"
+                               accept=".zip"
+                               required>
+                        <div class="form-text">ZIP-Datei der TYPO3-Extension (max. 50 MB). Die Datei wird temporär entpackt und nach dem Scan automatisch gelöscht.</div>
+                    </div>
+                    <button type="submit" class="btn btn-typo3">
+                        <i class="bi bi-upload me-1"></i>Hochladen und scannen
+                    </button>
+                </form>
+            </div>
+        </div>
     </div>
 </div>
 {% endblock %}
