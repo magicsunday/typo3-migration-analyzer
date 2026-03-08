@@ -34,7 +34,7 @@ final class RstDocumentTest extends TestCase
         $document = new RstDocument(
             type: DocumentType::Deprecation,
             issueId: 98765,
-            title: 'Deprecation: #98765 - Some feature deprecated',
+            title: 'Some feature deprecated',
             version: '13.0',
             description: 'Some feature has been deprecated.',
             impact: 'Using the old API will trigger a deprecation warning.',
@@ -47,7 +47,7 @@ final class RstDocumentTest extends TestCase
 
         self::assertSame(DocumentType::Deprecation, $document->type);
         self::assertSame(98765, $document->issueId);
-        self::assertSame('Deprecation: #98765 - Some feature deprecated', $document->title);
+        self::assertSame('Some feature deprecated', $document->title);
         self::assertSame('13.0', $document->version);
         self::assertSame('Some feature has been deprecated.', $document->description);
         self::assertSame('Using the old API will trigger a deprecation warning.', $document->impact);

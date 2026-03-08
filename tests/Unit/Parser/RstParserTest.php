@@ -44,7 +44,7 @@ final class RstParserTest extends TestCase
 
         self::assertSame(DocumentType::Deprecation, $document->type);
         self::assertSame(99999, $document->issueId);
-        self::assertSame('Deprecation: #99999 - Test method has been deprecated', $document->title);
+        self::assertSame('Test method has been deprecated', $document->title);
         self::assertSame('13.0', $document->version);
         self::assertSame(ScanStatus::FullyScanned, $document->scanStatus);
         self::assertSame('Deprecation-99999-TestDeprecation.rst', $document->filename);
@@ -121,7 +121,7 @@ final class RstParserTest extends TestCase
 
         self::assertSame(DocumentType::Breaking, $document->type);
         self::assertSame(88888, $document->issueId);
-        self::assertSame('Breaking: #88888 - Test class has been removed', $document->title);
+        self::assertSame('Test class has been removed', $document->title);
         self::assertSame('12.0', $document->version);
         self::assertSame(ScanStatus::NotScanned, $document->scanStatus);
         self::assertSame('Breaking-88888-TestBreaking.rst', $document->filename);

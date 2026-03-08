@@ -108,8 +108,8 @@ final readonly class RstParser
 
     private function extractTitle(string $content): string
     {
-        if (preg_match('/^(Deprecation|Breaking|Feature|Important):\s+#\d+\s*-\s+(.+)$/m', $content, $matches) === 1) {
-            return $matches[0];
+        if (preg_match('/^(?:Deprecation|Breaking|Feature|Important):\s+#\d+\s*-\s+(.+)$/m', $content, $matches) === 1) {
+            return $matches[1];
         }
 
         throw new RuntimeException('No title found in document');
