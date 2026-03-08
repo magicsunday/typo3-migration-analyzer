@@ -84,7 +84,7 @@
                                 {% for path in migrationPaths %}
                                 <li>
                                     <a class="dropdown-item {{ path.sourceVersion == versionRange.sourceVersion and path.targetVersion == versionRange.targetVersion ? 'active' : '' }}"
-                                       href="?migration_source={{ path.sourceVersion }}&migration_target={{ path.targetVersion }}">
+                                       href="{{ path(app.request.attributes.get('_route'), {migration_source: path.sourceVersion, migration_target: path.targetVersion}) }}">
                                         {{ path.label }}
                                     </a>
                                 </li>

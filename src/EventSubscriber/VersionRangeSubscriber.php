@@ -13,6 +13,7 @@ namespace App\EventSubscriber;
 
 use App\Dto\VersionRange;
 use App\Service\DocumentService;
+use InvalidArgumentException;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\HttpKernel\Event\ControllerEvent;
 use Symfony\Component\HttpKernel\KernelEvents;
@@ -85,9 +86,13 @@ final readonly class VersionRangeSubscriber implements EventSubscriberInterface
             && is_int($stored['source'])
             && is_int($stored['target'])
         ) {
-            $this->documentService->setVersionRange(
-                new VersionRange($stored['source'], $stored['target']),
-            );
+            try {
+                $this->documentService->setVersionRange(
+                    new VersionRange($stored['source'], $stored['target']),
+                );
+            } catch (InvalidArgumentException) {
+                $session->remove(self::SESSION_KEY);
+            }
         }
     }
 }

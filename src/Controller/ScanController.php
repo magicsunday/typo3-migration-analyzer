@@ -16,6 +16,8 @@ use App\Scanner\ExtensionScanner;
 use App\Scanner\GitRepositoryHandler;
 use App\Scanner\ScanReportExporter;
 use App\Scanner\ZipUploadHandler;
+use App\Service\DocumentService;
+use App\Service\VersionRangeProvider;
 use InvalidArgumentException;
 use RuntimeException;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -36,13 +38,18 @@ final class ScanController extends AbstractController
 
     public function __construct(
         private readonly ExtensionScanner $scanner,
+        private readonly DocumentService $documentService,
+        private readonly VersionRangeProvider $versionRangeProvider,
     ) {
     }
 
     #[Route('/scan', name: 'scan_index')]
     public function index(): Response
     {
-        return $this->render('scan/index.html.twig');
+        return $this->render('scan/index.html.twig', [
+            'versionRange'   => $this->documentService->getVersionRange(),
+            'migrationPaths' => $this->versionRangeProvider->getMigrationPaths(),
+        ]);
     }
 
     #[Route('/scan/run', name: 'scan_run', methods: ['POST'])]
@@ -61,7 +68,9 @@ final class ScanController extends AbstractController
         $this->storeScanResult($request, $result, $extensionPath);
 
         return $this->render('scan/result.html.twig', [
-            'result' => $result,
+            'result'         => $result,
+            'versionRange'   => $this->documentService->getVersionRange(),
+            'migrationPaths' => $this->versionRangeProvider->getMigrationPaths(),
         ]);
     }
 
@@ -97,7 +106,9 @@ final class ScanController extends AbstractController
         }
 
         return $this->render('scan/result.html.twig', [
-            'result' => $result,
+            'result'         => $result,
+            'versionRange'   => $this->documentService->getVersionRange(),
+            'migrationPaths' => $this->versionRangeProvider->getMigrationPaths(),
         ]);
     }
 
@@ -144,7 +155,9 @@ final class ScanController extends AbstractController
         }
 
         return $this->render('scan/result.html.twig', [
-            'result' => $result,
+            'result'         => $result,
+            'versionRange'   => $this->documentService->getVersionRange(),
+            'migrationPaths' => $this->versionRangeProvider->getMigrationPaths(),
         ]);
     }
 
