@@ -21,6 +21,7 @@ use function array_any;
 use function ltrim;
 use function mb_strtolower;
 use function str_contains;
+use function trim;
 
 /**
  * Scores the complexity of migrating a deprecated/breaking RST document.
@@ -30,6 +31,37 @@ use function str_contains;
  */
 final readonly class ComplexityScorer
 {
+    /**
+     * Keywords indicating a clear, actionable replacement exists in the migration text.
+     */
+    private const array REPLACEMENT_KEYWORDS = [
+        'replace',
+        'rename',
+        'migrate to',
+        'switch to',
+        'use instead',
+        'use the',
+        'can be removed',
+        'not needed anymore',
+        'should now use',
+        'has been renamed',
+        'has been replaced',
+        'has been moved',
+    ];
+
+    /**
+     * Keywords indicating no replacement exists — confirms Score 5.
+     */
+    private const array NO_REPLACEMENT_KEYWORDS = [
+        'no direct replacement',
+        'no replacement',
+        'manual review',
+        'has been removed without replacement',
+        'without substitute',
+        'must be reworked',
+        'no migration path',
+    ];
+
     public function __construct(
         private MigrationMappingExtractor $extractor,
     ) {
@@ -72,8 +104,35 @@ final readonly class ComplexityScorer
             return new ComplexityScore(3, 'Code references without mapping', false);
         }
 
-        // Rule 7: No migration text or no code references at all (score 5)
-        return new ComplexityScore(5, 'Architecture change without clear replacement', false);
+        $migrationText = $document->migration ?? '';
+
+        // Rule 7: Explicitly states no replacement (score 5)
+        if ($migrationText !== '' && $this->hasNoReplacementStatement($migrationText)) {
+            return new ComplexityScore(5, 'No replacement available', false);
+        }
+
+        // Rule 8: Clear replacement keywords + code blocks (score 2)
+        if ($migrationText !== '' && $this->hasClearReplacementInstructions($migrationText) && $document->codeBlocks !== []) {
+            return new ComplexityScore(2, 'Replacement with code example', false);
+        }
+
+        // Rule 9: Clear replacement keywords without code blocks (score 3)
+        if ($migrationText !== '' && $this->hasClearReplacementInstructions($migrationText)) {
+            return new ComplexityScore(3, 'Replacement described in prose', false);
+        }
+
+        // Rule 10: Has code blocks but no replacement keywords (score 3)
+        if ($migrationText !== '' && $document->codeBlocks !== []) {
+            return new ComplexityScore(3, 'Code examples without clear mapping', false);
+        }
+
+        // Rule 11: Has migration text but nothing actionable (score 4)
+        if ($migrationText !== '' && trim($migrationText) !== '') {
+            return new ComplexityScore(4, 'Migration guidance without clear replacement', false);
+        }
+
+        // Rule 12: No migration text at all (score 5)
+        return new ComplexityScore(5, 'No migration guidance', false);
     }
 
     /**
@@ -158,6 +217,32 @@ final readonly class ComplexityScorer
             $document->codeReferences,
             static fn (CodeReference $ref): bool => $ref->type === CodeReferenceType::InstanceMethod
                 || $ref->type === CodeReferenceType::StaticMethod,
+        );
+    }
+
+    /**
+     * Check if the migration text contains clear replacement instructions.
+     */
+    private function hasClearReplacementInstructions(string $migrationText): bool
+    {
+        $lower = mb_strtolower($migrationText);
+
+        return array_any(
+            self::REPLACEMENT_KEYWORDS,
+            static fn (string $keyword): bool => str_contains($lower, $keyword),
+        );
+    }
+
+    /**
+     * Check if the migration text explicitly states there is no replacement.
+     */
+    private function hasNoReplacementStatement(string $migrationText): bool
+    {
+        $lower = mb_strtolower($migrationText);
+
+        return array_any(
+            self::NO_REPLACEMENT_KEYWORDS,
+            static fn (string $keyword): bool => str_contains($lower, $keyword),
         );
     }
 

@@ -141,7 +141,7 @@ final class ComplexityScorerTest extends TestCase
 
         $result = $this->scorer->score($doc);
 
-        self::assertSame(5, $result->score);
+        self::assertSame(4, $result->score);
         self::assertFalse($result->automatable);
     }
 
@@ -174,6 +174,134 @@ final class ComplexityScorerTest extends TestCase
         // Property changes with mappings are simple renames
         self::assertSame(1, $result->score);
         self::assertTrue($result->automatable);
+    }
+
+    #[Test]
+    public function scoreMigrationWithReplaceKeywordAndCodeBlocks(): void
+    {
+        $doc = $this->createDocument(
+            migration: 'Replace `templatePathAndFilename` with the `templateName` and `templateRootPaths` options.',
+            codeBlocks: [
+                new CodeBlock('yaml', "templateName: 'MyTemplate'", null),
+            ],
+        );
+
+        $result = $this->scorer->score($doc);
+
+        self::assertSame(2, $result->score);
+        self::assertFalse($result->automatable);
+    }
+
+    #[Test]
+    public function scoreMigrationWithUseInsteadKeyword(): void
+    {
+        $doc = $this->createDocument(
+            migration: 'Use the already available icon identifiers from TYPO3.Icons instead.',
+        );
+
+        $result = $this->scorer->score($doc);
+
+        self::assertSame(3, $result->score);
+        self::assertFalse($result->automatable);
+    }
+
+    #[Test]
+    public function scoreMigrationWithCodeBlocksButNoRefs(): void
+    {
+        $doc = $this->createDocument(
+            migration: 'Extensions registering custom Content Objects should now use the service configuration.',
+            codeBlocks: [
+                new CodeBlock('yaml', "services:\n  MyVendor\\MyExt:", null),
+                new CodeBlock('yaml', "services:\n  MyVendor\\MyExt:", 'After'),
+            ],
+        );
+
+        $result = $this->scorer->score($doc);
+
+        self::assertSame(2, $result->score);
+        self::assertFalse($result->automatable);
+    }
+
+    #[Test]
+    public function scoreMigrationWithJustRemoveInstruction(): void
+    {
+        $doc = $this->createDocument(
+            migration: 'Calling this method is not needed anymore and can be removed from the affected code.',
+        );
+
+        $result = $this->scorer->score($doc);
+
+        self::assertSame(3, $result->score);
+        self::assertFalse($result->automatable);
+    }
+
+    #[Test]
+    public function scoreMigrationWithNoReplacementKeyword(): void
+    {
+        $doc = $this->createDocument(
+            migration: 'There is no direct replacement. Manual review of your architecture is required.',
+        );
+
+        $result = $this->scorer->score($doc);
+
+        self::assertSame(5, $result->score);
+        self::assertFalse($result->automatable);
+    }
+
+    #[Test]
+    public function scoreMigrationWithRenameKeyword(): void
+    {
+        $doc = $this->createDocument(
+            migration: 'Rename the files to `ext_typoscript_setup.typoscript` and `ext_typoscript_constants.typoscript`.',
+        );
+
+        $result = $this->scorer->score($doc);
+
+        self::assertSame(3, $result->score);
+        self::assertFalse($result->automatable);
+    }
+
+    #[Test]
+    public function scoreMappingsWithoutCodeReferences(): void
+    {
+        $doc = $this->createDocument(
+            migration: 'Replace :php:`\TYPO3\CMS\Core\OldClass` with :php:`\TYPO3\CMS\Core\NewClass`.',
+            codeReferences: [],
+        );
+
+        $result = $this->scorer->score($doc);
+
+        self::assertSame(1, $result->score);
+        self::assertTrue($result->automatable);
+    }
+
+    #[Test]
+    public function scoreMigrationTextWithSwitchToKeyword(): void
+    {
+        $doc = $this->createDocument(
+            migration: 'Switch to the new PageRenderer API for adding JavaScript modules.',
+        );
+
+        $result = $this->scorer->score($doc);
+
+        self::assertSame(3, $result->score);
+        self::assertFalse($result->automatable);
+    }
+
+    #[Test]
+    public function scoreMigrationTextWithMigrateToKeyword(): void
+    {
+        $doc = $this->createDocument(
+            migration: 'Migrate to the new content element registration via TCA.',
+            codeBlocks: [
+                new CodeBlock('php', '$GLOBALS["TCA"]["tt_content"]["types"]["my_type"] = [...]', 'After'),
+            ],
+        );
+
+        $result = $this->scorer->score($doc);
+
+        self::assertSame(2, $result->score);
+        self::assertFalse($result->automatable);
     }
 
     /**
