@@ -70,40 +70,58 @@ php -S localhost:8000 -t public/
 
 ## Roadmap
 
-### v1.1 — Rector + Extension-Scan
-- Rector-Rule-Skeleton-Generator
-- Eigene Extension scannen (Upload oder Pfad-Angabe)
+Detaillierte Architektur und Komponenten-Beschreibungen: `docs/plans/2026-03-07-roadmap-v1.1-v2.1-design.md`
+
+### v1.0 — Grundfunktionalität (fertig)
+- RST-Parser, Matcher-Config-Parser, RstFileLocator
+- Dashboard mit Coverage-Übersicht + Stat Cards
+- Deprecation-Liste mit Suche/Filter + Detailansicht
+- Matcher-Analyse + Generator (Configs generieren + ZIP-Export)
+- DocumentService mit Caching
+- Docker-Setup (PHP-FPM + Nginx + Traefik)
+- CI-Toolchain (PHPStan, PHP-CS-Fixer, Rector, PHPUnit, jscpd)
+
+### v1.1 — Rector + Extension-Scan + Visualisierung (~90% fertig)
+- [x] Rector-Rule-Skeleton-Generator (Config + Skeleton + UI-Tabs + Export)
+- [x] Migrations-Mapping-Extractor (Alt->Neu Paare aus RST, 4 Patterns, Confidence)
+- [x] Extension-Scanner mit Pfad-Eingabe (21 TYPO3-Matcher, JSON-Export)
+- [x] Before/After Code-Vergleich mit Syntax-Highlighting (highlight.js)
+- [x] Coverage-Report (Breakdowns nach Version, Typ, Scan-Status, Matcher-Typ)
+- [ ] Extension-Scanner: ZIP-Upload Support
 
 ### v1.2 — Intelligentere Analyse
-- Argument-Erkennung aus RST-Code-Blöcken (korrekte numberOfMandatoryArguments)
-- Migrations-Mapping: Alt->Neu Zuordnung parsen ("Replace X with Y")
-- Komplexitäts-Scoring pro Deprecation (einfach automatisierbar vs. manuell)
+- [x] Migrations-Mapping: Alt->Neu Zuordnung parsen (bereits in v1.1 umgesetzt)
+- [ ] Argument-Erkennung aus RST-Code-Blöcken (korrekte numberOfMandatoryArguments/maximumNumberOfArguments)
+- [ ] Komplexitäts-Scoring pro Deprecation (Score 1-5, automatisierbar vs. manuell)
 
 ### v1.3 — Extension-Scanner als Service
-- Extension hochladen/scannen (ZIP oder Git-URL)
-  - GitHub/GitLab Repository-URLs akzeptieren (öffentlich + privat via Token)
-  - `git clone --depth 1` in temporäres Verzeichnis, scannen, aufräumen
-  - URL-Validierung und Fehlerbehandlung (nicht erreichbar, kein TYPO3-Extension-Layout)
-- Findings-Report mit Datei + Zeilennummer
-- Export als JSON/CSV für Projektmanagement
+- [ ] ZIP-Upload (ZipUploadProvider, max 50MB, Validierung)
+- [ ] Git-URL-Scan (GitRepositoryProvider, `git clone --depth 1`, Cleanup)
+- [ ] Erweiterter Findings-Report (Code-Kontext, Gruppierung, Zusammenfassung)
+- [ ] Export: JSON, CSV, Markdown
 
 ### v2.0 — Multi-Version + Rector-Integration
-- Beliebige TYPO3-Versionen (9->10, 10->11, 11->12, 12->13)
-- Lauffähige Rector-Rules generieren (Rename Class/Method, Remove Argument)
-- Rector-Config-Export (komplette rector.php)
-- Diff gegen ssch/typo3-rector (was existiert schon, was fehlt)
+- [ ] Multi-Version Support (Versions-Bereich konfigurierbar, 9->10 bis 12->13)
+- [ ] Lauffähige Rector-Rules generieren (komplette Rule-Klassen mit Tests)
+- [ ] Rector-Config-Export (komplett, basierend auf Scan-Ergebnissen)
+- [ ] Diff gegen ssch/typo3-rector (Abdeckung vergleichen, fehlende Rules identifizieren)
 
 ### v2.1 — CI/CD Integration
-- CLI-Modus: `bin/console analyze:extension /path/to/ext`
-- GitHub Action für automatische Extension-Analyse bei PRs
-- Composer Plugin: `composer typo3:migration-check`
+- [ ] CLI-Modus: `bin/console scan:extension`, `report:coverage`, `generate:matcher`, `generate:rector`
+- [ ] GitHub Action: `magicsunday/typo3-migration-check-action`
+- [ ] Composer Plugin: `magicsunday/typo3-migration-check-plugin`
 
 ### v3.0 — Community-Plattform
-- Datenbank-Backend (Ergebnisse speichern, historisch vergleichen)
-- Benutzer-Accounts (eigene Extensions verwalten)
-- Generierte Matcher/Rules direkt als TYPO3 Core Patch oder typo3-rector PR einreichen
-- Crowd-Validierung generierter Rules
+- [ ] Datenbank-Backend (Ergebnisse speichern, historisch vergleichen)
+- [ ] Benutzer-Accounts (eigene Extensions verwalten)
+- [ ] Generierte Matcher/Rules direkt als TYPO3 Core Patch oder typo3-rector PR einreichen
+- [ ] Crowd-Validierung generierter Rules
 
 ## Design + Plan
-- `docs/plans/2026-03-07-typo3-migration-analyzer-design.md`
-- `docs/plans/2026-03-07-typo3-migration-analyzer-implementation.md`
+- `docs/plans/2026-03-07-typo3-migration-analyzer-design.md` — Gesamtarchitektur
+- `docs/plans/2026-03-07-typo3-migration-analyzer-implementation.md` — Implementierungsplan v1.0
+- `docs/plans/2026-03-07-roadmap-v1.1-v2.1-design.md` — Detaillierte Roadmap v1.1-v2.1
+- `docs/plans/2026-03-07-rector-rule-skeleton-generator.md` — Rector-Generator Plan
+- `docs/plans/2026-03-07-extension-scanner.md` — Extension-Scanner Plan
+- `docs/plans/2026-03-07-before-after-code-comparison.md` — Before/After Vergleich Plan
+- `docs/plans/2026-03-07-coverage-report.md` — Coverage-Report Plan
