@@ -13,9 +13,12 @@ namespace App\Dto;
 
 enum CodeReferenceType: string
 {
-    case ClassName      = 'class_name';
-    case InstanceMethod = 'instance_method';
-    case StaticMethod   = 'static_method';
-    case Property       = 'property';
-    case ClassConstant  = 'class_constant';
+    case ClassName         = 'class_name';
+    case ShortClassName    = 'short_class_name';
+    case InstanceMethod    = 'instance_method';
+    case StaticMethod      = 'static_method';
+    case UnqualifiedMethod = 'unqualified_method';
+    case Property          = 'property';
+    case ClassConstant     = 'class_constant';
+    case ConfigKey         = 'config_key';
 }

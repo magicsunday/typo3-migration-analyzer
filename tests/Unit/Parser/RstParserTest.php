@@ -68,8 +68,8 @@ final class RstParserTest extends TestCase
         // - TYPO3\CMS\Core\Utility\TestUtility::oldMethod() (static method, appears 3x but deduplicated)
         // - TYPO3\CMS\Core\Utility\NewUtility::newMethod() (static method, appears 2x but deduplicated)
         // - TYPO3\CMS\Core\OldClass (class name)
-        // Note: E_USER_DEPRECATED is not a FQCN, so it's excluded
-        self::assertCount(3, $document->codeReferences);
+        // - E_USER_DEPRECATED (unqualified constant, low confidence)
+        self::assertCount(4, $document->codeReferences);
 
         $classNames = array_map(
             static fn (CodeReference $ref): string => $ref->className,

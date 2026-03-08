@@ -78,15 +78,27 @@ final class CodeReferenceTest extends TestCase
     }
 
     #[Test]
-    public function fromPhpRoleReturnsNullForPlainFunctionName(): void
+    public function fromPhpRoleParsesPlainFunctionNameAsUnqualifiedMethod(): void
     {
-        self::assertNull(CodeReference::fromPhpRole('file'));
+        $ref = CodeReference::fromPhpRole('file');
+
+        self::assertNotNull($ref);
+        self::assertSame('', $ref->className);
+        self::assertSame('file', $ref->member);
+        self::assertSame(CodeReferenceType::UnqualifiedMethod, $ref->type);
+        self::assertSame(0.3, $ref->resolutionConfidence);
     }
 
     #[Test]
-    public function fromPhpRoleReturnsNullForGlobalConstant(): void
+    public function fromPhpRoleParsesGlobalConstantAsClassConstant(): void
     {
-        self::assertNull(CodeReference::fromPhpRole('E_USER_DEPRECATED'));
+        $ref = CodeReference::fromPhpRole('E_USER_DEPRECATED');
+
+        self::assertNotNull($ref);
+        self::assertSame('', $ref->className);
+        self::assertSame('E_USER_DEPRECATED', $ref->member);
+        self::assertSame(CodeReferenceType::ClassConstant, $ref->type);
+        self::assertSame(0.6, $ref->resolutionConfidence);
     }
 
     #[Test]
@@ -101,9 +113,15 @@ final class CodeReferenceTest extends TestCase
     }
 
     #[Test]
-    public function fromPhpRoleReturnsNullForSingleSegmentNamespace(): void
+    public function fromPhpRoleParsesShortClassNameForSingleSegment(): void
     {
-        self::assertNull(CodeReference::fromPhpRole('GeneralUtility'));
+        $ref = CodeReference::fromPhpRole('GeneralUtility');
+
+        self::assertNotNull($ref);
+        self::assertSame('GeneralUtility', $ref->className);
+        self::assertNull($ref->member);
+        self::assertSame(CodeReferenceType::ShortClassName, $ref->type);
+        self::assertSame(0.7, $ref->resolutionConfidence);
     }
 
     #[Test]
@@ -163,5 +181,101 @@ final class CodeReferenceTest extends TestCase
     public function fromPhpRoleReturnsNullForOnlyBackslash(): void
     {
         self::assertNull(CodeReference::fromPhpRole('\\'));
+    }
+
+    #[Test]
+    public function fromPhpRoleSetsFullConfidenceForFqcn(): void
+    {
+        $ref = CodeReference::fromPhpRole(GeneralUtility::class . '::fixPermissions()');
+
+        self::assertNotNull($ref);
+        self::assertSame(1.0, $ref->resolutionConfidence);
+    }
+
+    #[Test]
+    public function fromPhpRoleParsesShortClassName(): void
+    {
+        $ref = CodeReference::fromPhpRole('ConfigurationView');
+
+        self::assertNotNull($ref);
+        self::assertSame('ConfigurationView', $ref->className);
+        self::assertNull($ref->member);
+        self::assertSame(CodeReferenceType::ShortClassName, $ref->type);
+        self::assertSame(0.7, $ref->resolutionConfidence);
+    }
+
+    #[Test]
+    public function fromPhpRoleParsesUnqualifiedMethod(): void
+    {
+        $ref = CodeReference::fromPhpRole('getIdentifier()');
+
+        self::assertNotNull($ref);
+        self::assertSame('', $ref->className);
+        self::assertSame('getIdentifier', $ref->member);
+        self::assertSame(CodeReferenceType::UnqualifiedMethod, $ref->type);
+        self::assertSame(0.5, $ref->resolutionConfidence);
+    }
+
+    #[Test]
+    public function fromPhpRoleParsesPropertyWithoutClass(): void
+    {
+        $ref = CodeReference::fromPhpRole('$sourceTypes');
+
+        self::assertNotNull($ref);
+        self::assertSame('', $ref->className);
+        self::assertSame('sourceTypes', $ref->member);
+        self::assertSame(CodeReferenceType::Property, $ref->type);
+        self::assertSame(0.6, $ref->resolutionConfidence);
+    }
+
+    #[Test]
+    public function fromPhpRoleParsesUnqualifiedConstant(): void
+    {
+        $ref = CodeReference::fromPhpRole('SOME_CONSTANT');
+
+        self::assertNotNull($ref);
+        self::assertSame('', $ref->className);
+        self::assertSame('SOME_CONSTANT', $ref->member);
+        self::assertSame(CodeReferenceType::ClassConstant, $ref->type);
+        self::assertSame(0.6, $ref->resolutionConfidence);
+    }
+
+    #[Test]
+    public function fromPhpRoleParsesConfigKey(): void
+    {
+        $ref = CodeReference::fromPhpRole('config.contentObjectExceptionHandler');
+
+        self::assertNotNull($ref);
+        self::assertSame('config.contentObjectExceptionHandler', $ref->className);
+        self::assertNull($ref->member);
+        self::assertSame(CodeReferenceType::ConfigKey, $ref->type);
+        self::assertSame(0.4, $ref->resolutionConfidence);
+    }
+
+    #[Test]
+    #[DataProvider('providePhpKeywords')]
+    public function fromPhpRoleReturnsNullForPhpKeywords(string $keyword): void
+    {
+        self::assertNull(CodeReference::fromPhpRole($keyword));
+    }
+
+    /**
+     * @return iterable<string, array{string}>
+     */
+    public static function providePhpKeywords(): iterable
+    {
+        yield 'true' => ['true'];
+        yield 'false' => ['false'];
+        yield 'null' => ['null'];
+        yield 'array' => ['array'];
+        yield 'mixed' => ['mixed'];
+        yield 'string' => ['string'];
+        yield 'int' => ['int'];
+        yield 'void' => ['void'];
+        yield 'self' => ['self'];
+        yield 'static' => ['static'];
+        yield 'parent' => ['parent'];
+        yield '@internal' => ['@internal'];
+        yield 'new' => ['new'];
     }
 }

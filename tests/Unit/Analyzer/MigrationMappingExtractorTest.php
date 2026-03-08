@@ -103,12 +103,18 @@ final class MigrationMappingExtractorTest extends TestCase
     }
 
     #[Test]
-    public function extractSkipsNonFqcnReferences(): void
+    public function extractParsesNonFqcnReferences(): void
     {
-        // References without namespace separator are not valid FQCNs
-        $text = 'Replace :php:`oldFunction()` with :php:`newFunction()`.';
+        // Non-FQCN references are now parsed with lower confidence
+        $text     = 'Replace :php:`oldFunction()` with :php:`newFunction()`.';
+        $mappings = $this->extractor->extract($text);
 
-        self::assertSame([], $this->extractor->extract($text));
+        self::assertCount(1, $mappings);
+        self::assertSame(CodeReferenceType::UnqualifiedMethod, $mappings[0]->source->type);
+        self::assertSame('oldFunction', $mappings[0]->source->member);
+        self::assertSame(CodeReferenceType::UnqualifiedMethod, $mappings[0]->target->type);
+        self::assertSame('newFunction', $mappings[0]->target->member);
+        self::assertSame(0.5, $mappings[0]->source->resolutionConfidence);
     }
 
     #[Test]

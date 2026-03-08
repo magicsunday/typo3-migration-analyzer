@@ -73,11 +73,14 @@ final readonly class MatcherConfigGenerator
     private function resolveMatcherType(CodeReference $codeReference): MatcherType
     {
         return match ($codeReference->type) {
-            CodeReferenceType::ClassName      => MatcherType::ClassName,
-            CodeReferenceType::InstanceMethod => MatcherType::MethodCall,
-            CodeReferenceType::StaticMethod   => MatcherType::MethodCallStatic,
-            CodeReferenceType::Property       => MatcherType::PropertyProtected,
-            CodeReferenceType::ClassConstant  => MatcherType::ClassConstant,
+            CodeReferenceType::ClassName,
+            CodeReferenceType::ShortClassName,
+            CodeReferenceType::ConfigKey         => MatcherType::ClassName,
+            CodeReferenceType::InstanceMethod    => MatcherType::MethodCall,
+            CodeReferenceType::StaticMethod      => MatcherType::MethodCallStatic,
+            CodeReferenceType::Property          => MatcherType::PropertyProtected,
+            CodeReferenceType::ClassConstant     => MatcherType::ClassConstant,
+            CodeReferenceType::UnqualifiedMethod => MatcherType::MethodCall,
         };
     }
 
@@ -89,10 +92,13 @@ final readonly class MatcherConfigGenerator
 
         return match ($codeReference->type) {
             CodeReferenceType::InstanceMethod,
+            CodeReferenceType::UnqualifiedMethod,
             CodeReferenceType::Property => $codeReference->className . '->' . $codeReference->member,
             CodeReferenceType::StaticMethod,
             CodeReferenceType::ClassConstant => $codeReference->className . '::' . $codeReference->member,
-            CodeReferenceType::ClassName     => $codeReference->className,
+            CodeReferenceType::ClassName,
+            CodeReferenceType::ShortClassName,
+            CodeReferenceType::ConfigKey => $codeReference->className,
         };
     }
 

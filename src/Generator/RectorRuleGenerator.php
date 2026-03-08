@@ -53,11 +53,14 @@ final readonly class RectorRuleGenerator
      * @var array<string, array{string, string}>
      */
     private const array NODE_TYPE_MAP = [
-        'class_name'      => ['Node\Name\FullyQualified', 'FullyQualified'],
-        'instance_method' => ['Node\Expr\MethodCall', 'MethodCall'],
-        'static_method'   => ['Node\Expr\StaticCall', 'StaticCall'],
-        'property'        => ['Node\Expr\PropertyFetch', 'PropertyFetch'],
-        'class_constant'  => ['Node\Expr\ClassConstFetch', 'ClassConstFetch'],
+        'class_name'         => ['Node\Name\FullyQualified', 'FullyQualified'],
+        'short_class_name'   => ['Node\Name\FullyQualified', 'FullyQualified'],
+        'instance_method'    => ['Node\Expr\MethodCall', 'MethodCall'],
+        'static_method'      => ['Node\Expr\StaticCall', 'StaticCall'],
+        'unqualified_method' => ['Node\Expr\MethodCall', 'MethodCall'],
+        'property'           => ['Node\Expr\PropertyFetch', 'PropertyFetch'],
+        'class_constant'     => ['Node\Expr\ClassConstFetch', 'ClassConstFetch'],
+        'config_key'         => ['Node\Name\FullyQualified', 'FullyQualified'],
     ];
 
     public function __construct(
