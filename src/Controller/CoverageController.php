@@ -26,9 +26,9 @@ final class CoverageController extends AbstractController
     public function index(DocumentService $documentService, VersionRangeProvider $versionRangeProvider): Response
     {
         return $this->render('coverage/index.html.twig', [
-            'coverage'       => $documentService->getCoverage(),
-            'versionRange'   => $documentService->getVersionRange(),
-            'migrationPaths' => $versionRangeProvider->getMigrationPaths(),
+            'coverage'      => $documentService->getCoverage(),
+            'versionRange'  => $documentService->getVersionRange(),
+            'majorVersions' => $versionRangeProvider->getAvailableMajorVersions(),
         ]);
     }
 }

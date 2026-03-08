@@ -74,23 +74,24 @@
                             {% endblock %}
                         </ol>
                     </nav>
-                    {% if migrationPaths is defined and migrationPaths|length > 1 %}
-                    <div class="ms-auto">
-                        <div class="dropdown">
-                            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                                <i class="bi bi-arrow-left-right me-1"></i>{{ versionRange.label }}
-                            </button>
-                            <ul class="dropdown-menu dropdown-menu-end">
-                                {% for path in migrationPaths %}
-                                <li>
-                                    <a class="dropdown-item {{ path.sourceVersion == versionRange.sourceVersion and path.targetVersion == versionRange.targetVersion ? 'active' : '' }}"
-                                       href="{{ path(app.request.attributes.get('_route'), {migration_source: path.sourceVersion, migration_target: path.targetVersion}) }}">
-                                        {{ path.label }}
-                                    </a>
-                                </li>
-                                {% endfor %}
-                            </ul>
-                        </div>
+                    {% if majorVersions is defined and majorVersions|length > 2 %}
+                    <div class="ms-auto d-flex align-items-center gap-2">
+                        <span class="text-muted small d-none d-md-inline">Migration:</span>
+                        <select id="migration-source" class="form-select form-select-sm" style="width: auto;" onchange="applyMigrationPath()">
+                            {% for v in majorVersions %}
+                                {% if not loop.last %}
+                                <option value="{{ v }}" {{ versionRange is defined and versionRange.sourceVersion == v ? 'selected' : '' }}>{{ v }}</option>
+                                {% endif %}
+                            {% endfor %}
+                        </select>
+                        <i class="bi bi-arrow-right text-muted"></i>
+                        <select id="migration-target" class="form-select form-select-sm" style="width: auto;" onchange="applyMigrationPath()">
+                            {% for v in majorVersions %}
+                                {% if not loop.first %}
+                                <option value="{{ v }}" {{ versionRange is defined and versionRange.targetVersion == v ? 'selected' : '' }}>{{ v }}</option>
+                                {% endif %}
+                            {% endfor %}
+                        </select>
                     </div>
                     {% endif %}
                 </div>
@@ -104,6 +105,14 @@
     </div>
 
     <script src="/js/sidebar.js"></script>
+    <script>
+    function applyMigrationPath() {
+        var source = document.getElementById('migration-source').value;
+        var target = document.getElementById('migration-target').value;
+        if (parseInt(source) >= parseInt(target)) { return; }
+        window.location.href = window.location.pathname + '?migration_source=' + source + '&migration_target=' + target;
+    }
+    </script>
     <script src="/libs/bootstrap/js/bootstrap.bundle.min.js"></script>
     <script src="/libs/highlightjs/highlight.min.js"></script>
     <script src="/libs/highlightjs/php.min.js"></script>

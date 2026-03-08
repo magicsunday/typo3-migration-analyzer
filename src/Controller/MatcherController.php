@@ -40,7 +40,7 @@ use const PATHINFO_FILENAME;
 
 final class MatcherController extends AbstractController
 {
-    private const array FILENAME_REQUIREMENT = ['filename' => '[A-Za-z0-9_\-]+\.rst'];
+    private const array FILENAME_REQUIREMENT = ['filename' => '[A-Za-z0-9_.\-]+\.rst'];
 
     public function __construct(
         private readonly DocumentService $documentService,
@@ -54,9 +54,9 @@ final class MatcherController extends AbstractController
     public function analysis(): Response
     {
         return $this->render('matcher/analysis.html.twig', [
-            'coverage'       => $this->documentService->getCoverage(),
-            'versionRange'   => $this->documentService->getVersionRange(),
-            'migrationPaths' => $this->versionRangeProvider->getMigrationPaths(),
+            'coverage'      => $this->documentService->getCoverage(),
+            'versionRange'  => $this->documentService->getVersionRange(),
+            'majorVersions' => $this->versionRangeProvider->getAvailableMajorVersions(),
         ]);
     }
 
@@ -78,7 +78,7 @@ final class MatcherController extends AbstractController
             'rectorSkeletonRules' => $rectorSkeletonRules,
             'rectorGenerator'     => $this->rectorGenerator,
             'versionRange'        => $this->documentService->getVersionRange(),
-            'migrationPaths'      => $this->versionRangeProvider->getMigrationPaths(),
+            'majorVersions'       => $this->versionRangeProvider->getAvailableMajorVersions(),
         ]);
     }
 

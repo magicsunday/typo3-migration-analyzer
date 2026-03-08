@@ -121,16 +121,16 @@ final class DeprecationController extends AbstractController
         $documents = array_values($documents);
 
         return $this->render('deprecation/list.html.twig', [
-            'documents'      => $documents,
-            'versions'       => $documentService->getVersions(),
-            'filters'        => $filters,
-            'scores'         => $scores,
-            'versionRange'   => $documentService->getVersionRange(),
-            'migrationPaths' => $versionRangeProvider->getMigrationPaths(),
+            'documents'     => $documents,
+            'versions'      => $documentService->getVersions(),
+            'filters'       => $filters,
+            'scores'        => $scores,
+            'versionRange'  => $documentService->getVersionRange(),
+            'majorVersions' => $versionRangeProvider->getAvailableMajorVersions(),
         ]);
     }
 
-    #[Route('/deprecations/{filename}', name: 'deprecation_detail', requirements: ['filename' => '[A-Za-z0-9_\-]+\.rst'])]
+    #[Route('/deprecations/{filename}', name: 'deprecation_detail', requirements: ['filename' => '[A-Za-z0-9_.\-]+\.rst'])]
     public function detail(
         string $filename,
         DocumentService $documentService,
@@ -145,11 +145,11 @@ final class DeprecationController extends AbstractController
         }
 
         return $this->render('deprecation/detail.html.twig', [
-            'doc'            => $doc,
-            'mappings'       => $extractor->extract($doc->migration),
-            'complexity'     => $complexityScorer->score($doc),
-            'versionRange'   => $documentService->getVersionRange(),
-            'migrationPaths' => $versionRangeProvider->getMigrationPaths(),
+            'doc'           => $doc,
+            'mappings'      => $extractor->extract($doc->migration),
+            'complexity'    => $complexityScorer->score($doc),
+            'versionRange'  => $documentService->getVersionRange(),
+            'majorVersions' => $versionRangeProvider->getAvailableMajorVersions(),
         ]);
     }
 }

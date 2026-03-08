@@ -40,7 +40,7 @@ final class DashboardController extends AbstractController
             'totalMatchers'     => $coverage->totalMatchers,
             'coverage'          => $coverage,
             'versionRange'      => $documentService->getVersionRange(),
-            'migrationPaths'    => $versionRangeProvider->getMigrationPaths(),
+            'majorVersions'     => $versionRangeProvider->getAvailableMajorVersions(),
         ]);
     }
 }

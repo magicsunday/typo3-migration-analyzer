@@ -47,8 +47,8 @@ final class ScanController extends AbstractController
     public function index(): Response
     {
         return $this->render('scan/index.html.twig', [
-            'versionRange'   => $this->documentService->getVersionRange(),
-            'migrationPaths' => $this->versionRangeProvider->getMigrationPaths(),
+            'versionRange'  => $this->documentService->getVersionRange(),
+            'majorVersions' => $this->versionRangeProvider->getAvailableMajorVersions(),
         ]);
     }
 
@@ -68,9 +68,9 @@ final class ScanController extends AbstractController
         $this->storeScanResult($request, $result, $extensionPath);
 
         return $this->render('scan/result.html.twig', [
-            'result'         => $result,
-            'versionRange'   => $this->documentService->getVersionRange(),
-            'migrationPaths' => $this->versionRangeProvider->getMigrationPaths(),
+            'result'        => $result,
+            'versionRange'  => $this->documentService->getVersionRange(),
+            'majorVersions' => $this->versionRangeProvider->getAvailableMajorVersions(),
         ]);
     }
 
@@ -106,9 +106,9 @@ final class ScanController extends AbstractController
         }
 
         return $this->render('scan/result.html.twig', [
-            'result'         => $result,
-            'versionRange'   => $this->documentService->getVersionRange(),
-            'migrationPaths' => $this->versionRangeProvider->getMigrationPaths(),
+            'result'        => $result,
+            'versionRange'  => $this->documentService->getVersionRange(),
+            'majorVersions' => $this->versionRangeProvider->getAvailableMajorVersions(),
         ]);
     }
 
@@ -155,9 +155,9 @@ final class ScanController extends AbstractController
         }
 
         return $this->render('scan/result.html.twig', [
-            'result'         => $result,
-            'versionRange'   => $this->documentService->getVersionRange(),
-            'migrationPaths' => $this->versionRangeProvider->getMigrationPaths(),
+            'result'        => $result,
+            'versionRange'  => $this->documentService->getVersionRange(),
+            'majorVersions' => $this->versionRangeProvider->getAvailableMajorVersions(),
         ]);
     }
 
