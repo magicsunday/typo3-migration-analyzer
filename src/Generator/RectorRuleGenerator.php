@@ -100,6 +100,10 @@ final readonly class RectorRuleGenerator
 
         // 2. Generate skeleton rules for code references without mappings
         foreach ($document->codeReferences as $ref) {
+            if ($ref->resolutionConfidence < 0.9) {
+                continue;
+            }
+
             $key = $this->buildRefKey($ref);
 
             if (isset($handledSourceKeys[$key])) {

@@ -389,6 +389,21 @@ final class RectorRuleGeneratorTest extends TestCase
         self::assertSame('ExtMakeToolbarDeprecatedRector', $this->generator->generateClassName($rule2));
     }
 
+    #[Test]
+    public function generateSkipsNonFqcnSkeletonRules(): void
+    {
+        $doc = $this->createDocument(
+            migration: 'There is no direct replacement.',
+            codeReferences: [
+                new CodeReference('', 'oldMethod', CodeReferenceType::UnqualifiedMethod, 0.5),
+            ],
+        );
+
+        $rules = $this->generator->generate($doc);
+
+        self::assertSame([], $rules);
+    }
+
     /**
      * @param list<CodeReference> $codeReferences
      */

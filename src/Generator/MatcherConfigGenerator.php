@@ -39,6 +39,10 @@ final readonly class MatcherConfigGenerator
         $entries = [];
 
         foreach ($document->codeReferences as $codeReference) {
+            if ($codeReference->resolutionConfidence < 0.9) {
+                continue;
+            }
+
             $matcherType      = $this->resolveMatcherType($codeReference);
             $identifier       = $this->buildIdentifier($codeReference);
             $additionalConfig = $this->buildAdditionalConfig($matcherType, $codeReference, $document);

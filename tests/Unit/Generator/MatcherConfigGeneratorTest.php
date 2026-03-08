@@ -355,6 +355,22 @@ final class MatcherConfigGeneratorTest extends TestCase
         ], $entries[0]->additionalConfig);
     }
 
+    #[Test]
+    public function generateSkipsNonFqcnReferences(): void
+    {
+        $document = $this->createDocument(
+            filename: 'Deprecation-99999-Test.rst',
+            codeReferences: [
+                new CodeReference('', 'oldMethod', CodeReferenceType::UnqualifiedMethod, 0.5),
+                new CodeReference('ConfigView', null, CodeReferenceType::ShortClassName, 0.7),
+            ],
+        );
+
+        $entries = $this->generator->generate($document);
+
+        self::assertSame([], $entries);
+    }
+
     /**
      * @param list<CodeReference> $codeReferences
      * @param list<CodeBlock>     $codeBlocks
