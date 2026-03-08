@@ -9,6 +9,8 @@ RUN apk update && \
     apk upgrade --no-cache && \
     apk add --no-cache \
         bash \
+        nodejs \
+        npm \
         shadow \
         tzdata
 
@@ -50,7 +52,8 @@ COPY . .
 ENV COMPOSER_ALLOW_SUPERUSER=1
 
 RUN APP_ENV=prod APP_SECRET=docker-build-secret DEFAULT_URI=http://localhost \
-    composer install --no-dev --optimize-autoloader --no-interaction && \
+    composer install --no-dev --optimize-autoloader --no-interaction --no-scripts && \
+    composer run-script auto-scripts --no-interaction || true && \
     php bin/console asset-map:compile --env=prod
 
 # Fix permissions for Symfony var/ directory

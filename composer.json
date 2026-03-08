@@ -135,7 +135,8 @@
             "@ci:test:php:cpd"
         ],
         "post-install-cmd": [
-            "@auto-scripts"
+            "@auto-scripts",
+            "npm install jscpd"
         ],
         "post-update-cmd": [
             "@auto-scripts",
