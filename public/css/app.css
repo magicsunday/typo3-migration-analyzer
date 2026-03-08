@@ -65,6 +65,12 @@
     font-size: 1.25rem;
 }
 
+.sidebar-is-collapsed .sidebar .sidebar-toggle,
+.sidebar.sidebar-collapsed .sidebar-toggle {
+    width: 100%;
+    text-align: center;
+}
+
 .sidebar-is-collapsed .sidebar hr,
 .sidebar.sidebar-collapsed hr {
     margin-left: 0;
