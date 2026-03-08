@@ -19,11 +19,14 @@ use SplFileInfo;
 use Symfony\Component\Process\Process;
 
 use function array_any;
+use function array_filter;
+use function array_values;
 use function count;
 use function explode;
 use function is_dir;
 use function mkdir;
 use function parse_url;
+use function preg_replace;
 use function realpath;
 use function rmdir;
 use function sprintf;
