@@ -13,11 +13,13 @@ namespace App\Analyzer;
 
 use App\Dto\CodeReference;
 use App\Dto\CodeReferenceType;
+use App\Dto\CodeBlock;
 use App\Dto\ComplexityScore;
 use App\Dto\MigrationMapping;
 use App\Dto\RstDocument;
 
 use function array_any;
+use function array_filter;
 use function ltrim;
 use function mb_strtolower;
 use function str_contains;
@@ -31,6 +33,8 @@ use function trim;
  */
 final readonly class ComplexityScorer
 {
+    private const float HIGH_CONFIDENCE_THRESHOLD = 0.95;
+
     /**
      * Keywords indicating a clear, actionable replacement exists in the migration text.
      */
@@ -84,31 +88,35 @@ final readonly class ComplexityScorer
 
         $mappings = $this->extractor->extract($document->migration);
 
-        // Rule 3: 1:1 rename mapping exists for all references (score 1)
-        if ($mappings !== [] && $this->allReferencesHaveMappings($document, $mappings)) {
+        $migrationText = $document->migration ?? '';
+
+        // Rule 3: Explicitly states no replacement (score 5)
+        if ($migrationText !== '' && $this->hasNoReplacementStatement($migrationText)) {
+            return new ComplexityScore(5, 'No replacement available', false);
+        }
+
+        // Rule 4: 1:1 high-confidence rename mapping exists for all references (score 1)
+        if (
+            $mappings !== []
+            && $this->allReferencesHaveMappings($document, $mappings)
+            && $this->allMappingsHaveHighConfidence($mappings)
+        ) {
             return new ComplexityScore(1, 'Renamed with 1:1 mapping', true);
         }
 
-        // Rule 4: Partial mappings — some refs have replacement (score 2)
+        // Rule 5: Partial mappings — some refs have replacement (score 2)
         if ($mappings !== []) {
             return new ComplexityScore(2, 'Partial replacement available', true);
         }
 
-        // Rule 5: Method/function refs with code blocks suggest argument changes (score 3)
+        // Rule 6: Method/function refs with PHP code blocks suggest argument changes (score 3)
         if ($this->hasMethodRefsWithCodeBlocks($document)) {
             return new ComplexityScore(3, 'Argument signature changed', false);
         }
 
-        // Rule 6: Has code references but no mappings (score 3)
+        // Rule 7: Has code references but no actionable mappings (score 3)
         if ($document->codeReferences !== []) {
             return new ComplexityScore(3, 'Code references without mapping', false);
-        }
-
-        $migrationText = $document->migration ?? '';
-
-        // Rule 7: Explicitly states no replacement (score 5)
-        if ($migrationText !== '' && $this->hasNoReplacementStatement($migrationText)) {
-            return new ComplexityScore(5, 'No replacement available', false);
         }
 
         // Rule 8: Clear replacement keywords + code blocks (score 2)
@@ -209,7 +217,12 @@ final readonly class ComplexityScorer
      */
     private function hasMethodRefsWithCodeBlocks(RstDocument $document): bool
     {
-        if ($document->codeBlocks === []) {
+        $phpCodeBlocks = array_filter(
+            $document->codeBlocks,
+            static fn (CodeBlock $block): bool => $block->language === 'php',
+        );
+
+        if ($phpCodeBlocks === []) {
             return false;
         }
 
@@ -243,6 +256,17 @@ final readonly class ComplexityScorer
         return array_any(
             self::NO_REPLACEMENT_KEYWORDS,
             static fn (string $keyword): bool => str_contains($lower, $keyword),
+        );
+    }
+
+    /**
+     * @param list<MigrationMapping> $mappings
+     */
+    private function allMappingsHaveHighConfidence(array $mappings): bool
+    {
+        return !array_any(
+            $mappings,
+            static fn (MigrationMapping $mapping): bool => $mapping->confidence < self::HIGH_CONFIDENCE_THRESHOLD,
         );
     }
 

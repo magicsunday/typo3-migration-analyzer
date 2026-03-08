@@ -79,7 +79,7 @@ final class MigrationMappingExtractorTest extends TestCase
         self::assertCount(1, $mappings);
         self::assertSame('TYPO3\CMS\Core\OldApi', $mappings[0]->source->className);
         self::assertSame('TYPO3\CMS\Core\NewApi', $mappings[0]->target->className);
-        self::assertSame(1.0, $mappings[0]->confidence);
+        self::assertSame(0.8, $mappings[0]->confidence);
     }
 
     #[Test]

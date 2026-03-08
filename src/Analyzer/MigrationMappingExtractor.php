@@ -39,7 +39,7 @@ final class MigrationMappingExtractor
         // "Use :php:`New` instead of :php:`Old`" (note: reversed order)
         ['/\b[Uu]se\b.*?:php:`([^`]+)`.*?\binstead\s+of\b.*?:php:`([^`]+)`/s', 2, 1, 0.9],
         // "Migrate [from] :php:`Old` to :php:`New`"
-        ['/\b[Mm]igrate\b.*?(?:from\s+)?:php:`([^`]+)`.*?\bto\b.*?:php:`([^`]+)`/s', 1, 2, 1.0],
+        ['/\b[Mm]igrate\b.*?(?:from\s+)?:php:`([^`]+)`.*?\bto\b.*?:php:`([^`]+)`/s', 1, 2, 0.8],
     ];
 
     /**

@@ -249,6 +249,22 @@ final class ComplexityScorerTest extends TestCase
     }
 
     #[Test]
+    public function scoreNoReplacementKeywordWithCodeReferencesStillManual(): void
+    {
+        $doc = $this->createDocument(
+            migration: 'There is no replacement. The API has been removed without replacement.',
+            codeReferences: [
+                new CodeReference('TYPO3\CMS\Core\Legacy', 'oldMethod', CodeReferenceType::InstanceMethod),
+            ],
+        );
+
+        $result = $this->scorer->score($doc);
+
+        self::assertSame(5, $result->score);
+        self::assertFalse($result->automatable);
+    }
+
+    #[Test]
     public function scoreMigrationWithRenameKeyword(): void
     {
         $doc = $this->createDocument(
@@ -302,6 +318,22 @@ final class ComplexityScorerTest extends TestCase
 
         self::assertSame(2, $result->score);
         self::assertFalse($result->automatable);
+    }
+
+    #[Test]
+    public function scoreMigrateMappingsAreNotRatedAsTrivialRenames(): void
+    {
+        $doc = $this->createDocument(
+            migration: 'Migrate from :php:`\TYPO3\CMS\Core\OldApi` to :php:`\TYPO3\CMS\Core\NewApi`.',
+            codeReferences: [
+                new CodeReference('TYPO3\CMS\Core\OldApi', null, CodeReferenceType::ClassName),
+            ],
+        );
+
+        $result = $this->scorer->score($doc);
+
+        self::assertSame(2, $result->score);
+        self::assertTrue($result->automatable);
     }
 
     /**
