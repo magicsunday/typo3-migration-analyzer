@@ -15,44 +15,78 @@ use App\Analyzer\MatcherCoverageAnalyzer;
 use App\Dto\CoverageResult;
 use App\Dto\MatcherEntry;
 use App\Dto\RstDocument;
+use App\Dto\VersionRange;
 use App\Parser\MatcherConfigParser;
 use App\Parser\RstFileLocator;
 use Symfony\Contracts\Cache\CacheInterface;
 use Symfony\Contracts\Cache\ItemInterface;
 
-final readonly class DocumentService
+use function sprintf;
+
+/**
+ * Central service for loading and caching RST documents, matchers, and coverage data.
+ */
+final class DocumentService
 {
-    private const array VERSIONS = ['12.0', '12.1', '12.2', '12.3', '12.4', '12.4.x', '13.0', '13.1', '13.2', '13.3', '13.4', '13.4.x'];
+    private VersionRange $versionRange;
 
     public function __construct(
-        private RstFileLocator $locator,
-        private MatcherConfigParser $matcherParser,
-        private MatcherCoverageAnalyzer $coverageAnalyzer,
-        private CacheInterface $cache,
+        private readonly RstFileLocator $locator,
+        private readonly MatcherConfigParser $matcherParser,
+        private readonly MatcherCoverageAnalyzer $coverageAnalyzer,
+        private readonly VersionRangeProvider $versionRangeProvider,
+        private readonly CacheInterface $cache,
     ) {
+        $this->versionRange = $this->versionRangeProvider->getDefaultRange();
     }
 
     /**
+     * Returns the currently active version range.
+     */
+    public function getVersionRange(): VersionRange
+    {
+        return $this->versionRange;
+    }
+
+    /**
+     * Sets the active version range for document loading.
+     */
+    public function setVersionRange(VersionRange $versionRange): void
+    {
+        $this->versionRange = $versionRange;
+    }
+
+    /**
+     * Returns the version directories matching the current version range.
+     *
      * @return string[]
      */
     public function getVersions(): array
     {
-        return self::VERSIONS;
+        return $this->versionRange->getVersionDirectories(
+            $this->versionRangeProvider->getAvailableDirectories(),
+        );
     }
 
     /**
+     * Returns all parsed RST documents for the current version range.
+     *
      * @return RstDocument[]
      */
     public function getDocuments(): array
     {
-        return $this->cache->get('rst_documents', function (ItemInterface $item): array {
+        $cacheKey = sprintf('rst_documents_%s', $this->versionRange->getCacheKeySuffix());
+
+        return $this->cache->get($cacheKey, function (ItemInterface $item): array {
             $item->expiresAfter(3600);
 
-            return $this->locator->findAll(self::VERSIONS);
+            return $this->locator->findAll($this->getVersions());
         });
     }
 
     /**
+     * Returns all parsed matcher entries from the installed TYPO3 package.
+     *
      * @return MatcherEntry[]
      */
     public function getMatchers(): array
@@ -64,26 +98,38 @@ final readonly class DocumentService
         });
     }
 
+    /**
+     * Returns the coverage analysis result for the current version range.
+     */
     public function getCoverage(): CoverageResult
     {
-        return $this->cache->get('coverage_result', function (ItemInterface $item): CoverageResult {
+        $cacheKey = sprintf('coverage_result_%s', $this->versionRange->getCacheKeySuffix());
+
+        return $this->cache->get($cacheKey, function (ItemInterface $item): CoverageResult {
             $item->expiresAfter(3600);
 
             return $this->coverageAnalyzer->analyze($this->getDocuments(), $this->getMatchers());
         });
     }
 
+    /**
+     * Finds a single document by its filename.
+     */
     public function findDocumentByFilename(string $filename): ?RstDocument
     {
         return $this->getDocumentIndex()[$filename] ?? null;
     }
 
     /**
+     * Returns an index of documents keyed by filename.
+     *
      * @return array<string, RstDocument>
      */
     private function getDocumentIndex(): array
     {
-        return $this->cache->get('rst_documents_index', function (ItemInterface $item): array {
+        $cacheKey = sprintf('rst_documents_index_%s', $this->versionRange->getCacheKeySuffix());
+
+        return $this->cache->get($cacheKey, function (ItemInterface $item): array {
             $item->expiresAfter(3600);
 
             $index = [];

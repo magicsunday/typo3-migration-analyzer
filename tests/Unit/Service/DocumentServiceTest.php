@@ -12,14 +12,21 @@ declare(strict_types=1);
 namespace App\Tests\Unit\Service;
 
 use App\Analyzer\MatcherCoverageAnalyzer;
+use App\Dto\VersionRange;
 use App\Parser\MatcherConfigParser;
 use App\Parser\RstFileLocator;
 use App\Parser\RstParser;
 use App\Service\DocumentService;
+use App\Service\VersionRangeProvider;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Cache\Adapter\ArrayAdapter;
 
+use function array_any;
+use function str_starts_with;
+
+#[CoversClass(DocumentService::class)]
 final class DocumentServiceTest extends TestCase
 {
     #[Test]
@@ -29,8 +36,34 @@ final class DocumentServiceTest extends TestCase
         $versions = $service->getVersions();
 
         self::assertNotEmpty($versions);
-        self::assertContains('13.0', $versions);
-        self::assertContains('12.0', $versions);
+
+        // Default range is the latest migration path
+        $range = $service->getVersionRange();
+        self::assertGreaterThan(0, $range->sourceVersion);
+    }
+
+    #[Test]
+    public function getVersionRangeReturnsDefaultRange(): void
+    {
+        $service = $this->createServiceWithFixtures();
+        $range   = $service->getVersionRange();
+
+        self::assertInstanceOf(VersionRange::class, $range);
+    }
+
+    #[Test]
+    public function setVersionRangeChangesLoadedVersions(): void
+    {
+        $service = $this->createServiceWithFixtures();
+        $service->setVersionRange(new VersionRange(11, 12));
+
+        $versions = $service->getVersions();
+
+        self::assertNotEmpty($versions);
+
+        // Should contain 11.x versions
+        $has11 = array_any($versions, static fn (string $v): bool => str_starts_with($v, '11.'));
+        self::assertTrue($has11);
     }
 
     #[Test]
@@ -103,6 +136,7 @@ final class DocumentServiceTest extends TestCase
             new RstFileLocator(new RstParser()),
             new MatcherConfigParser(),
             new MatcherCoverageAnalyzer(),
+            new VersionRangeProvider(),
             new ArrayAdapter(),
         );
     }
