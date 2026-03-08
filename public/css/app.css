@@ -48,7 +48,7 @@
 .sidebar.sidebar-collapsed .sidebar-label,
 .sidebar.sidebar-collapsed .sidebar-brand,
 .sidebar.sidebar-collapsed .sidebar-footer {
-    display: none;
+    display: none !important;
 }
 
 .sidebar-is-collapsed .sidebar .nav-link,
