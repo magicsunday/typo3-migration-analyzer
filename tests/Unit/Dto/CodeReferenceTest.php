@@ -277,5 +277,11 @@ final class CodeReferenceTest extends TestCase
         yield 'parent' => ['parent'];
         yield '@internal' => ['@internal'];
         yield 'new' => ['new'];
+        yield 'float' => ['float'];
+        yield 'bool' => ['bool'];
+        yield 'never' => ['never'];
+        yield 'callable' => ['callable'];
+        yield 'iterable' => ['iterable'];
+        yield 'object' => ['object'];
     }
 }
