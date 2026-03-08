@@ -13,9 +13,11 @@ namespace App\Controller;
 
 use App\Dto\ScanResult;
 use App\Scanner\ExtensionScanner;
+use App\Scanner\GitRepositoryHandler;
 use App\Scanner\ScanReportExporter;
 use App\Scanner\ZipUploadHandler;
 use InvalidArgumentException;
+use RuntimeException;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\HeaderUtils;
@@ -24,6 +26,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 
 use function is_dir;
+use function trim;
 
 final class ScanController extends AbstractController
 {
@@ -83,6 +86,41 @@ final class ScanController extends AbstractController
             $result = $this->scanner->scan($extractedPath);
         } finally {
             $uploadHandler->cleanup($extractedPath);
+        }
+
+        return $this->render('scan/result.html.twig', [
+            'result' => $result,
+        ]);
+    }
+
+    /**
+     * Handle Git repository URL, clone, scan, and clean up.
+     */
+    #[Route('/scan/clone', name: 'scan_clone', methods: ['POST'])]
+    public function clone(Request $request, GitRepositoryHandler $gitHandler): Response
+    {
+        $repositoryUrl = trim($request->request->getString('repository_url'));
+
+        try {
+            $gitHandler->validate($repositoryUrl);
+        } catch (InvalidArgumentException $exception) {
+            $this->addFlash('danger', $exception->getMessage());
+
+            return $this->redirectToRoute('scan_index');
+        }
+
+        try {
+            $clonedPath = $gitHandler->clone($repositoryUrl);
+        } catch (RuntimeException $exception) {
+            $this->addFlash('danger', $exception->getMessage());
+
+            return $this->redirectToRoute('scan_index');
+        }
+
+        try {
+            $result = $this->scanner->scan($clonedPath);
+        } finally {
+            $gitHandler->cleanup($clonedPath);
         }
 
         return $this->render('scan/result.html.twig', [
