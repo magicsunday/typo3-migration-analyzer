@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Unit\Generator;
 
+use App\Dto\CodeBlock;
 use App\Dto\CodeReference;
 use App\Dto\CodeReferenceType;
 use App\Dto\DocumentType;
@@ -103,8 +104,8 @@ final class MatcherConfigGeneratorTest extends TestCase
         self::assertSame(MatcherType::MethodCallStatic, $entries[0]->matcherType);
         self::assertSame(['Deprecation-34567-StaticMethodRemoved.rst'], $entries[0]->restFiles);
         self::assertSame([
-            'numberOfMandatoryArguments' => 0,
-            'maximumNumberOfArguments'   => 0,
+            'numberOfMandatoryArguments' => 1,
+            'maximumNumberOfArguments'   => 2,
         ], $entries[0]->additionalConfig);
     }
 
@@ -278,12 +279,90 @@ final class MatcherConfigGeneratorTest extends TestCase
         self::assertSame("<?php\n\nreturn [\n];\n", $rendered);
     }
 
+    #[Test]
+    public function generateDetectsArgumentsFromCodeBlocks(): void
+    {
+        $document = $this->createDocument(
+            filename: 'Deprecation-11111-MethodChanged.rst',
+            codeReferences: [
+                new CodeReference(
+                    className: 'TYPO3\CMS\Core\SomeClass',
+                    member: 'doSomething',
+                    type: CodeReferenceType::InstanceMethod,
+                ),
+            ],
+            codeBlocks: [
+                new CodeBlock(
+                    language: 'php',
+                    code: 'public function doSomething(string $name, int $age, string $title = \'\')',
+                    label: null,
+                ),
+            ],
+        );
+
+        $entries = $this->generator->generate($document);
+
+        self::assertCount(1, $entries);
+        self::assertSame([
+            'numberOfMandatoryArguments' => 2,
+            'maximumNumberOfArguments'   => 3,
+        ], $entries[0]->additionalConfig);
+    }
+
+    #[Test]
+    public function generateFallsBackToZeroWhenNoSignatureFound(): void
+    {
+        $document = $this->createDocument(
+            filename: 'Deprecation-22222-UnknownMethod.rst',
+            codeReferences: [
+                new CodeReference(
+                    className: 'TYPO3\CMS\Core\NonExistentClass',
+                    member: 'nonExistentMethod',
+                    type: CodeReferenceType::InstanceMethod,
+                ),
+            ],
+        );
+
+        $entries = $this->generator->generate($document);
+
+        self::assertCount(1, $entries);
+        self::assertSame([
+            'numberOfMandatoryArguments' => 0,
+            'maximumNumberOfArguments'   => 0,
+        ], $entries[0]->additionalConfig);
+    }
+
+    #[Test]
+    public function generateDetectsArgumentsViaReflectionFallback(): void
+    {
+        $document = $this->createDocument(
+            filename: 'Deprecation-33333-HmacRemoved.rst',
+            codeReferences: [
+                new CodeReference(
+                    className: GeneralUtility::class,
+                    member: 'hmac',
+                    type: CodeReferenceType::StaticMethod,
+                ),
+            ],
+        );
+
+        $entries = $this->generator->generate($document);
+
+        self::assertCount(1, $entries);
+        self::assertSame([
+            'numberOfMandatoryArguments' => 1,
+            'maximumNumberOfArguments'   => 2,
+        ], $entries[0]->additionalConfig);
+    }
+
     /**
      * @param list<CodeReference> $codeReferences
+     * @param list<CodeBlock>     $codeBlocks
      */
     private function createDocument(
         string $filename,
         array $codeReferences = [],
+        array $codeBlocks = [],
     ): RstDocument {
         return new RstDocument(
             type: DocumentType::Deprecation,
@@ -297,6 +376,7 @@ final class MatcherConfigGeneratorTest extends TestCase
             indexTags: [],
             scanStatus: ScanStatus::NotScanned,
             filename: $filename,
+            codeBlocks: $codeBlocks,
         );
     }
 }

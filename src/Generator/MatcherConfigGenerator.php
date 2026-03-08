@@ -11,6 +11,8 @@ declare(strict_types=1);
 
 namespace App\Generator;
 
+use App\Analyzer\ArgumentSignatureAnalyzer;
+use App\Dto\ArgumentCount;
 use App\Dto\CodeReference;
 use App\Dto\CodeReferenceType;
 use App\Dto\MatcherEntry;
@@ -20,8 +22,13 @@ use App\Dto\RstDocument;
 use function str_replace;
 use function var_export;
 
-final class MatcherConfigGenerator
+final readonly class MatcherConfigGenerator
 {
+    public function __construct(
+        private ArgumentSignatureAnalyzer $argumentSignatureAnalyzer = new ArgumentSignatureAnalyzer(),
+    ) {
+    }
+
     /**
      * Generate matcher entries from a document's code references.
      *
@@ -34,7 +41,7 @@ final class MatcherConfigGenerator
         foreach ($document->codeReferences as $codeReference) {
             $matcherType      = $this->resolveMatcherType($codeReference);
             $identifier       = $this->buildIdentifier($codeReference);
-            $additionalConfig = $this->buildAdditionalConfig($matcherType);
+            $additionalConfig = $this->buildAdditionalConfig($matcherType, $codeReference, $document);
 
             $entries[] = new MatcherEntry(
                 identifier: $identifier,
@@ -92,16 +99,48 @@ final class MatcherConfigGenerator
     /**
      * @return array<string, mixed>
      */
-    private function buildAdditionalConfig(MatcherType $matcherType): array
-    {
+    private function buildAdditionalConfig(
+        MatcherType $matcherType,
+        CodeReference $codeReference,
+        RstDocument $document,
+    ): array {
         if ($matcherType === MatcherType::MethodCall || $matcherType === MatcherType::MethodCallStatic) {
-            return [
-                'numberOfMandatoryArguments' => 0,
-                'maximumNumberOfArguments'   => 0,
-            ];
+            $argumentCount = $this->detectArguments($codeReference, $document);
+
+            return $argumentCount->toConfigArray();
         }
 
         return [];
+    }
+
+    /**
+     * Detect argument counts from code blocks or reflection, with fallback to zero.
+     */
+    private function detectArguments(CodeReference $codeReference, RstDocument $document): ArgumentCount
+    {
+        if ($codeReference->member !== null) {
+            // Try code block analysis first
+            $result = $this->argumentSignatureAnalyzer->analyzeCodeBlocks(
+                $document->codeBlocks,
+                $codeReference->member,
+            );
+
+            if ($result instanceof ArgumentCount) {
+                return $result;
+            }
+
+            // Fall back to reflection on installed classes
+            $result = $this->argumentSignatureAnalyzer->analyzeWithReflection(
+                $codeReference->className,
+                $codeReference->member,
+            );
+
+            if ($result instanceof ArgumentCount) {
+                return $result;
+            }
+        }
+
+        return new ArgumentCount(0, 0);
     }
 
     private function renderEntry(MatcherEntry $entry): string
