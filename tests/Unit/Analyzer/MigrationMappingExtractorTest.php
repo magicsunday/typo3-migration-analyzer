@@ -246,4 +246,97 @@ final class MigrationMappingExtractorTest extends TestCase
 
         self::assertCount(1, $mappings);
     }
+
+    #[Test]
+    public function extractFindsInsteadOfWithoutUsePrefix(): void
+    {
+        $text     = ':php:`\TYPO3\CMS\Core\NewClass` instead of :php:`\TYPO3\CMS\Core\OldClass`.';
+        $mappings = $this->extractor->extract($text);
+
+        self::assertCount(1, $mappings);
+        // "NEW instead of OLD" — OLD is source, NEW is target (reversed)
+        self::assertSame('TYPO3\CMS\Core\OldClass', $mappings[0]->source->className);
+        self::assertSame('TYPO3\CMS\Core\NewClass', $mappings[0]->target->className);
+        self::assertSame(0.8, $mappings[0]->confidence);
+    }
+
+    #[Test]
+    public function extractFindsCrossSentenceRemovedUse(): void
+    {
+        $text     = ':php:`\TYPO3\CMS\Core\OldClass` has been removed. Use :php:`\TYPO3\CMS\Core\NewClass` instead.';
+        $mappings = $this->extractor->extract($text);
+
+        self::assertCount(1, $mappings);
+        self::assertSame('TYPO3\CMS\Core\OldClass', $mappings[0]->source->className);
+        self::assertSame('TYPO3\CMS\Core\NewClass', $mappings[0]->target->className);
+        self::assertSame(0.7, $mappings[0]->confidence);
+    }
+
+    #[Test]
+    public function extractFindsSupersededBy(): void
+    {
+        $text     = ':php:`\TYPO3\CMS\Core\OldClass` has been superseded by :php:`\TYPO3\CMS\Core\NewClass`.';
+        $mappings = $this->extractor->extract($text);
+
+        self::assertCount(1, $mappings);
+        self::assertSame('TYPO3\CMS\Core\OldClass', $mappings[0]->source->className);
+        self::assertSame('TYPO3\CMS\Core\NewClass', $mappings[0]->target->className);
+        self::assertSame(0.9, $mappings[0]->confidence);
+    }
+
+    #[Test]
+    public function extractFindsNoLongerExtends(): void
+    {
+        $text     = ':php:`\TYPO3\CMS\Core\OldClass` no longer extends :php:`\TYPO3\CMS\Core\NewClass`.';
+        $mappings = $this->extractor->extract($text);
+
+        self::assertCount(1, $mappings);
+        self::assertSame('TYPO3\CMS\Core\OldClass', $mappings[0]->source->className);
+        self::assertSame('TYPO3\CMS\Core\NewClass', $mappings[0]->target->className);
+        self::assertSame(0.7, $mappings[0]->confidence);
+    }
+
+    #[Test]
+    public function extractFindsBacktickRename(): void
+    {
+        $text     = '`\TYPO3\CMS\Core\OldClass` has been renamed to `\TYPO3\CMS\Core\NewClass`.';
+        $mappings = $this->extractor->extract($text);
+
+        self::assertCount(1, $mappings);
+        self::assertSame('TYPO3\CMS\Core\OldClass', $mappings[0]->source->className);
+        self::assertSame('TYPO3\CMS\Core\NewClass', $mappings[0]->target->className);
+        self::assertSame(0.6, $mappings[0]->confidence);
+    }
+
+    #[Test]
+    public function extractFindsBacktickReplace(): void
+    {
+        $text     = 'Replace `\TYPO3\CMS\Core\OldClass` with `\TYPO3\CMS\Core\NewClass`.';
+        $mappings = $this->extractor->extract($text);
+
+        self::assertCount(1, $mappings);
+        self::assertSame('TYPO3\CMS\Core\OldClass', $mappings[0]->source->className);
+        self::assertSame('TYPO3\CMS\Core\NewClass', $mappings[0]->target->className);
+        self::assertSame(0.6, $mappings[0]->confidence);
+    }
+
+    #[Test]
+    public function extractFindsBacktickTo(): void
+    {
+        $text     = '`OldName` to `NewName`';
+        $mappings = $this->extractor->extract($text);
+
+        self::assertCount(1, $mappings);
+        self::assertSame('OldName', $mappings[0]->source->className);
+        self::assertSame('NewName', $mappings[0]->target->className);
+    }
+
+    #[Test]
+    public function extractIgnoresNonCodeBackticks(): void
+    {
+        $text     = '`some text` to `other text`';
+        $mappings = $this->extractor->extract($text);
+
+        self::assertSame([], $mappings);
+    }
 }
