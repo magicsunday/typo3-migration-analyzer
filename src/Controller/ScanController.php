@@ -15,7 +15,10 @@ use App\Dto\ScanFileResult;
 use App\Dto\ScanFinding;
 use App\Dto\ScanResult;
 use App\Scanner\ExtensionScanner;
+use App\Scanner\ZipUploadHandler;
+use InvalidArgumentException;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\HeaderUtils;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -51,6 +54,40 @@ final class ScanController extends AbstractController
         }
 
         $result = $this->scanner->scan($extensionPath);
+
+        return $this->render('scan/result.html.twig', [
+            'result' => $result,
+        ]);
+    }
+
+    /**
+     * Handle ZIP file upload, extract, scan, and clean up.
+     */
+    #[Route('/scan/upload', name: 'scan_upload', methods: ['POST'])]
+    public function upload(Request $request, ZipUploadHandler $uploadHandler): Response
+    {
+        /** @var UploadedFile|null $file */
+        $file = $request->files->get('extension_zip');
+
+        if (!$file instanceof UploadedFile || !$file->isValid()) {
+            $this->addFlash('danger', 'Bitte eine gültige ZIP-Datei auswählen.');
+
+            return $this->redirectToRoute('scan_index');
+        }
+
+        try {
+            $extractedPath = $uploadHandler->extract($file);
+        } catch (InvalidArgumentException $exception) {
+            $this->addFlash('danger', $exception->getMessage());
+
+            return $this->redirectToRoute('scan_index');
+        }
+
+        try {
+            $result = $this->scanner->scan($extractedPath);
+        } finally {
+            $uploadHandler->cleanup($extractedPath);
+        }
 
         return $this->render('scan/result.html.twig', [
             'result' => $result,
