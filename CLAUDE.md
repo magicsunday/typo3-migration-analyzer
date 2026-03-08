@@ -104,6 +104,7 @@ Detaillierte Architektur und Komponenten-Beschreibungen: `docs/plans/2026-03-07-
 - [ ] Lauffähige Rector-Rules generieren (komplette Rule-Klassen mit Tests)
 - [ ] Rector-Config-Export (komplett, basierend auf Scan-Ergebnissen)
 - [ ] Diff gegen ssch/typo3-rector (Abdeckung vergleichen, fehlende Rules identifizieren)
+- [ ] LLM-basiertes Komplexitäts-Scoring (Hybrid: Heuristik-Vorbewertung + LLM-Verfeinerung für Score 3-4)
 
 ### v2.1 — CI/CD Integration
 - [ ] CLI-Modus: `bin/console scan:extension`, `report:coverage`, `generate:matcher`, `generate:rector`
