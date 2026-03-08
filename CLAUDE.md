@@ -70,7 +70,7 @@ php -S localhost:8000 -t public/
 
 ## Roadmap
 
-Detaillierte Architektur und Komponenten-Beschreibungen: `docs/plans/2026-03-07-roadmap-v1.1-v2.1-design.md`
+Detaillierte Architektur und Komponenten-Beschreibungen: `docs/plans/2026-03-07-roadmap-v1.1-v3.0-design.md`
 
 ### v1.0 — Grundfunktionalität (fertig)
 - RST-Parser, Matcher-Config-Parser, RstFileLocator
@@ -121,7 +121,7 @@ Detaillierte Architektur und Komponenten-Beschreibungen: `docs/plans/2026-03-07-
 ## Design + Plan
 - `docs/plans/2026-03-07-typo3-migration-analyzer-design.md` — Gesamtarchitektur
 - `docs/plans/2026-03-07-typo3-migration-analyzer-implementation.md` — Implementierungsplan v1.0
-- `docs/plans/2026-03-07-roadmap-v1.1-v2.1-design.md` — Detaillierte Roadmap v1.1-v2.1
+- `docs/plans/2026-03-07-roadmap-v1.1-v3.0-design.md` — Detaillierte Roadmap v1.1-v2.1
 - `docs/plans/2026-03-07-rector-rule-skeleton-generator.md` — Rector-Generator Plan
 - `docs/plans/2026-03-07-extension-scanner.md` — Extension-Scanner Plan
 - `docs/plans/2026-03-07-before-after-code-comparison.md` — Before/After Vergleich Plan
