@@ -75,7 +75,7 @@ final readonly class RectorRuleGenerator
      */
     public function generate(RstDocument $document): array
     {
-        $mappings          = $this->extractor->extract($document->migration);
+        $mappings          = $this->extractor->extract($document->migration, $document->description);
         $rules             = [];
         $handledSourceKeys = [];
 

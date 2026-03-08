@@ -14,12 +14,13 @@ namespace App\Analyzer;
 use App\Dto\CodeReference;
 use App\Dto\MigrationMapping;
 
+use function min;
 use function preg_match_all;
 
 use const PREG_SET_ORDER;
 
 /**
- * Extracts old->new API mappings from RST migration text.
+ * Extracts old->new API mappings from RST migration and description text.
  *
  * Detects patterns like "Replace :php:`\Old\Class` with :php:`\New\Class`" and converts
  * them into structured MigrationMapping DTOs with source, target, and confidence.
@@ -40,50 +41,72 @@ final class MigrationMappingExtractor
         ['/\b[Uu]se\b.*?:php:`([^`]+)`.*?\binstead\s+of\b.*?:php:`([^`]+)`/s', 2, 1, 0.9],
         // "Migrate [from] :php:`Old` to :php:`New`"
         ['/\b[Mm]igrate\b.*?(?:from\s+)?:php:`([^`]+)`.*?\bto\b.*?:php:`([^`]+)`/s', 1, 2, 1.0],
+        // ":php:`Old` has been/was moved to :php:`New`"
+        ['/:php:`([^`]+)`.*?\b(?:has been|was)\s+moved\s+to\b.*?:php:`([^`]+)`/s', 1, 2, 1.0],
+        // ":php:`Old` has been/was changed to :php:`New`"
+        ['/:php:`([^`]+)`.*?\b(?:has been|was)\s+changed\s+to\b.*?:php:`([^`]+)`/s', 1, 2, 0.9],
+        // ":php:`Old` (has been|was|should be|can be) replaced (by|with) :php:`New`"
+        ['/:php:`([^`]+)`.*?\b(?:has been|was|should be|can be)\s+replaced\s+(?:by|with)\b.*?:php:`([^`]+)`/s', 1, 2, 0.9],
+        // ":php:`Old` is now available via :php:`New`"
+        ['/:php:`([^`]+)`.*?\bis\s+now\s+available\s+via\b.*?:php:`([^`]+)`/s', 1, 2, 0.8],
+        // Bare ":php:`Old` to :php:`New`" (no keyword prefix — lowest priority, MUST be last)
+        ['/:php:`([^`]+)`\s+to\s+:php:`([^`]+)`/', 1, 2, 0.9],
     ];
 
     /**
-     * Extract old->new API mappings from RST migration text.
+     * Extract old->new API mappings from RST migration and description text.
      *
-     * Deduplicates by source+target key, keeping the first (highest confidence) match.
+     * Scans migration text first, then description text, deduplicating across both
+     * by source+target key and keeping the first (highest confidence) match.
      *
      * @return list<MigrationMapping>
      */
-    public function extract(?string $migrationText): array
+    public function extract(?string $migrationText, ?string $descriptionText = null): array
     {
-        if ($migrationText === null || $migrationText === '') {
-            return [];
-        }
-
         $mappings = [];
         $seen     = [];
 
-        foreach (self::MAPPING_PATTERNS as [$pattern, $sourceGroup, $targetGroup, $confidence]) {
-            if (preg_match_all($pattern, $migrationText, $matches, PREG_SET_ORDER) === 0) {
+        foreach ([$migrationText, $descriptionText] as $text) {
+            if ($text === null) {
                 continue;
             }
 
-            foreach ($matches as $match) {
-                $source = CodeReference::fromPhpRole($match[$sourceGroup]);
-                $target = CodeReference::fromPhpRole($match[$targetGroup]);
+            if ($text === '') {
+                continue;
+            }
 
-                if (!$source instanceof CodeReference) {
+            foreach (self::MAPPING_PATTERNS as [$pattern, $sourceGroup, $targetGroup, $confidence]) {
+                if (preg_match_all($pattern, $text, $matches, PREG_SET_ORDER) === 0) {
                     continue;
                 }
 
-                if (!$target instanceof CodeReference) {
-                    continue;
+                foreach ($matches as $match) {
+                    $source = CodeReference::fromPhpRole($match[$sourceGroup]);
+                    $target = CodeReference::fromPhpRole($match[$targetGroup]);
+
+                    if (!$source instanceof CodeReference) {
+                        continue;
+                    }
+
+                    if (!$target instanceof CodeReference) {
+                        continue;
+                    }
+
+                    $key = $source->className . '::' . ($source->member ?? '')
+                        . '->' . $target->className . '::' . ($target->member ?? '');
+
+                    if (isset($seen[$key])) {
+                        continue;
+                    }
+
+                    $effectiveConfidence = $confidence * min(
+                        $source->resolutionConfidence,
+                        $target->resolutionConfidence,
+                    );
+
+                    $seen[$key] = true;
+                    $mappings[] = new MigrationMapping($source, $target, $effectiveConfidence);
                 }
-
-                $key = $source->className . '::' . ($source->member ?? '')
-                    . '->' . $target->className . '::' . ($target->member ?? '');
-
-                if (isset($seen[$key])) {
-                    continue;
-                }
-
-                $seen[$key] = true;
-                $mappings[] = new MigrationMapping($source, $target, $confidence);
             }
         }
 

@@ -146,7 +146,7 @@ final class DeprecationController extends AbstractController
 
         return $this->render('deprecation/detail.html.twig', [
             'doc'           => $doc,
-            'mappings'      => $extractor->extract($doc->migration),
+            'mappings'      => $extractor->extract($doc->migration, $doc->description),
             'complexity'    => $complexityScorer->score($doc),
             'versionRange'  => $documentService->getVersionRange(),
             'majorVersions' => $versionRangeProvider->getAvailableMajorVersions(),

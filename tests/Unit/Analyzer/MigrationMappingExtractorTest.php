@@ -115,6 +115,8 @@ final class MigrationMappingExtractorTest extends TestCase
         self::assertSame(CodeReferenceType::UnqualifiedMethod, $mappings[0]->target->type);
         self::assertSame('newFunction', $mappings[0]->target->member);
         self::assertSame(0.5, $mappings[0]->source->resolutionConfidence);
+        // Effective confidence = pattern 1.0 × min(source 0.5, target 0.5) = 0.5
+        self::assertSame(0.5, $mappings[0]->confidence);
     }
 
     #[Test]
@@ -141,5 +143,107 @@ final class MigrationMappingExtractorTest extends TestCase
         self::assertCount(1, $mappings);
         self::assertSame('TYPO3\CMS\Core\OldClass', $mappings[0]->source->className);
         self::assertSame('TYPO3\CMS\Core\NewClass', $mappings[0]->target->className);
+    }
+
+    #[Test]
+    public function extractMovedToPattern(): void
+    {
+        $text     = ':php:`\TYPO3\CMS\Core\OldClass` has been moved to :php:`\TYPO3\CMS\Core\NewClass`.';
+        $mappings = $this->extractor->extract($text);
+
+        self::assertCount(1, $mappings);
+        self::assertSame('TYPO3\CMS\Core\OldClass', $mappings[0]->source->className);
+        self::assertSame('TYPO3\CMS\Core\NewClass', $mappings[0]->target->className);
+        self::assertSame(1.0, $mappings[0]->confidence);
+    }
+
+    #[Test]
+    public function extractChangedToPattern(): void
+    {
+        $text     = ':php:`\TYPO3\CMS\Core\OldClass` has been changed to :php:`\TYPO3\CMS\Core\NewClass`.';
+        $mappings = $this->extractor->extract($text);
+
+        self::assertCount(1, $mappings);
+        self::assertSame('TYPO3\CMS\Core\OldClass', $mappings[0]->source->className);
+        self::assertSame('TYPO3\CMS\Core\NewClass', $mappings[0]->target->className);
+    }
+
+    #[Test]
+    public function extractReplacedByPattern(): void
+    {
+        $text     = ':php:`\TYPO3\CMS\Core\OldClass` has been replaced by :php:`\TYPO3\CMS\Core\NewClass`.';
+        $mappings = $this->extractor->extract($text);
+
+        self::assertCount(1, $mappings);
+        self::assertSame('TYPO3\CMS\Core\OldClass', $mappings[0]->source->className);
+        self::assertSame('TYPO3\CMS\Core\NewClass', $mappings[0]->target->className);
+    }
+
+    #[Test]
+    public function extractCanBeReplacedByPattern(): void
+    {
+        $text     = ':php:`\TYPO3\CMS\Core\OldClass` can be replaced by :php:`\TYPO3\CMS\Core\NewClass`.';
+        $mappings = $this->extractor->extract($text);
+
+        self::assertCount(1, $mappings);
+        self::assertSame('TYPO3\CMS\Core\OldClass', $mappings[0]->source->className);
+        self::assertSame('TYPO3\CMS\Core\NewClass', $mappings[0]->target->className);
+    }
+
+    #[Test]
+    public function extractBareToConnectorPattern(): void
+    {
+        $text     = '* :php:`\TYPO3\CMS\Lowlevel\View\ConfigurationView` to :php:`\TYPO3\CMS\Lowlevel\Controller\ConfigurationController`';
+        $mappings = $this->extractor->extract($text);
+
+        self::assertCount(1, $mappings);
+        self::assertSame('TYPO3\CMS\Lowlevel\View\ConfigurationView', $mappings[0]->source->className);
+        self::assertSame('TYPO3\CMS\Lowlevel\Controller\ConfigurationController', $mappings[0]->target->className);
+    }
+
+    #[Test]
+    public function extractIsNowAvailableViaPattern(): void
+    {
+        $text     = ':php:`\TYPO3\CMS\Core\OldClass` is now available via :php:`\TYPO3\CMS\Core\NewClass`.';
+        $mappings = $this->extractor->extract($text);
+
+        self::assertCount(1, $mappings);
+        self::assertSame('TYPO3\CMS\Core\OldClass', $mappings[0]->source->className);
+        self::assertSame('TYPO3\CMS\Core\NewClass', $mappings[0]->target->className);
+    }
+
+    #[Test]
+    public function extractNonFqcnMappingWithReducedConfidence(): void
+    {
+        $text     = 'Replace :php:`pi_list_browseresults()` with :php:`pi_list_browseResults()`.';
+        $mappings = $this->extractor->extract($text);
+
+        self::assertCount(1, $mappings);
+        self::assertSame('pi_list_browseresults', $mappings[0]->source->member);
+        self::assertSame('pi_list_browseResults', $mappings[0]->target->member);
+        // Confidence = pattern 1.0 × min(source 0.5, target 0.5) = 0.5
+        self::assertSame(0.5, $mappings[0]->confidence);
+    }
+
+    #[Test]
+    public function extractFindsPatternInDescription(): void
+    {
+        $migration   = 'Use new class names instead.';
+        $description = '* :php:`\TYPO3\CMS\Lowlevel\View\ConfigurationView` to :php:`\TYPO3\CMS\Lowlevel\Controller\ConfigurationController`';
+        $mappings    = $this->extractor->extract($migration, $description);
+
+        self::assertCount(1, $mappings);
+        self::assertSame('TYPO3\CMS\Lowlevel\View\ConfigurationView', $mappings[0]->source->className);
+        self::assertSame('TYPO3\CMS\Lowlevel\Controller\ConfigurationController', $mappings[0]->target->className);
+    }
+
+    #[Test]
+    public function extractDeduplicatesAcrossMigrationAndDescription(): void
+    {
+        $migration   = 'Replace :php:`\TYPO3\CMS\Core\OldClass` with :php:`\TYPO3\CMS\Core\NewClass`.';
+        $description = ':php:`\TYPO3\CMS\Core\OldClass` has been renamed to :php:`\TYPO3\CMS\Core\NewClass`.';
+        $mappings    = $this->extractor->extract($migration, $description);
+
+        self::assertCount(1, $mappings);
     }
 }

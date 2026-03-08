@@ -86,7 +86,7 @@ final readonly class ComplexityScorer
             return new ComplexityScore(4, 'TCA structure change', false);
         }
 
-        $mappings = $this->extractor->extract($document->migration);
+        $mappings = $this->extractor->extract($document->migration, $document->description);
 
         // Rule 3: 1:1 rename mapping exists for all references (score 1)
         if ($mappings !== [] && $this->allReferencesHaveMappings($document, $mappings)) {
