@@ -81,13 +81,12 @@ Detaillierte Architektur und Komponenten-Beschreibungen: `docs/plans/2026-03-07-
 - Docker-Setup (PHP-FPM + Nginx + Traefik)
 - CI-Toolchain (PHPStan, PHP-CS-Fixer, Rector, PHPUnit, jscpd)
 
-### v1.1 — Rector + Extension-Scan + Visualisierung (~90% fertig)
+### v1.1 — Rector + Extension-Scan + Visualisierung (fertig)
 - [x] Rector-Rule-Skeleton-Generator (Config + Skeleton + UI-Tabs + Export)
 - [x] Migrations-Mapping-Extractor (Alt->Neu Paare aus RST, 4 Patterns, Confidence)
 - [x] Extension-Scanner mit Pfad-Eingabe (21 TYPO3-Matcher, JSON-Export)
 - [x] Before/After Code-Vergleich mit Syntax-Highlighting (highlight.js)
 - [x] Coverage-Report (Breakdowns nach Version, Typ, Scan-Status, Matcher-Typ)
-- [ ] Extension-Scanner: ZIP-Upload Support
 
 ### v1.2 — Intelligentere Analyse
 - [x] Migrations-Mapping: Alt->Neu Zuordnung parsen (bereits in v1.1 umgesetzt)
