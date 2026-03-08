@@ -3,11 +3,11 @@
 ## Projekt-Kontext
 - Symfony 7.2 Web-App die TYPO3 Deprecation/Breaking-Change RST-Dokumente parst
 - Identifiziert fehlende Extension-Scanner-Matcher und generiert diese
-- TYPO3 12 -> 13 Migration (später erweiterbar auf 11 -> 12)
+- Multi-Version Migration Support (7→8 bis 13→14, konfigurierbar per UI-Dropdown)
 - Repo: https://github.com/magicsunday/typo3-migration-analyzer
 
 ## Tech Stack
-- PHP 8.4+, Symfony 7.2, Twig, Turbo/Stimulus, AssetMapper
+- PHP 8.4+, Symfony 7.4, Twig, Bootstrap 5.3
 - symfony/property-info + symfony/property-access für Introspection
 - typo3/cms-core + typo3/cms-install als Composer-Dependency (Datenquelle)
 - PHPUnit, PHPStan Level max, PHP-CS-Fixer (@PER-CS2x0 + @Symfony)
@@ -101,7 +101,7 @@ Detaillierte Architektur und Komponenten-Beschreibungen: `docs/plans/2026-03-07-
 - [x] Session-basierter Scan-Result-Cache (Exports für alle Quellen, Clone-Deduplizierung)
 
 ### v2.0 — Multi-Version + Rector-Integration
-- [ ] Multi-Version Support (Versions-Bereich konfigurierbar, 9->10 bis 12->13)
+- [x] Multi-Version Support (VersionRange DTO, VersionRangeProvider, Session-basiert, UI-Dropdown, typo3/cms-core ^14.1)
 - [ ] Lauffähige Rector-Rules generieren (komplette Rule-Klassen mit Tests)
 - [ ] Rector-Config-Export (komplett, basierend auf Scan-Ergebnissen)
 - [ ] Diff gegen ssch/typo3-rector (Abdeckung vergleichen, fehlende Rules identifizieren)
