@@ -90,8 +90,8 @@ Detaillierte Architektur und Komponenten-Beschreibungen: `docs/plans/2026-03-07-
 
 ### v1.2 — Intelligentere Analyse
 - [x] Migrations-Mapping: Alt->Neu Zuordnung parsen (bereits in v1.1 umgesetzt)
-- [ ] Argument-Erkennung aus RST-Code-Blöcken (korrekte numberOfMandatoryArguments/maximumNumberOfArguments)
-- [ ] Komplexitäts-Scoring pro Deprecation (Score 1-5, automatisierbar vs. manuell)
+- [x] Argument-Erkennung aus RST-Code-Blöcken (korrekte numberOfMandatoryArguments/maximumNumberOfArguments)
+- [x] Komplexitäts-Scoring pro Deprecation (Score 1-5, automatisierbar vs. manuell)
 
 ### v1.3 — Extension-Scanner als Service
 - [ ] ZIP-Upload (ZipUploadProvider, max 50MB, Validierung)
