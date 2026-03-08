@@ -26,6 +26,7 @@ use function is_dir;
 use function mkdir;
 use function rmdir;
 use function sys_get_temp_dir;
+use function uniqid;
 use function unlink;
 
 #[CoversClass(GitRepositoryHandler::class)]
