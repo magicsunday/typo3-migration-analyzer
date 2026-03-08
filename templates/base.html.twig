@@ -92,7 +92,7 @@
     <script src="/libs/highlightjs/yaml.min.js"></script>
     <script src="/libs/highlightjs/typescript.min.js"></script>
     <script>
-    document.addEventListener('turbo:load', function() {
+    document.addEventListener('DOMContentLoaded', function() {
         document.querySelectorAll('pre code.hljs-code').forEach(function(el) {
             if (!el.dataset.highlighted) {
                 hljs.highlightElement(el);

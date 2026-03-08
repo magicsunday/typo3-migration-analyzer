@@ -16,7 +16,4 @@ return [
         'path' => './assets/app.js',
         'entrypoint' => true,
     ],
-    '@hotwired/turbo' => [
-        'version' => '7.3.0',
-    ],
 ];
