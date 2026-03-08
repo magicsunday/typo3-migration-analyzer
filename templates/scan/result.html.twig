@@ -12,12 +12,25 @@
 <div class="d-flex justify-content-between align-items-center mb-4">
     <div>
         <h1 class="h3 mb-1">Scan-Ergebnis</h1>
-        <p class="text-muted mb-0">Ergebnis der Extension-Analyse</p>
+        <p class="text-muted mb-0">{{ result.totalFindings() }} Fundstellen in {{ result.filesWithFindings()|length }} Dateien ({{ result.scannedFiles() }} gescannt)</p>
     </div>
     <div class="d-flex gap-2 flex-shrink-0">
-        <a href="{{ path('scan_export_json', {path: result.extensionPath}) }}" class="btn btn-outline-secondary btn-sm">
-            <i class="bi bi-download me-1"></i>JSON-Export
-        </a>
+        <div class="dropdown">
+            <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                <i class="bi bi-download me-1"></i>Export
+            </button>
+            <ul class="dropdown-menu">
+                <li><a class="dropdown-item" href="{{ path('scan_export_json', {path: result.extensionPath}) }}">
+                    <i class="bi bi-filetype-json me-2"></i>JSON
+                </a></li>
+                <li><a class="dropdown-item" href="{{ path('scan_export_csv', {path: result.extensionPath}) }}">
+                    <i class="bi bi-filetype-csv me-2"></i>CSV
+                </a></li>
+                <li><a class="dropdown-item" href="{{ path('scan_export_markdown', {path: result.extensionPath}) }}">
+                    <i class="bi bi-markdown me-2"></i>Markdown
+                </a></li>
+            </ul>
+        </div>
         <a href="{{ path('scan_index') }}" class="btn btn-typo3">
             <i class="bi bi-arrow-repeat me-1"></i>Neuer Scan
         </a>
@@ -45,18 +58,17 @@
     <div class="col-sm-6 col-lg-3">
         <div class="card border-0 shadow-sm h-100">
             <div class="card-body text-center">
-                <div class="h2 mb-1 {{ result.filesWithFindings()|length > 0 ? 'text-warning' : 'text-success' }}">{{ result.filesWithFindings()|length }}</div>
-                <small class="text-muted">Betroffene Dateien</small>
+                <span class="badge text-bg-danger me-1">{{ result.strongFindings() }} strong</span>
+                <span class="badge text-bg-secondary">{{ result.weakFindings() }} weak</span>
+                <br><small class="text-muted">nach Stärke</small>
             </div>
         </div>
     </div>
     <div class="col-sm-6 col-lg-3">
         <div class="card border-0 shadow-sm h-100">
             <div class="card-body text-center">
-                <div class="text-truncate mb-1" title="{{ result.extensionPath }}">
-                    <code class="small">{{ result.extensionPath }}</code>
-                </div>
-                <small class="text-muted">Extension-Pfad</small>
+                <div class="h2 mb-1 {{ result.filesWithFindings()|length > 0 ? 'text-warning' : 'text-success' }}">{{ result.filesWithFindings()|length }}</div>
+                <small class="text-muted">Betroffene Dateien</small>
             </div>
         </div>
     </div>
@@ -67,50 +79,181 @@
         <i class="bi bi-check-circle me-2"></i>Keine Fundstellen erkannt. Die Extension verwendet keine als deprecated oder breaking markierten APIs.
     </div>
 {% else %}
-    {% for fileResult in result.filesWithFindings() %}
-    <div class="card border-0 shadow-sm mb-3">
-        <div class="card-header d-flex justify-content-between align-items-center">
-            <span class="fw-medium"><i class="bi bi-file-earmark-code me-1"></i>{{ fileResult.filePath }}</span>
-            <span class="badge text-bg-danger">{{ fileResult.findings|length }} Fundstelle{{ fileResult.findings|length != 1 ? 'n' : '' }}</span>
-        </div>
-        <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
-                <thead>
-                    <tr>
-                        <th style="width: 80px;">Zeile</th>
-                        <th>Nachricht</th>
-                        <th style="width: 100px;">St&auml;rke</th>
-                        <th>RST-Dateien</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for finding in fileResult.findings %}
-                    <tr>
-                        <td class="text-muted">{{ finding.line }}</td>
-                        <td>
-                            {{ finding.message }}
-                            {% if finding.lineContent %}
-                                <br><code class="small text-muted">{{ finding.lineContent }}</code>
-                            {% endif %}
-                        </td>
-                        <td>
-                            {% if finding.isStrong() %}
-                                <span class="badge text-bg-danger">strong</span>
-                            {% else %}
-                                <span class="badge text-bg-secondary">weak</span>
-                            {% endif %}
-                        </td>
-                        <td>
-                            {% for rstFile in finding.restFiles %}
-                                <span class="badge text-bg-info mb-1">{{ rstFile }}</span>
+    {# Grouping tabs #}
+    <ul class="nav nav-tabs mb-3" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="by-file-tab" data-bs-toggle="tab"
+                    data-bs-target="#by-file-pane" type="button" role="tab">
+                <i class="bi bi-file-earmark-code me-1"></i>Nach Datei
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="by-severity-tab" data-bs-toggle="tab"
+                    data-bs-target="#by-severity-pane" type="button" role="tab">
+                <i class="bi bi-exclamation-triangle me-1"></i>Nach Stärke
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="by-rst-tab" data-bs-toggle="tab"
+                    data-bs-target="#by-rst-pane" type="button" role="tab">
+                <i class="bi bi-file-text me-1"></i>Nach Deprecation
+            </button>
+        </li>
+    </ul>
+
+    <div class="tab-content">
+        {# Group by File #}
+        <div class="tab-pane fade show active" id="by-file-pane" role="tabpanel">
+            {% for fileResult in result.filesWithFindings() %}
+            <div class="card border-0 shadow-sm mb-3">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span class="fw-medium"><i class="bi bi-file-earmark-code me-1"></i>{{ fileResult.filePath }}</span>
+                    <span class="badge text-bg-danger">{{ fileResult.findings|length }} Fundstelle{{ fileResult.findings|length != 1 ? 'n' : '' }}</span>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th style="width: 80px;">Zeile</th>
+                                <th>Nachricht</th>
+                                <th style="width: 100px;">Stärke</th>
+                                <th>RST-Dateien</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for finding in fileResult.findings %}
+                            <tr>
+                                <td class="text-muted">{{ finding.line }}</td>
+                                <td>
+                                    {{ finding.message }}
+                                    {% if finding.contextLines|length > 0 %}
+                                        <div class="mt-2">
+                                            <pre class="bg-light border rounded p-2 mb-0 small"><code>
+{%- for ctx in finding.contextLines -%}
+<span class="{{ ctx.isHighlighted ? 'bg-warning-subtle fw-bold' : 'text-muted' }}">{{ '%4d'|format(ctx.number) }} │ {{ ctx.content }}</span>
+{% endfor -%}
+</code></pre>
+                                        </div>
+                                    {% elseif finding.lineContent %}
+                                        <br><code class="small text-muted">{{ finding.lineContent }}</code>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if finding.isStrong() %}
+                                        <span class="badge text-bg-danger">strong</span>
+                                    {% else %}
+                                        <span class="badge text-bg-secondary">weak</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% for rstFile in finding.restFiles %}
+                                        <span class="badge text-bg-info mb-1">{{ rstFile }}</span>
+                                    {% endfor %}
+                                </td>
+                            </tr>
                             {% endfor %}
-                        </td>
-                    </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        {# Group by Severity #}
+        <div class="tab-pane fade" id="by-severity-pane" role="tabpanel">
+            {% for severity in ['strong', 'weak'] %}
+                {% set severityFindings = [] %}
+                {% for fileResult in result.filesWithFindings() %}
+                    {% for finding in fileResult.findings %}
+                        {% if finding.indicator == severity %}
+                            {% set severityFindings = severityFindings|merge([{file: fileResult.filePath, finding: finding}]) %}
+                        {% endif %}
                     {% endfor %}
-                </tbody>
-            </table>
+                {% endfor %}
+
+                {% if severityFindings|length > 0 %}
+                <div class="card border-0 shadow-sm mb-3">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <span class="fw-medium">
+                            {% if severity == 'strong' %}
+                                <span class="badge text-bg-danger me-1">strong</span> Hohe Konfidenz
+                            {% else %}
+                                <span class="badge text-bg-secondary me-1">weak</span> Niedrige Konfidenz
+                            {% endif %}
+                        </span>
+                        <span class="badge text-bg-primary">{{ severityFindings|length }}</span>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Datei</th>
+                                    <th style="width: 80px;">Zeile</th>
+                                    <th>Nachricht</th>
+                                    <th>RST-Dateien</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in severityFindings %}
+                                <tr>
+                                    <td><code class="small">{{ item.file }}</code></td>
+                                    <td class="text-muted">{{ item.finding.line }}</td>
+                                    <td>{{ item.finding.message }}</td>
+                                    <td>
+                                        {% for rstFile in item.finding.restFiles %}
+                                            <span class="badge text-bg-info mb-1">{{ rstFile }}</span>
+                                        {% endfor %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                {% endif %}
+            {% endfor %}
+        </div>
+
+        {# Group by RST/Deprecation #}
+        <div class="tab-pane fade" id="by-rst-pane" role="tabpanel">
+            {% set grouped = result.findingsGroupedByRestFile() %}
+            {% for rstFile, items in grouped %}
+            <div class="card border-0 shadow-sm mb-3">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span class="fw-medium"><i class="bi bi-file-text me-1"></i>{{ rstFile }}</span>
+                    <span class="badge text-bg-primary">{{ items|length }} Fundstelle{{ items|length != 1 ? 'n' : '' }}</span>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>Datei</th>
+                                <th style="width: 80px;">Zeile</th>
+                                <th style="width: 100px;">Stärke</th>
+                                <th>Nachricht</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in items %}
+                            <tr>
+                                <td><code class="small">{{ item.file }}</code></td>
+                                <td class="text-muted">{{ item.finding.line }}</td>
+                                <td>
+                                    {% if item.finding.isStrong() %}
+                                        <span class="badge text-bg-danger">strong</span>
+                                    {% else %}
+                                        <span class="badge text-bg-secondary">weak</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ item.finding.message }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            {% endfor %}
         </div>
     </div>
-    {% endfor %}
 {% endif %}
 {% endblock %}
