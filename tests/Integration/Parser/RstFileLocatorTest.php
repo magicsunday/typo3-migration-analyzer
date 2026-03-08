@@ -15,11 +15,14 @@ use App\Dto\DocumentType;
 use App\Dto\RstDocument;
 use App\Parser\RstFileLocator;
 use App\Parser\RstParser;
+use App\Service\VersionRangeProvider;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 use function count;
 
+#[CoversClass(RstFileLocator::class)]
 final class RstFileLocatorTest extends TestCase
 {
     private RstFileLocator $locator;
@@ -34,11 +37,9 @@ final class RstFileLocatorTest extends TestCase
     #[Test]
     public function findAllDocumentsForVersionRange(): void
     {
-        $versions = [
-            '12.0', '12.1', '12.2', '12.3', '12.4', '12.4.x',
-            '13.0', '13.1', '13.2', '13.3', '13.4', '13.4.x',
-        ];
-
+        $provider  = new VersionRangeProvider();
+        $range     = $provider->getDefaultRange();
+        $versions  = $range->getVersionDirectories($provider->getAvailableDirectories());
         $documents = $this->locator->findAll($versions);
 
         self::assertNotEmpty($documents);
