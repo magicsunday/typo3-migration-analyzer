@@ -11,7 +11,10 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Analyzer\ActionPlanGenerator;
+use App\Dto\AutomationGrade;
 use App\Dto\ScanResult;
+use App\Generator\RectorRuleGenerator;
 use App\Scanner\ExtensionScanner;
 use App\Scanner\GitRepositoryHandler;
 use App\Scanner\ScanReportExporter;
@@ -27,6 +30,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 
+use function array_values;
 use function is_dir;
 use function trim;
 
@@ -40,6 +44,8 @@ final class ScanController extends AbstractController
         private readonly ExtensionScanner $scanner,
         private readonly DocumentService $documentService,
         private readonly VersionRangeProvider $versionRangeProvider,
+        private readonly ActionPlanGenerator $actionPlanGenerator,
+        private readonly RectorRuleGenerator $rectorGenerator,
     ) {
     }
 
@@ -223,6 +229,79 @@ final class ScanController extends AbstractController
             'Content-Disposition',
             HeaderUtils::makeDisposition(HeaderUtils::DISPOSITION_ATTACHMENT, 'scan-result.md'),
         );
+
+        return $response;
+    }
+
+    /**
+     * Generate and display a prioritized action plan based on scan results.
+     */
+    #[Route('/scan/action-plan', name: 'scan_action_plan')]
+    public function actionPlan(Request $request): Response
+    {
+        $result = $this->getSessionResult($request);
+
+        if (!$result instanceof ScanResult) {
+            return $this->redirectToRoute('scan_index');
+        }
+
+        $documents = array_values($this->documentService->getDocuments());
+        $plan      = $this->actionPlanGenerator->generate($result, $documents);
+
+        return $this->render('scan/action-plan.html.twig', [
+            'plan'          => $plan,
+            'result'        => $result,
+            'versionRange'  => $this->documentService->getVersionRange(),
+            'majorVersions' => $this->versionRangeProvider->getAvailableMajorVersions(),
+        ]);
+    }
+
+    /**
+     * Export a combined Rector config with all automatable rules from the action plan.
+     */
+    #[Route('/scan/export-rector-config', name: 'scan_export_rector_config')]
+    public function exportRectorConfig(Request $request): Response
+    {
+        $result = $this->getSessionResult($request);
+
+        if (!$result instanceof ScanResult) {
+            return $this->redirectToRoute('scan_index');
+        }
+
+        $documents = array_values($this->documentService->getDocuments());
+        $plan      = $this->actionPlanGenerator->generate($result, $documents);
+
+        // Collect all config rules from fully and partially automatable items
+        $allConfigRules = [];
+
+        foreach ($plan->items as $item) {
+            if ($item->automationGrade === AutomationGrade::Manual) {
+                continue;
+            }
+
+            foreach ($item->rectorRules as $rule) {
+                if ($rule->isConfig()) {
+                    $allConfigRules[] = $rule;
+                }
+            }
+        }
+
+        if ($allConfigRules === []) {
+            $this->addFlash('warning', 'Keine automatisierbaren Rector-Rules gefunden.');
+
+            return $this->redirectToRoute('scan_action_plan');
+        }
+
+        $phpCode = $this->rectorGenerator->renderConfig($allConfigRules);
+
+        $disposition = HeaderUtils::makeDisposition(
+            HeaderUtils::DISPOSITION_ATTACHMENT,
+            'rector.php',
+        );
+
+        $response = new Response($phpCode);
+        $response->headers->set('Content-Type', 'application/x-php; charset=UTF-8');
+        $response->headers->set('Content-Disposition', $disposition);
 
         return $response;
     }

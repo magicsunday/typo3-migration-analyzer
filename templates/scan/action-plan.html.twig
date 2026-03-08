@@ -1,0 +1,201 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Aktionsplan{% endblock %}
+
+{% block breadcrumb %}
+    <li class="breadcrumb-item"><a href="{{ path('dashboard') }}">Dashboard</a></li>
+    <li class="breadcrumb-item"><a href="{{ path('scan_index') }}">Extension scannen</a></li>
+    <li class="breadcrumb-item active">Aktionsplan</li>
+{% endblock %}
+
+{% block body %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h3 mb-1">Aktionsplan</h1>
+        <p class="text-muted mb-0">{{ plan.summary.totalItems }} Aktionen, {{ plan.summary.totalFindings }} Fundstellen</p>
+    </div>
+    <div class="d-flex gap-2">
+        {% if plan.summary.fullCount > 0 or plan.summary.partialCount > 0 %}
+        <a href="{{ path('scan_export_rector_config') }}" class="btn btn-success btn-sm">
+            <i class="bi bi-download me-1"></i>Rector-Config exportieren
+        </a>
+        {% endif %}
+        <a href="{{ path('scan_index') }}" class="btn btn-typo3 btn-sm">
+            <i class="bi bi-arrow-repeat me-1"></i>Neuer Scan
+        </a>
+    </div>
+</div>
+
+{# Summary cards #}
+<div class="row g-3 mb-4">
+    <div class="col-sm-6 col-lg-3">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body text-center">
+                <div class="h2 mb-1 text-success">{{ plan.summary.fullCount }}</div>
+                <small class="text-muted">Vollautomatisch</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body text-center">
+                <div class="h2 mb-1 text-warning">{{ plan.summary.partialCount }}</div>
+                <small class="text-muted">Teilautomatisch</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body text-center">
+                <div class="h2 mb-1 text-danger">{{ plan.summary.manualCount }}</div>
+                <small class="text-muted">Manuell</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body text-center">
+                <div class="h2 mb-1">{{ plan.summary.totalItems }}</div>
+                <small class="text-muted">Aktionen gesamt</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if plan.items|length == 0 %}
+    <div class="alert alert-success" role="alert">
+        <i class="bi bi-check-circle me-2"></i>Keine Aktionen erforderlich. Alle Fundstellen konnten keinem bekannten Changelog-Dokument zugeordnet werden.
+    </div>
+{% else %}
+{# Tab navigation #}
+<ul class="nav nav-tabs mb-3" role="tablist">
+    <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="by-grade-tab" data-bs-toggle="tab"
+                data-bs-target="#by-grade-pane" type="button" role="tab">
+            <i class="bi bi-lightning me-1"></i>Nach Automatisierung
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="by-file-tab" data-bs-toggle="tab"
+                data-bs-target="#by-file-pane" type="button" role="tab">
+            <i class="bi bi-file-earmark-code me-1"></i>Nach Datei
+        </button>
+    </li>
+</ul>
+
+<div class="tab-content">
+    {# View 1: By Automation Grade #}
+    <div class="tab-pane fade show active" id="by-grade-pane" role="tabpanel">
+        {% for gradeValue, label, colorClass in [
+            ['full', 'Vollautomatisch — Rector-Config anwenden', 'success'],
+            ['partial', 'Teilautomatisch — Rector + manuelle Anpassung', 'warning'],
+            ['manual', 'Manuell — kein Rector-Support', 'danger']
+        ] %}
+            {% set gradeItems = [] %}
+            {% for item in plan.items %}
+                {% if item.automationGrade.value == gradeValue %}
+                    {% set gradeItems = gradeItems|merge([item]) %}
+                {% endif %}
+            {% endfor %}
+
+            {% if gradeItems|length > 0 %}
+            <div class="card border-0 shadow-sm mb-3">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span class="fw-medium">
+                        <span class="badge text-bg-{{ colorClass }} me-1">{{ gradeItems|length }}</span>
+                        {{ label }}
+                    </span>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>Dokument</th>
+                                <th>Version</th>
+                                <th class="text-center">Dateien</th>
+                                <th class="text-center">Findings</th>
+                                <th class="text-center">Complexity</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in gradeItems %}
+                            <tr>
+                                <td>
+                                    <a href="{{ path('deprecation_detail', {filename: item.document.filename}) }}" class="text-decoration-none">
+                                        {{ item.document.title }}
+                                    </a>
+                                </td>
+                                <td><span class="badge text-bg-secondary">{{ item.document.version }}</span></td>
+                                <td class="text-center">{{ item.affectedFileCount() }}</td>
+                                <td class="text-center">{{ item.findings|length }}</td>
+                                <td class="text-center">
+                                    <span class="badge text-bg-{{ item.complexity.score <= 2 ? 'success' : (item.complexity.score <= 3 ? 'warning' : 'danger') }}">
+                                        {{ item.complexity.score }}/5
+                                    </span>
+                                </td>
+                                <td class="text-end">
+                                    <a href="{{ path('deprecation_detail', {filename: item.document.filename}) }}" class="btn btn-outline-primary btn-sm" title="Details">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            {% endif %}
+        {% endfor %}
+    </div>
+
+    {# View 2: By File #}
+    <div class="tab-pane fade" id="by-file-pane" role="tabpanel">
+        {% for filePath, items in plan.itemsByFile() %}
+        <div class="card border-0 shadow-sm mb-3">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span class="fw-medium"><i class="bi bi-file-earmark-code me-1"></i>{{ filePath }}</span>
+                <span class="badge text-bg-primary">{{ items|length }} Aktion{{ items|length != 1 ? 'en' : '' }}</span>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>Dokument</th>
+                            <th class="text-center">Automatisierung</th>
+                            <th class="text-center">Complexity</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in items %}
+                        <tr>
+                            <td>
+                                <a href="{{ path('deprecation_detail', {filename: item.document.filename}) }}" class="text-decoration-none">
+                                    {{ item.document.title }}
+                                </a>
+                            </td>
+                            <td class="text-center">
+                                {% if item.automationGrade.value == 'full' %}
+                                    <span class="badge text-bg-success">Automatisch</span>
+                                {% elseif item.automationGrade.value == 'partial' %}
+                                    <span class="badge text-bg-warning">Teilweise</span>
+                                {% else %}
+                                    <span class="badge text-bg-danger">Manuell</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-center">
+                                <span class="badge text-bg-{{ item.complexity.score <= 2 ? 'success' : (item.complexity.score <= 3 ? 'warning' : 'danger') }}">
+                                    {{ item.complexity.score }}/5
+                                </span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+{% endblock %}
