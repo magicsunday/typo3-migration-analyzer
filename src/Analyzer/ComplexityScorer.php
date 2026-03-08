@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace App\Analyzer;
 
+use App\Dto\CodeReference;
 use App\Dto\CodeReferenceType;
 use App\Dto\ComplexityScore;
 use App\Dto\MigrationMapping;
@@ -155,7 +156,7 @@ final readonly class ComplexityScorer
 
         return array_any(
             $document->codeReferences,
-            static fn ($ref): bool => $ref->type === CodeReferenceType::InstanceMethod
+            static fn (CodeReference $ref): bool => $ref->type === CodeReferenceType::InstanceMethod
                 || $ref->type === CodeReferenceType::StaticMethod,
         );
     }
