@@ -30,6 +30,10 @@ use function trim;
 
 final class ScanController extends AbstractController
 {
+    private const string SESSION_KEY_SCAN_RESULT = 'scan_result';
+
+    private const string SESSION_KEY_SCAN_SOURCE = 'scan_source';
+
     public function __construct(
         private readonly ExtensionScanner $scanner,
     ) {
@@ -53,6 +57,8 @@ final class ScanController extends AbstractController
         }
 
         $result = $this->scanner->scan($extensionPath);
+
+        $this->storeScanResult($request, $result, $extensionPath);
 
         return $this->render('scan/result.html.twig', [
             'result' => $result,
@@ -84,6 +90,8 @@ final class ScanController extends AbstractController
 
         try {
             $result = $this->scanner->scan($extractedPath);
+
+            $this->storeScanResult($request, $result, $file->getClientOriginalName());
         } finally {
             $uploadHandler->cleanup($extractedPath);
         }
@@ -100,6 +108,16 @@ final class ScanController extends AbstractController
     public function clone(Request $request, GitRepositoryHandler $gitHandler): Response
     {
         $repositoryUrl = trim($request->request->getString('repository_url'));
+
+        $session      = $request->getSession();
+        $cachedResult = $session->get(self::SESSION_KEY_SCAN_RESULT);
+        $cachedSource = $session->get(self::SESSION_KEY_SCAN_SOURCE);
+
+        if ($cachedResult instanceof ScanResult && $cachedSource === $repositoryUrl) {
+            return $this->render('scan/result.html.twig', [
+                'result' => $cachedResult,
+            ]);
+        }
 
         try {
             $gitHandler->validate($repositoryUrl);
@@ -119,6 +137,8 @@ final class ScanController extends AbstractController
 
         try {
             $result = $this->scanner->scan($clonedPath);
+
+            $this->storeScanResult($request, $result, $repositoryUrl);
         } finally {
             $gitHandler->cleanup($clonedPath);
         }
@@ -134,7 +154,7 @@ final class ScanController extends AbstractController
     #[Route('/scan/export-json', name: 'scan_export_json', methods: ['GET'])]
     public function exportJson(Request $request, ScanReportExporter $exporter): Response
     {
-        $result = $this->scanFromPath($request->query->getString('path'));
+        $result = $this->getSessionResult($request);
 
         if (!$result instanceof ScanResult) {
             return $this->redirectToRoute('scan_index');
@@ -156,7 +176,7 @@ final class ScanController extends AbstractController
     #[Route('/scan/export-csv', name: 'scan_export_csv', methods: ['GET'])]
     public function exportCsv(Request $request, ScanReportExporter $exporter): Response
     {
-        $result = $this->scanFromPath($request->query->getString('path'));
+        $result = $this->getSessionResult($request);
 
         if (!$result instanceof ScanResult) {
             return $this->redirectToRoute('scan_index');
@@ -178,7 +198,7 @@ final class ScanController extends AbstractController
     #[Route('/scan/export-markdown', name: 'scan_export_markdown', methods: ['GET'])]
     public function exportMarkdown(Request $request, ScanReportExporter $exporter): Response
     {
-        $result = $this->scanFromPath($request->query->getString('path'));
+        $result = $this->getSessionResult($request);
 
         if (!$result instanceof ScanResult) {
             return $this->redirectToRoute('scan_index');
@@ -195,16 +215,28 @@ final class ScanController extends AbstractController
     }
 
     /**
-     * Validate path and run scan, or add flash error and return null.
+     * Store the scan result and its source identifier in the session.
      */
-    private function scanFromPath(string $extensionPath): ?ScanResult
+    private function storeScanResult(Request $request, ScanResult $result, string $source): void
     {
-        if ($extensionPath === '' || !is_dir($extensionPath)) {
-            $this->addFlash('danger', 'Der angegebene Pfad existiert nicht oder ist kein Verzeichnis.');
+        $session = $request->getSession();
+        $session->set(self::SESSION_KEY_SCAN_RESULT, $result);
+        $session->set(self::SESSION_KEY_SCAN_SOURCE, $source);
+    }
+
+    /**
+     * Retrieve the cached scan result from the session, or null if none exists.
+     */
+    private function getSessionResult(Request $request): ?ScanResult
+    {
+        $result = $request->getSession()->get(self::SESSION_KEY_SCAN_RESULT);
+
+        if (!$result instanceof ScanResult) {
+            $this->addFlash('danger', 'Kein Scan-Ergebnis vorhanden. Bitte zuerst einen Scan durchführen.');
 
             return null;
         }
 
-        return $this->scanner->scan($extensionPath);
+        return $result;
     }
 }
