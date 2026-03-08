@@ -7,11 +7,9 @@
     <link href="/libs/bootstrap/css/bootstrap.min.css" rel="stylesheet">
     <link href="/libs/bootstrap-icons/font/bootstrap-icons.min.css" rel="stylesheet">
     <link href="/libs/highlightjs/atom-one-dark.min.css" rel="stylesheet">
+    <link href="/assets/styles/app.css" rel="stylesheet">
     <script>if(localStorage.getItem('sidebar-collapsed')==='1')document.documentElement.classList.add('sidebar-is-collapsed');</script>
     {% block stylesheets %}{% endblock %}
-    {% block javascripts %}
-        {% block importmap %}{{ importmap('app') }}{% endblock %}
-    {% endblock %}
 </head>
 <body>
     <div class="d-flex">
