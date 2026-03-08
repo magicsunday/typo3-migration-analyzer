@@ -20,6 +20,7 @@ use function count;
 use function implode;
 use function json_encode;
 use function sprintf;
+use function str_contains;
 use function str_replace;
 
 use const JSON_PRETTY_PRINT;
@@ -29,7 +30,7 @@ use const JSON_UNESCAPED_SLASHES;
 /**
  * Exports scan results in multiple formats: JSON, CSV, and Markdown.
  */
-final class ScanReportExporter
+final readonly class ScanReportExporter
 {
     /**
      * Export scan results as structured JSON.
@@ -71,15 +72,15 @@ final class ScanReportExporter
      */
     public function toCsv(ScanResult $result): string
     {
-        $lines = ['File,Line,Severity,Message,RST Files'];
+        $lines = ['"File","Line","Severity","Message","RST Files"'];
 
         foreach ($result->filesWithFindings() as $fileResult) {
             foreach ($fileResult->findings as $finding) {
                 $lines[] = sprintf(
-                    '%s,%d,%s,"%s","%s"',
+                    '"%s",%d,"%s","%s","%s"',
                     $this->escapeCsv($fileResult->filePath),
                     $finding->line,
-                    $finding->indicator,
+                    $this->escapeCsv($finding->indicator),
                     $this->escapeCsv($finding->message),
                     $this->escapeCsv(implode('; ', $finding->restFiles)),
                 );
@@ -130,10 +131,17 @@ final class ScanReportExporter
     }
 
     /**
-     * Escape a value for CSV output (double quotes).
+     * Escape a value for CSV output, protecting against formula injection.
      */
     private function escapeCsv(string $value): string
     {
-        return str_replace('"', '""', $value);
+        $escaped = str_replace('"', '""', $value);
+
+        // Prevent CSV formula injection in spreadsheet applications
+        if ($escaped !== '' && str_contains('=+-@', $escaped[0])) {
+            return "'" . $escaped;
+        }
+
+        return $escaped;
     }
 }

@@ -69,7 +69,7 @@ final class ScanReportExporterTest extends TestCase
         $lines = explode("\n", trim($csv));
 
         self::assertCount(3, $lines);
-        self::assertSame('File,Line,Severity,Message,RST Files', $lines[0]);
+        self::assertSame('"File","Line","Severity","Message","RST Files"', $lines[0]);
     }
 
     #[Test]

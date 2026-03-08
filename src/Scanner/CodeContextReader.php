@@ -23,7 +23,7 @@ use function rtrim;
 /**
  * Reads surrounding lines of code from a source file for context display.
  */
-final class CodeContextReader
+final readonly class CodeContextReader
 {
     /**
      * Read lines surrounding a target line number.
