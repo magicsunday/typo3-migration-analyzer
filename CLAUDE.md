@@ -96,8 +96,8 @@ Detaillierte Architektur und Komponenten-Beschreibungen: `docs/plans/2026-03-07-
 ### v1.3 — Extension-Scanner als Service
 - [x] ZIP-Upload (ZipUploadHandler, max 50MB, Validierung, Path-Traversal-Schutz)
 - [ ] Git-URL-Scan (GitRepositoryProvider, `git clone --depth 1`, Cleanup)
-- [ ] Erweiterter Findings-Report (Code-Kontext, Gruppierung, Zusammenfassung)
-- [ ] Export: JSON, CSV, Markdown
+- [x] Erweiterter Findings-Report (Code-Kontext, Gruppierung nach Datei/Stärke/Deprecation, Zusammenfassung)
+- [x] Export: JSON, CSV, Markdown (ScanReportExporter, CSV-Injection-Schutz)
 
 ### v2.0 — Multi-Version + Rector-Integration
 - [ ] Multi-Version Support (Versions-Bereich konfigurierbar, 9->10 bis 12->13)
