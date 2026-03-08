@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Analyzer\MigrationMappingExtractor;
 use App\Dto\DocumentType;
 use App\Dto\RstDocument;
 use App\Dto\ScanStatus;
@@ -97,8 +98,11 @@ final class DeprecationController extends AbstractController
     }
 
     #[Route('/deprecations/{filename}', name: 'deprecation_detail', requirements: ['filename' => '[A-Za-z0-9_\-]+\.rst'])]
-    public function detail(string $filename, DocumentService $documentService): Response
-    {
+    public function detail(
+        string $filename,
+        DocumentService $documentService,
+        MigrationMappingExtractor $extractor,
+    ): Response {
         $doc = $documentService->findDocumentByFilename($filename);
 
         if (!$doc instanceof RstDocument) {
@@ -106,7 +110,8 @@ final class DeprecationController extends AbstractController
         }
 
         return $this->render('deprecation/detail.html.twig', [
-            'doc' => $doc,
+            'doc'      => $doc,
+            'mappings' => $extractor->extract($doc->migration),
         ]);
     }
 }
