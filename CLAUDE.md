@@ -98,6 +98,7 @@ Detaillierte Architektur und Komponenten-Beschreibungen: `docs/plans/2026-03-07-
 - [x] Git-URL-Scan (GitRepositoryHandler, `git clone --depth 1`, GitHub/GitLab, Cleanup)
 - [x] Erweiterter Findings-Report (Code-Kontext, Gruppierung nach Datei/Stärke/Deprecation, Zusammenfassung)
 - [x] Export: JSON, CSV, Markdown (ScanReportExporter, CSV-Injection-Schutz)
+- [x] Session-basierter Scan-Result-Cache (Exports für alle Quellen, Clone-Deduplizierung)
 
 ### v2.0 — Multi-Version + Rector-Integration
 - [ ] Multi-Version Support (Versions-Bereich konfigurierbar, 9->10 bis 12->13)
@@ -110,6 +111,7 @@ Detaillierte Architektur und Komponenten-Beschreibungen: `docs/plans/2026-03-07-
 - [ ] CLI-Modus: `bin/console scan:extension`, `report:coverage`, `generate:matcher`, `generate:rector`
 - [ ] GitHub Action: `magicsunday/typo3-migration-check-action`
 - [ ] Composer Plugin: `magicsunday/typo3-migration-check-plugin`
+- [ ] Multi-Result Session-Cache (mehrere Scan-Ergebnisse parallel vorhalten)
 
 ### v3.0 — Community-Plattform
 - [ ] Private Repository-Unterstützung (GitHub/GitLab Token-Authentifizierung)
