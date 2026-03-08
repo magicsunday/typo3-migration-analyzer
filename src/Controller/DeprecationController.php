@@ -32,16 +32,28 @@ use function strtolower;
 final class DeprecationController extends AbstractController
 {
     #[Route('/deprecations', name: 'deprecation_list')]
-    public function list(Request $request, DocumentService $documentService): Response
-    {
+    public function list(
+        Request $request,
+        DocumentService $documentService,
+        ComplexityScorer $complexityScorer,
+    ): Response {
         $documents = $documentService->getDocuments();
 
         $filters = [
-            'type'    => $request->query->getString('type'),
-            'version' => $request->query->getString('version'),
-            'scan'    => $request->query->getString('scan'),
-            'q'       => $request->query->getString('q'),
+            'type'        => $request->query->getString('type'),
+            'version'     => $request->query->getString('version'),
+            'scan'        => $request->query->getString('scan'),
+            'q'           => $request->query->getString('q'),
+            'complexity'  => $request->query->getString('complexity'),
+            'automatable' => $request->query->getString('automatable'),
         ];
+
+        // Compute complexity scores for all documents before any filtering
+        $scores = [];
+
+        foreach ($documents as $doc) {
+            $scores[$doc->filename] = $complexityScorer->score($doc);
+        }
 
         if ($filters['type'] !== '') {
             $filterType = DocumentType::tryFrom(strtolower($filters['type']));
@@ -89,12 +101,28 @@ final class DeprecationController extends AbstractController
             );
         }
 
+        if ($filters['complexity'] !== '') {
+            $filterComplexity = (int) $filters['complexity'];
+            $documents        = array_filter(
+                $documents,
+                static fn (RstDocument $doc): bool => $scores[$doc->filename]->score === $filterComplexity,
+            );
+        }
+
+        if ($filters['automatable'] === '1') {
+            $documents = array_filter(
+                $documents,
+                static fn (RstDocument $doc): bool => $scores[$doc->filename]->automatable,
+            );
+        }
+
         $documents = array_values($documents);
 
         return $this->render('deprecation/list.html.twig', [
             'documents' => $documents,
             'versions'  => $documentService->getVersions(),
             'filters'   => $filters,
+            'scores'    => $scores,
         ]);
     }
 
