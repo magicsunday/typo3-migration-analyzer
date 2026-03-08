@@ -13,43 +13,48 @@
     {% endblock %}
 </head>
 <body>
-    <div class="d-flex">
+    <div class="d-flex" data-controller="sidebar">
         {# Sidebar #}
-        <nav id="sidebar" class="sidebar d-flex flex-column flex-shrink-0 p-3 text-bg-dark" style="width: 280px; min-height: 100vh;">
-            <a href="{{ path('dashboard') }}" class="d-flex align-items-center mb-3 mb-md-0 me-md-auto text-white text-decoration-none">
-                <i class="bi bi-arrow-repeat me-2 fs-4 text-typo3"></i>
-                <span class="fs-5 fw-semibold">TYPO3 Migration</span>
-            </a>
+        <nav id="sidebar" class="sidebar d-flex flex-column flex-shrink-0 p-3 text-bg-dark" data-sidebar-target="sidebar">
+            <div class="d-flex align-items-center justify-content-between">
+                <a href="{{ path('dashboard') }}" class="d-flex align-items-center text-white text-decoration-none">
+                    <i class="bi bi-arrow-repeat fs-4 text-typo3"></i>
+                    <span class="fs-5 fw-semibold ms-2 sidebar-brand">TYPO3 Migration</span>
+                </a>
+                <button class="sidebar-toggle d-none d-lg-block" type="button" data-action="sidebar#toggle" title="Sidebar ein-/ausklappen">
+                    <i class="bi bi-layout-sidebar-inset"></i>
+                </button>
+            </div>
             <hr>
             <ul class="nav nav-pills flex-column mb-auto">
                 <li class="nav-item">
                     <a href="{{ path('dashboard') }}" class="nav-link text-white {{ app.request.attributes.get('_route') == 'dashboard' ? 'active bg-typo3' : '' }}">
-                        <i class="bi bi-speedometer2 me-2"></i>Dashboard
+                        <i class="bi bi-speedometer2 me-2"></i><span class="sidebar-label">Dashboard</span>
                     </a>
                 </li>
                 <li>
                     <a href="{{ path('deprecation_list') }}" class="nav-link text-white {{ app.request.attributes.get('_route') starts with 'deprecation' ? 'active bg-typo3' : '' }}">
-                        <i class="bi bi-exclamation-triangle me-2"></i>Deprecations
+                        <i class="bi bi-exclamation-triangle me-2"></i><span class="sidebar-label">Deprecations</span>
                     </a>
                 </li>
                 <li>
                     <a href="{{ path('matcher_analysis') }}" class="nav-link text-white {{ app.request.attributes.get('_route') starts with 'matcher' ? 'active bg-typo3' : '' }}">
-                        <i class="bi bi-search me-2"></i>Matcher-Analyse
+                        <i class="bi bi-search me-2"></i><span class="sidebar-label">Matcher-Analyse</span>
                     </a>
                 </li>
                 <li>
                     <a href="{{ path('coverage_report') }}" class="nav-link text-white {{ app.request.attributes.get('_route') starts with 'coverage' ? 'active bg-typo3' : '' }}">
-                        <i class="bi bi-bar-chart me-2"></i>Coverage-Report
+                        <i class="bi bi-bar-chart me-2"></i><span class="sidebar-label">Coverage-Report</span>
                     </a>
                 </li>
                 <li>
                     <a href="{{ path('scan_index') }}" class="nav-link text-white {{ app.request.attributes.get('_route') starts with 'scan' ? 'active bg-typo3' : '' }}">
-                        <i class="bi bi-cpu me-2"></i>Extension scannen
+                        <i class="bi bi-cpu me-2"></i><span class="sidebar-label">Extension scannen</span>
                     </a>
                 </li>
             </ul>
             <hr>
-            <div class="text-muted small">
+            <div class="text-muted small sidebar-footer">
                 <i class="bi bi-tag me-1"></i>TYPO3 12 &rarr; 13
             </div>
         </nav>
