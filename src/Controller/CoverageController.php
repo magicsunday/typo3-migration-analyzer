@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use App\Service\DocumentService;
+use App\Service\VersionRangeProvider;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
@@ -22,10 +23,12 @@ use Symfony\Component\Routing\Attribute\Route;
 final class CoverageController extends AbstractController
 {
     #[Route('/coverage', name: 'coverage_report')]
-    public function index(DocumentService $documentService): Response
+    public function index(DocumentService $documentService, VersionRangeProvider $versionRangeProvider): Response
     {
         return $this->render('coverage/index.html.twig', [
-            'coverage' => $documentService->getCoverage(),
+            'coverage'       => $documentService->getCoverage(),
+            'versionRange'   => $documentService->getVersionRange(),
+            'migrationPaths' => $versionRangeProvider->getMigrationPaths(),
         ]);
     }
 }

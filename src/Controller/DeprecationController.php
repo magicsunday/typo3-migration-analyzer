@@ -17,6 +17,7 @@ use App\Dto\DocumentType;
 use App\Dto\RstDocument;
 use App\Dto\ScanStatus;
 use App\Service\DocumentService;
+use App\Service\VersionRangeProvider;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -36,6 +37,7 @@ final class DeprecationController extends AbstractController
         Request $request,
         DocumentService $documentService,
         ComplexityScorer $complexityScorer,
+        VersionRangeProvider $versionRangeProvider,
     ): Response {
         $documents = $documentService->getDocuments();
 
@@ -119,10 +121,12 @@ final class DeprecationController extends AbstractController
         $documents = array_values($documents);
 
         return $this->render('deprecation/list.html.twig', [
-            'documents' => $documents,
-            'versions'  => $documentService->getVersions(),
-            'filters'   => $filters,
-            'scores'    => $scores,
+            'documents'      => $documents,
+            'versions'       => $documentService->getVersions(),
+            'filters'        => $filters,
+            'scores'         => $scores,
+            'versionRange'   => $documentService->getVersionRange(),
+            'migrationPaths' => $versionRangeProvider->getMigrationPaths(),
         ]);
     }
 
@@ -132,6 +136,7 @@ final class DeprecationController extends AbstractController
         DocumentService $documentService,
         MigrationMappingExtractor $extractor,
         ComplexityScorer $complexityScorer,
+        VersionRangeProvider $versionRangeProvider,
     ): Response {
         $doc = $documentService->findDocumentByFilename($filename);
 
@@ -140,9 +145,11 @@ final class DeprecationController extends AbstractController
         }
 
         return $this->render('deprecation/detail.html.twig', [
-            'doc'        => $doc,
-            'mappings'   => $extractor->extract($doc->migration),
-            'complexity' => $complexityScorer->score($doc),
+            'doc'            => $doc,
+            'mappings'       => $extractor->extract($doc->migration),
+            'complexity'     => $complexityScorer->score($doc),
+            'versionRange'   => $documentService->getVersionRange(),
+            'migrationPaths' => $versionRangeProvider->getMigrationPaths(),
         ]);
     }
 }

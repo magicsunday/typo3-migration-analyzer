@@ -17,6 +17,7 @@ use App\Dto\RstDocument;
 use App\Generator\MatcherConfigGenerator;
 use App\Generator\RectorRuleGenerator;
 use App\Service\DocumentService;
+use App\Service\VersionRangeProvider;
 use RuntimeException;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\HeaderUtils;
@@ -45,6 +46,7 @@ final class MatcherController extends AbstractController
         private readonly DocumentService $documentService,
         private readonly MatcherConfigGenerator $generator,
         private readonly RectorRuleGenerator $rectorGenerator,
+        private readonly VersionRangeProvider $versionRangeProvider,
     ) {
     }
 
@@ -52,7 +54,9 @@ final class MatcherController extends AbstractController
     public function analysis(): Response
     {
         return $this->render('matcher/analysis.html.twig', [
-            'coverage' => $this->documentService->getCoverage(),
+            'coverage'       => $this->documentService->getCoverage(),
+            'versionRange'   => $this->documentService->getVersionRange(),
+            'migrationPaths' => $this->versionRangeProvider->getMigrationPaths(),
         ]);
     }
 
@@ -73,6 +77,8 @@ final class MatcherController extends AbstractController
             'rectorConfigPhp'     => $rectorConfigRules !== [] ? $this->rectorGenerator->renderConfig($rectorConfigRules) : null,
             'rectorSkeletonRules' => $rectorSkeletonRules,
             'rectorGenerator'     => $this->rectorGenerator,
+            'versionRange'        => $this->documentService->getVersionRange(),
+            'migrationPaths'      => $this->versionRangeProvider->getMigrationPaths(),
         ]);
     }
 

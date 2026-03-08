@@ -14,6 +14,7 @@ namespace App\Controller;
 use App\Dto\DocumentType;
 use App\Dto\RstDocument;
 use App\Service\DocumentService;
+use App\Service\VersionRangeProvider;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
@@ -24,7 +25,7 @@ use function count;
 final class DashboardController extends AbstractController
 {
     #[Route('/', name: 'dashboard')]
-    public function index(DocumentService $documentService): Response
+    public function index(DocumentService $documentService, VersionRangeProvider $versionRangeProvider): Response
     {
         $documents = $documentService->getDocuments();
         $coverage  = $documentService->getCoverage();
@@ -38,6 +39,8 @@ final class DashboardController extends AbstractController
             'totalBreaking'     => count($breaking),
             'totalMatchers'     => $coverage->totalMatchers,
             'coverage'          => $coverage,
+            'versionRange'      => $documentService->getVersionRange(),
+            'migrationPaths'    => $versionRangeProvider->getMigrationPaths(),
         ]);
     }
 }
