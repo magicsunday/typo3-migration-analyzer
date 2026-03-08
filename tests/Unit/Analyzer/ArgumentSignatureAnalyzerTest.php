@@ -261,4 +261,49 @@ final class ArgumentSignatureAnalyzerTest extends TestCase
 
         self::assertNull($result);
     }
+
+    #[Test]
+    public function analyzeHandlesArrayDefaultWithElements(): void
+    {
+        $code = 'public function setOptions(string $name, array $items = [1, 2, 3]): void {}';
+
+        $result = $this->analyzer->analyzeCodeBlocks(
+            [new CodeBlock('php', $code, null)],
+            'setOptions',
+        );
+
+        self::assertInstanceOf(ArgumentCount::class, $result);
+        self::assertSame(1, $result->numberOfMandatoryArguments);
+        self::assertSame(2, $result->maximumNumberOfArguments);
+    }
+
+    #[Test]
+    public function analyzeHandlesLegacyArrayConstructDefault(): void
+    {
+        $code = 'public function configure(string $name, array $options = array(1, 2)): void {}';
+
+        $result = $this->analyzer->analyzeCodeBlocks(
+            [new CodeBlock('php', $code, null)],
+            'configure',
+        );
+
+        self::assertInstanceOf(ArgumentCount::class, $result);
+        self::assertSame(1, $result->numberOfMandatoryArguments);
+        self::assertSame(2, $result->maximumNumberOfArguments);
+    }
+
+    #[Test]
+    public function analyzeHandlesNestedArrayDefault(): void
+    {
+        $code = "public function init(string \$a, array \$b = ['key' => [1, 2]]): void {}";
+
+        $result = $this->analyzer->analyzeCodeBlocks(
+            [new CodeBlock('php', $code, null)],
+            'init',
+        );
+
+        self::assertInstanceOf(ArgumentCount::class, $result);
+        self::assertSame(1, $result->numberOfMandatoryArguments);
+        self::assertSame(2, $result->maximumNumberOfArguments);
+    }
 }

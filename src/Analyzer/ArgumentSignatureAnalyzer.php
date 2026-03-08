@@ -17,13 +17,13 @@ use ReflectionException;
 use ReflectionMethod;
 
 use function array_filter;
-use function array_map;
 use function class_exists;
 use function count;
-use function explode;
 use function preg_match;
 use function preg_quote;
 use function str_contains;
+use function strlen;
+use function substr;
 use function trim;
 
 use const PHP_INT_MAX;
@@ -90,21 +90,92 @@ final class ArgumentSignatureAnalyzer
 
     /**
      * Extract the raw parameter list string from a method definition.
+     *
+     * Uses balanced parenthesis matching to correctly handle nested constructs
+     * like array() defaults within parameter lists.
      */
     private function extractParameterList(string $code, string $escapedMethodName): ?string
     {
-        // Match function/method definition with balanced parentheses
-        $pattern = '/function\s+' . $escapedMethodName . '\s*\(([^)]*)\)/s';
+        // Find the opening parenthesis after the method name
+        $pattern = '/function\s+' . $escapedMethodName . '\s*\(/s';
 
-        if (preg_match($pattern, $code, $match) !== 1) {
+        if (preg_match($pattern, $code, $match, PREG_OFFSET_CAPTURE) !== 1) {
             return null;
         }
 
-        return trim($match[1]);
+        // Position right after the opening parenthesis
+        $start = $match[0][1] + strlen($match[0][0]);
+
+        return $this->extractBalancedContent($code, $start);
     }
 
     /**
-     * Parse a comma-separated parameter list into an ArgumentCount.
+     * Extract content between balanced parentheses starting at the given position.
+     *
+     * Tracks nesting of (), [] and ignores delimiters inside string literals.
+     */
+    private function extractBalancedContent(string $code, int $start): ?string
+    {
+        $depth  = 1;
+        $length = strlen($code);
+        $i      = $start;
+
+        while ($i < $length && $depth > 0) {
+            $char = $code[$i];
+
+            // Skip string literals
+            if ($char === "'" || $char === '"') {
+                $i = $this->skipStringLiteral($code, $i, $length);
+
+                continue;
+            }
+
+            if ($char === '(' || $char === '[') {
+                ++$depth;
+            } elseif ($char === ')' || $char === ']') {
+                --$depth;
+            }
+
+            ++$i;
+        }
+
+        if ($depth !== 0) {
+            return null;
+        }
+
+        // $i points one past the closing delimiter
+        return trim(substr($code, $start, $i - $start - 1));
+    }
+
+    /**
+     * Skip past a string literal, handling escaped quotes.
+     */
+    private function skipStringLiteral(string $code, int $position, int $length): int
+    {
+        $quote = $code[$position];
+        ++$position;
+
+        while ($position < $length) {
+            if ($code[$position] === '\\') {
+                $position += 2;
+
+                continue;
+            }
+
+            if ($code[$position] === $quote) {
+                return $position + 1;
+            }
+
+            ++$position;
+        }
+
+        return $position;
+    }
+
+    /**
+     * Parse a parameter list string into an ArgumentCount.
+     *
+     * Splits on commas at the top level only, respecting nested (), [] and strings.
      */
     private function parseParameterList(string $parameterList): ArgumentCount
     {
@@ -112,10 +183,7 @@ final class ArgumentSignatureAnalyzer
             return new ArgumentCount(0, 0);
         }
 
-        $parameters = array_filter(
-            array_map(trim(...), explode(',', $parameterList)),
-            static fn (string $param): bool => $param !== '',
-        );
+        $parameters = $this->splitTopLevelCommas($parameterList);
 
         $mandatory  = 0;
         $total      = count($parameters);
@@ -137,5 +205,62 @@ final class ArgumentSignatureAnalyzer
             numberOfMandatoryArguments: $mandatory,
             maximumNumberOfArguments: $isVariadic ? PHP_INT_MAX : $total,
         );
+    }
+
+    /**
+     * Split a parameter list on commas, respecting nesting of (), [] and strings.
+     *
+     * @return list<string>
+     */
+    private function splitTopLevelCommas(string $parameterList): array
+    {
+        $parameters = [];
+        $current    = '';
+        $depth      = 0;
+        $length     = strlen($parameterList);
+        $i          = 0;
+
+        while ($i < $length) {
+            $char = $parameterList[$i];
+
+            // Skip string literals
+            if ($char === "'" || $char === '"') {
+                $start = $i;
+                $i     = $this->skipStringLiteral($parameterList, $i, $length);
+                $current .= substr($parameterList, $start, $i - $start);
+
+                continue;
+            }
+
+            if ($char === '(' || $char === '[') {
+                ++$depth;
+            } elseif ($char === ')' || $char === ']') {
+                --$depth;
+            }
+
+            if ($char === ',' && $depth === 0) {
+                $trimmed = trim($current);
+
+                if ($trimmed !== '') {
+                    $parameters[] = $trimmed;
+                }
+
+                $current = '';
+                ++$i;
+
+                continue;
+            }
+
+            $current .= $char;
+            ++$i;
+        }
+
+        $trimmed = trim($current);
+
+        if ($trimmed !== '') {
+            $parameters[] = $trimmed;
+        }
+
+        return $parameters;
     }
 }
