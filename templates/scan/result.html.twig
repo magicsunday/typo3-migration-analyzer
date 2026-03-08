@@ -20,13 +20,13 @@
                 <i class="bi bi-download me-1"></i>Export
             </button>
             <ul class="dropdown-menu">
-                <li><a class="dropdown-item" href="{{ path('scan_export_json', {path: result.extensionPath}) }}">
+                <li><a class="dropdown-item" href="{{ path('scan_export_json') }}">
                     <i class="bi bi-filetype-json me-2"></i>JSON
                 </a></li>
-                <li><a class="dropdown-item" href="{{ path('scan_export_csv', {path: result.extensionPath}) }}">
+                <li><a class="dropdown-item" href="{{ path('scan_export_csv') }}">
                     <i class="bi bi-filetype-csv me-2"></i>CSV
                 </a></li>
-                <li><a class="dropdown-item" href="{{ path('scan_export_markdown', {path: result.extensionPath}) }}">
+                <li><a class="dropdown-item" href="{{ path('scan_export_markdown') }}">
                     <i class="bi bi-markdown me-2"></i>Markdown
                 </a></li>
             </ul>
