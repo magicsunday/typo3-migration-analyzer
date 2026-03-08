@@ -15,7 +15,6 @@ use InvalidArgumentException;
 
 use function array_filter;
 use function array_values;
-use function intval;
 use function sprintf;
 use function strstr;
 
@@ -66,7 +65,8 @@ final readonly class VersionRange
             array_filter(
                 $availableDirectories,
                 function (string $directory): bool {
-                    $majorVersion = intval(strstr($directory, '.', true));
+                    $beforeDot    = strstr($directory, '.', true);
+                    $majorVersion = (int) ($beforeDot !== false ? $beforeDot : $directory);
 
                     return $majorVersion >= $this->sourceVersion
                         && $majorVersion <= $this->targetVersion;

@@ -76,6 +76,24 @@ final class VersionRangeTest extends TestCase
     }
 
     #[Test]
+    public function getVersionDirectoriesHandlesEmptyArray(): void
+    {
+        $range  = new VersionRange(12, 13);
+        $result = $range->getVersionDirectories([]);
+
+        self::assertSame([], $result);
+    }
+
+    #[Test]
+    public function getVersionDirectoriesHandlesDotlessDirectoryNames(): void
+    {
+        $range  = new VersionRange(12, 13);
+        $result = $range->getVersionDirectories(['11', '12', '13', '14']);
+
+        self::assertSame(['12', '13'], $result);
+    }
+
+    #[Test]
     public function getCacheKeySuffixReturnsUniqueString(): void
     {
         $range12to13 = new VersionRange(12, 13);
