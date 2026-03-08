@@ -26,6 +26,18 @@
         {% else %}
             <span class="badge text-bg-danger">Not Scanned</span>
         {% endif %}
+        {% if complexity is defined %}
+            {% if complexity.score <= 2 %}
+                <span class="badge text-bg-success" title="{{ complexity.reason }}">Complexity {{ complexity.score }}/5</span>
+            {% elseif complexity.score == 3 %}
+                <span class="badge text-bg-warning" title="{{ complexity.reason }}">Complexity {{ complexity.score }}/5</span>
+            {% else %}
+                <span class="badge text-bg-danger" title="{{ complexity.reason }}">Complexity {{ complexity.score }}/5</span>
+            {% endif %}
+            {% if complexity.automatable %}
+                <span class="badge text-bg-info">Automatable</span>
+            {% endif %}
+        {% endif %}
     </div>
     <h1 class="h3 mb-1">#{{ doc.issueId }} &mdash; {{ doc.title }}</h1>
     {% if doc.indexTags|length > 0 %}

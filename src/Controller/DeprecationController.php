@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Analyzer\ComplexityScorer;
 use App\Analyzer\MigrationMappingExtractor;
 use App\Dto\DocumentType;
 use App\Dto\RstDocument;
@@ -102,6 +103,7 @@ final class DeprecationController extends AbstractController
         string $filename,
         DocumentService $documentService,
         MigrationMappingExtractor $extractor,
+        ComplexityScorer $complexityScorer,
     ): Response {
         $doc = $documentService->findDocumentByFilename($filename);
 
@@ -110,8 +112,9 @@ final class DeprecationController extends AbstractController
         }
 
         return $this->render('deprecation/detail.html.twig', [
-            'doc'      => $doc,
-            'mappings' => $extractor->extract($doc->migration),
+            'doc'        => $doc,
+            'mappings'   => $extractor->extract($doc->migration),
+            'complexity' => $complexityScorer->score($doc),
         ]);
     }
 }
