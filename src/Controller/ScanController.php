@@ -11,22 +11,18 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
-use App\Dto\ScanFileResult;
-use App\Dto\ScanFinding;
 use App\Dto\ScanResult;
 use App\Scanner\ExtensionScanner;
+use App\Scanner\ScanReportExporter;
 use App\Scanner\ZipUploadHandler;
 use InvalidArgumentException;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\HeaderUtils;
-use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 
-use function array_map;
-use function count;
 use function is_dir;
 
 final class ScanController extends AbstractController
@@ -94,59 +90,83 @@ final class ScanController extends AbstractController
         ]);
     }
 
+    /**
+     * Export scan results as structured JSON.
+     */
     #[Route('/scan/export-json', name: 'scan_export_json', methods: ['GET'])]
-    public function exportJson(Request $request): Response
+    public function exportJson(Request $request, ScanReportExporter $exporter): Response
     {
-        $extensionPath = $request->query->getString('path');
+        $result = $this->scanFromPath($request->query->getString('path'));
 
-        if ($extensionPath === '' || !is_dir($extensionPath)) {
-            $this->addFlash('danger', 'Der angegebene Pfad existiert nicht oder ist kein Verzeichnis.');
-
+        if (!$result instanceof ScanResult) {
             return $this->redirectToRoute('scan_index');
         }
 
-        $result   = $this->scanner->scan($extensionPath);
-        $data     = $this->buildJsonExport($result);
-        $response = new JsonResponse($data);
-
-        $disposition = HeaderUtils::makeDisposition(
-            HeaderUtils::DISPOSITION_ATTACHMENT,
-            'scan-result.json',
+        $response = new Response($exporter->toJson($result));
+        $response->headers->set('Content-Type', 'application/json');
+        $response->headers->set(
+            'Content-Disposition',
+            HeaderUtils::makeDisposition(HeaderUtils::DISPOSITION_ATTACHMENT, 'scan-result.json'),
         );
-
-        $response->headers->set('Content-Disposition', $disposition);
 
         return $response;
     }
 
     /**
-     * Builds a JSON-serializable array from the scan result.
-     *
-     * @return array<string, mixed>
+     * Export scan results as CSV.
      */
-    private function buildJsonExport(ScanResult $result): array
+    #[Route('/scan/export-csv', name: 'scan_export_csv', methods: ['GET'])]
+    public function exportCsv(Request $request, ScanReportExporter $exporter): Response
     {
-        return [
-            'extensionPath' => $result->extensionPath,
-            'scannedFiles'  => $result->scannedFiles(),
-            'totalFindings' => $result->totalFindings(),
-            'filesAffected' => count($result->filesWithFindings()),
-            'files'         => array_map(
-                static fn (ScanFileResult $fileResult): array => [
-                    'file'     => $fileResult->filePath,
-                    'findings' => array_map(
-                        static fn (ScanFinding $finding): array => [
-                            'line'        => $finding->line,
-                            'message'     => $finding->message,
-                            'indicator'   => $finding->indicator,
-                            'lineContent' => $finding->lineContent,
-                            'restFiles'   => $finding->restFiles,
-                        ],
-                        $fileResult->findings,
-                    ),
-                ],
-                $result->filesWithFindings(),
-            ),
-        ];
+        $result = $this->scanFromPath($request->query->getString('path'));
+
+        if (!$result instanceof ScanResult) {
+            return $this->redirectToRoute('scan_index');
+        }
+
+        $response = new Response($exporter->toCsv($result));
+        $response->headers->set('Content-Type', 'text/csv; charset=utf-8');
+        $response->headers->set(
+            'Content-Disposition',
+            HeaderUtils::makeDisposition(HeaderUtils::DISPOSITION_ATTACHMENT, 'scan-result.csv'),
+        );
+
+        return $response;
+    }
+
+    /**
+     * Export scan results as Markdown.
+     */
+    #[Route('/scan/export-markdown', name: 'scan_export_markdown', methods: ['GET'])]
+    public function exportMarkdown(Request $request, ScanReportExporter $exporter): Response
+    {
+        $result = $this->scanFromPath($request->query->getString('path'));
+
+        if (!$result instanceof ScanResult) {
+            return $this->redirectToRoute('scan_index');
+        }
+
+        $response = new Response($exporter->toMarkdown($result));
+        $response->headers->set('Content-Type', 'text/markdown; charset=utf-8');
+        $response->headers->set(
+            'Content-Disposition',
+            HeaderUtils::makeDisposition(HeaderUtils::DISPOSITION_ATTACHMENT, 'scan-result.md'),
+        );
+
+        return $response;
+    }
+
+    /**
+     * Validate path and run scan, or add flash error and return null.
+     */
+    private function scanFromPath(string $extensionPath): ?ScanResult
+    {
+        if ($extensionPath === '' || !is_dir($extensionPath)) {
+            $this->addFlash('danger', 'Der angegebene Pfad existiert nicht oder ist kein Verzeichnis.');
+
+            return null;
+        }
+
+        return $this->scanner->scan($extensionPath);
     }
 }
