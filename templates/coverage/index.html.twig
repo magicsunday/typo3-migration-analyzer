@@ -191,8 +191,9 @@
                 <thead>
                     <tr>
                         <th>Typ</th>
-                        <th>Version</th>
+                        <th>Issue</th>
                         <th>Titel</th>
+                        <th>Version</th>
                         <th>Scan-Status</th>
                         <th class="text-center">Referenzen</th>
                     </tr>
@@ -209,7 +210,7 @@
                                 <span class="badge text-bg-secondary">{{ doc.type.value }}</span>
                             {% endif %}
                         </td>
-                        <td><span class="badge text-bg-light text-dark border">{{ doc.version }}</span></td>
+                        <td class="text-muted">#{{ doc.issueId }}</td>
                         <td>
                             <a href="{{ path('deprecation_detail', {filename: doc.filename}) }}" class="text-decoration-none fw-medium">
                                 {{ doc.title }}
