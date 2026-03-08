@@ -19,7 +19,6 @@ use App\Dto\MigrationMapping;
 use App\Dto\RstDocument;
 
 use function array_any;
-use function array_filter;
 use function ltrim;
 use function mb_strtolower;
 use function str_contains;
@@ -217,12 +216,12 @@ final readonly class ComplexityScorer
      */
     private function hasMethodRefsWithCodeBlocks(RstDocument $document): bool
     {
-        $phpCodeBlocks = array_filter(
+        $hasPhpCodeBlocks = array_any(
             $document->codeBlocks,
             static fn (CodeBlock $block): bool => $block->language === 'php',
         );
 
-        if ($phpCodeBlocks === []) {
+        if (!$hasPhpCodeBlocks) {
             return false;
         }
 
