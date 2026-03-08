@@ -102,8 +102,11 @@ Detaillierte Architektur und Komponenten-Beschreibungen: `docs/plans/2026-03-07-
 
 ### v2.0 — Multi-Version + Rector-Integration
 - [x] Multi-Version Support (VersionRange DTO, VersionRangeProvider, Session-basiert, UI-Dropdown, typo3/cms-core ^14.1)
+- [x] Erweiterte Pattern-Erkennung (non-FQCN CodeReference mit Confidence, 5 neue Mapping-Patterns, Description-Scan)
+- [x] Rector-Config-Export basierend auf Scan-Ergebnissen (kombinierte rector.php für alle Full-Automation Rules)
+- [x] Aktionsplan-Generator (ActionPlanGenerator, AutomationGrade Full/Partial/Manual, priorisiert)
+- [x] Aktionsplan-UI (Ansicht nach Automatisierungsgrad + nach Datei, Zusammenfassung, Rector-Export)
 - [ ] Lauffähige Rector-Rules generieren (komplette Rule-Klassen mit Tests)
-- [ ] Rector-Config-Export (komplett, basierend auf Scan-Ergebnissen)
 - [ ] Diff gegen ssch/typo3-rector (Abdeckung vergleichen, fehlende Rules identifizieren)
 - [ ] LLM-basiertes Komplexitäts-Scoring (Hybrid: Heuristik-Vorbewertung + LLM-Verfeinerung für Score 3-4)
 
@@ -129,3 +132,5 @@ Detaillierte Architektur und Komponenten-Beschreibungen: `docs/plans/2026-03-07-
 - `docs/plans/2026-03-07-before-after-code-comparison.md` — Before/After Vergleich Plan
 - `docs/plans/2026-03-07-coverage-report.md` — Coverage-Report Plan
 - `docs/plans/2026-03-08-git-url-scan.md` — Git-URL-Scan Plan
+- `docs/plans/2026-03-08-end-to-end-upgrade-pipeline-design.md` — End-to-End Pipeline Design
+- `docs/plans/2026-03-08-end-to-end-upgrade-pipeline.md` — End-to-End Pipeline Implementierungsplan
