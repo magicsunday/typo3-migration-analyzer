@@ -111,12 +111,18 @@
                     <span class="badge text-bg-danger">{{ fileResult.findings|length }} Fundstelle{{ fileResult.findings|length != 1 ? 'n' : '' }}</span>
                 </div>
                 <div class="table-responsive">
-                    <table class="table table-hover align-middle mb-0">
+                    <table class="table table-hover align-middle mb-0" style="table-layout: fixed;">
+                        <colgroup>
+                            <col style="width: 60px;">
+                            <col>
+                            <col style="width: 80px;">
+                            <col style="width: 30%;">
+                        </colgroup>
                         <thead>
                             <tr>
-                                <th style="width: 80px;">Zeile</th>
+                                <th>Zeile</th>
                                 <th>Nachricht</th>
-                                <th style="width: 100px;">Stärke</th>
+                                <th>Stärke</th>
                                 <th>RST-Dateien</th>
                             </tr>
                         </thead>
@@ -124,11 +130,11 @@
                             {% for finding in fileResult.findings %}
                             <tr>
                                 <td class="text-muted">{{ finding.line }}</td>
-                                <td>
+                                <td class="text-break">
                                     {{ finding.message }}
                                     {% if finding.contextLines|length > 0 %}
                                         <div class="mt-2">
-                                            <pre class="bg-light border rounded p-2 mb-0 small"><code>
+                                            <pre class="bg-light border rounded p-2 mb-0 small" style="overflow-x: auto;"><code>
 {%- for ctx in finding.contextLines -%}
 <span class="{{ ctx.isHighlighted ? 'bg-warning-subtle fw-bold' : 'text-muted' }}">{{ '%4d'|format(ctx.number) }} │ {{ ctx.content }}</span>
 {% endfor -%}
@@ -145,7 +151,7 @@
                                         <span class="badge text-bg-secondary">weak</span>
                                     {% endif %}
                                 </td>
-                                <td>
+                                <td style="word-break: break-all;">
                                     {% for rstFile in finding.restFiles %}
                                         <span class="badge text-bg-info mb-1">{{ rstFile }}</span>
                                     {% endfor %}
@@ -184,11 +190,17 @@
                         <span class="badge text-bg-primary">{{ severityFindings|length }}</span>
                     </div>
                     <div class="table-responsive">
-                        <table class="table table-hover align-middle mb-0">
+                        <table class="table table-hover align-middle mb-0" style="table-layout: fixed;">
+                            <colgroup>
+                                <col style="width: 30%;">
+                                <col style="width: 60px;">
+                                <col>
+                                <col style="width: 30%;">
+                            </colgroup>
                             <thead>
                                 <tr>
                                     <th>Datei</th>
-                                    <th style="width: 80px;">Zeile</th>
+                                    <th>Zeile</th>
                                     <th>Nachricht</th>
                                     <th>RST-Dateien</th>
                                 </tr>
@@ -196,10 +208,10 @@
                             <tbody>
                                 {% for item in severityFindings %}
                                 <tr>
-                                    <td><code class="small">{{ item.file }}</code></td>
+                                    <td class="text-break"><code class="small">{{ item.file }}</code></td>
                                     <td class="text-muted">{{ item.finding.line }}</td>
-                                    <td>{{ item.finding.message }}</td>
-                                    <td>
+                                    <td class="text-break">{{ item.finding.message }}</td>
+                                    <td style="word-break: break-all;">
                                         {% for rstFile in item.finding.restFiles %}
                                             <span class="badge text-bg-info mb-1">{{ rstFile }}</span>
                                         {% endfor %}
@@ -224,19 +236,25 @@
                     <span class="badge text-bg-primary">{{ items|length }} Fundstelle{{ items|length != 1 ? 'n' : '' }}</span>
                 </div>
                 <div class="table-responsive">
-                    <table class="table table-hover align-middle mb-0">
+                    <table class="table table-hover align-middle mb-0" style="table-layout: fixed;">
+                        <colgroup>
+                            <col style="width: 30%;">
+                            <col style="width: 60px;">
+                            <col style="width: 80px;">
+                            <col>
+                        </colgroup>
                         <thead>
                             <tr>
                                 <th>Datei</th>
-                                <th style="width: 80px;">Zeile</th>
-                                <th style="width: 100px;">Stärke</th>
+                                <th>Zeile</th>
+                                <th>Stärke</th>
                                 <th>Nachricht</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for item in items %}
                             <tr>
-                                <td><code class="small">{{ item.file }}</code></td>
+                                <td class="text-break"><code class="small">{{ item.file }}</code></td>
                                 <td class="text-muted">{{ item.finding.line }}</td>
                                 <td>
                                     {% if item.finding.isStrong() %}
@@ -245,7 +263,7 @@
                                         <span class="badge text-bg-secondary">weak</span>
                                     {% endif %}
                                 </td>
-                                <td>{{ item.finding.message }}</td>
+                                <td class="text-break">{{ item.finding.message }}</td>
                             </tr>
                             {% endfor %}
                         </tbody>
