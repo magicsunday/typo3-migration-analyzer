@@ -216,6 +216,7 @@
                                 {{ doc.title }}
                             </a>
                         </td>
+                        <td><span class="badge text-bg-light text-dark border">{{ doc.version }}</span></td>
                         <td>
                             {% if doc.scanStatus.value == 'fully_scanned' %}
                                 <span class="badge text-bg-success">Fully Scanned</span>
