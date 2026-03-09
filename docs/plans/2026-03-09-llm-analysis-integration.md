@@ -1072,6 +1072,8 @@ Use LLM analysis score when available, fall back to heuristic scoring
 **Step 5:** Code-Review aller neuen Dateien
 **Step 6:** CLAUDE.md Roadmap aktualisieren
 
+**Status:** ✅ Tasks 1–11 implementiert und getestet (314 Tests grün)
+
 ---
 
 ## Kostenübersicht (geschätzt)
@@ -1113,3 +1115,63 @@ Annahme: ~1.500 Input-Tokens + ~500 Output-Tokens pro Dokument.
 | 10 | Bulk-Analyse UI | Template + `llm-bulk.js` |
 | 11 | Score-Integration | `ComplexityScorer.php` |
 | 12 | Tests + Review | Alle Dateien |
+
+---
+
+## Implementierungsnotizen
+
+Die folgenden Anpassungen und Erkenntnisse wurden während der Implementierung dokumentiert.
+
+### JSON-Zuverlässigkeit (umgesetzt)
+
+LLM-APIs liefern nicht immer valides JSON. Drei Maßnahmen wurden implementiert:
+
+1. **Claude Assistant Prefill:** `{"role": "assistant", "content": "{"}` erzwingt, dass die Antwort mit `{` beginnt. Der Client prependet `{` zum Response-Text.
+2. **OpenAI Response Format:** `'response_format' => ['type' => 'json_object']` garantiert valides JSON.
+3. **Markdown Fence Stripping:** `ClaudeClient::stripMarkdownFences()` entfernt `\`\`\`json` und `\`\`\`` Wrapper, falls das Modell die Antwort trotzdem in Code-Fences einpackt.
+
+### HTTP Client Timeout (umgesetzt)
+
+Beide Clients verwenden 60 Sekunden Timeout für LLM API-Calls (`'timeout' => 60`).
+
+### Aggregate Token Queries (umgesetzt)
+
+`LlmResultRepository::getTotalTokens()` liefert `SUM(tokens_input)` und `SUM(tokens_output)` über alle Analysen. Wird von `LlmStatusCommand` und `LlmController` verwendet.
+
+### AutomationGrade als Enum (umgesetzt)
+
+`LlmAnalysisResult::$automationGrade` verwendet den bestehenden `AutomationGrade`-Enum statt `string`. Der Plan hatte `string` vorgesehen, aber der Enum war bereits vorhanden und passt semantisch besser.
+
+### Automatable-Mapping (Bug-Fix nach Code-Review)
+
+`ComplexityScorer` mappt `AutomationGrade` → `bool automatable` mit:
+```php
+automatable: $llmResult->automationGrade !== AutomationGrade::Manual,
+```
+Nicht `=== 'full'`, weil `Partial` sonst als nicht-automatisierbar behandelt würde — inkonsistent mit dem Heuristik-Pfad, der Score 1–2 als `automatable: true` markiert.
+
+### migrations/schema.sql (Referenz-Datei)
+
+`migrations/schema.sql` ist eine Referenz-Datei für Dokumentationszwecke. Das Schema wird automatisch von `LlmResultRepository::initializeSchema()` beim ersten Zugriff erstellt. Kein separater Migrations-Schritt nötig.
+
+### PHPUnit + final readonly classes
+
+PHPUnit kann `final readonly` Klassen nicht stubben. Tests für `LlmAnalysisService` verwenden deshalb echte Instanzen (mit `LlmConfigurationService` im Temp-Verzeichnis, `LlmClientFactory` mit Symfonys `MockHttpClient`).
+
+---
+
+## Offene Verbesserungen (noch nicht implementiert)
+
+### Retry/Backoff für API-Fehler
+
+Bei 429 (Rate Limit) oder 5xx sollten die Clients automatisch retry mit exponentiellem Backoff versuchen. Aktuell bricht ein Fehler die Analyse ab.
+
+### Request-ID und Logging
+
+Für Debugging und Nachvollziehbarkeit wäre ein optionales Logging der API-Aufrufe sinnvoll (Request-ID, Dauer, Token-Verbrauch, Fehler).
+
+### Bulk-Analyse Strategie
+
+Die Bulk-Analyse analysiert aktuell das erste nicht-analysierte Dokument. Optimierungen:
+- Priorisierung nach Score 3–4 (wo LLM den größten Mehrwert bringt)
+- Parallelisierung (aktuell sequentiell wegen Rate Limiting)

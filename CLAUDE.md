@@ -109,11 +109,11 @@ Detaillierte Architektur und Komponenten-Beschreibungen: `docs/plans/2026-03-07-
 - [x] Aktionsplan-UI (Ansicht nach Automatisierungsgrad + nach Datei, Zusammenfassung, Rector-Export)
 - [ ] Lauffähige Rector-Rules generieren (komplette Rule-Klassen mit Tests)
 - [ ] Diff gegen ssch/typo3-rector (Abdeckung vergleichen, fehlende Rules identifizieren)
-- [ ] LLM-Analyse-Integration (Provider-Konfiguration, SQLite-Cache, Detail-Anzeige, Bulk-Analyse)
-- [ ] LLM-basiertes Komplexitäts-Scoring (Hybrid: Heuristik-Vorbewertung + LLM-Verfeinerung für Score 3-4)
+- [x] LLM-Analyse-Integration (Provider-Konfiguration, SQLite-Cache, Detail-Anzeige, Bulk-Analyse)
+- [x] LLM-basiertes Komplexitäts-Scoring (Hybrid: Heuristik-Vorbewertung + LLM-Verfeinerung für Score 3-4)
 
 ### v2.1 — CI/CD Integration
-- [ ] CLI-Modus: `bin/console llm:analyze`, `llm:status`, `scan:extension`, `report:coverage`, `generate:matcher`, `generate:rector`
+- [ ] CLI-Modus: `bin/console scan:extension`, `report:coverage`, `generate:matcher`, `generate:rector` (llm:analyze + llm:status bereits in v2.0)
 - [ ] GitHub Action: `magicsunday/typo3-migration-check-action`
 - [ ] Composer Plugin: `magicsunday/typo3-migration-check-plugin`
 - [ ] Multi-Result Session-Cache (mehrere Scan-Ergebnisse parallel vorhalten)
