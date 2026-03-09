@@ -11,10 +11,14 @@ declare(strict_types=1);
 
 namespace App\Llm;
 
+use RuntimeException;
+use Symfony\Contracts\HttpClient\Exception\ClientExceptionInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 use function hrtime;
+use function json_decode;
 use function ltrim;
+use function sprintf;
 
 /**
  * LLM client for the Anthropic Messages API.
@@ -57,8 +61,19 @@ final readonly class ClaudeClient implements LlmClientInterface
             ],
         ]);
 
-        /** @var array{content: list<array{text: string}>, usage: array{input_tokens: int, output_tokens: int}} $data */
-        $data       = $response->toArray();
+        try {
+            /** @var array{content: list<array{text: string}>, usage: array{input_tokens: int, output_tokens: int}} $data */
+            $data = $response->toArray();
+        } catch (ClientExceptionInterface $e) {
+            $body = $response->getContent(false);
+
+            /** @var array{error?: array{message?: string}}|null $error */
+            $error   = json_decode($body, true);
+            $message = $error['error']['message'] ?? $body;
+
+            throw new RuntimeException(sprintf('Claude API error: %s', $message), $e->getCode(), $e);
+        }
+
         $durationMs = (int) ((hrtime(true) - $startTime) / 1_000_000);
 
         // Prepend the "{" prefill that Claude continues from

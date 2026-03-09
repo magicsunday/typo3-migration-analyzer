@@ -11,9 +11,13 @@ declare(strict_types=1);
 
 namespace App\Llm;
 
+use RuntimeException;
+use Symfony\Contracts\HttpClient\Exception\ClientExceptionInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 use function hrtime;
+use function json_decode;
+use function sprintf;
 
 /**
  * LLM client for the OpenAI Chat Completions API.
@@ -53,8 +57,19 @@ final readonly class OpenAiClient implements LlmClientInterface
             ],
         ]);
 
-        /** @var array{choices: list<array{message: array{content: string}}>, usage: array{prompt_tokens: int, completion_tokens: int}} $data */
-        $data       = $response->toArray();
+        try {
+            /** @var array{choices: list<array{message: array{content: string}}>, usage: array{prompt_tokens: int, completion_tokens: int}} $data */
+            $data = $response->toArray();
+        } catch (ClientExceptionInterface $e) {
+            $body = $response->getContent(false);
+
+            /** @var array{error?: array{message?: string}}|null $error */
+            $error   = json_decode($body, true);
+            $message = $error['error']['message'] ?? $body;
+
+            throw new RuntimeException(sprintf('OpenAI API error: %s', $message), $e->getCode(), $e);
+        }
+
         $durationMs = (int) ((hrtime(true) - $startTime) / 1_000_000);
 
         return new LlmResponse(
