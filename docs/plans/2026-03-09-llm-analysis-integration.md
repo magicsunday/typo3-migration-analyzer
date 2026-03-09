@@ -73,7 +73,7 @@ LlmAnalysisService::analyze(RstDocument)
 
 ---
 
-## Task 1: Composer-Dependency + SQLite-Setup
+## Task 1: Composer-Dependency + SQLite-Setup ✅
 
 **Files:**
 - Modify: `composer.json`
@@ -131,7 +131,7 @@ Add symfony/http-client and SQLite schema for LLM analysis results
 
 ---
 
-## Task 2: LLM DTOs
+## Task 2: LLM DTOs ✅
 
 **Files:**
 - Create: `src/Dto/LlmProvider.php`
@@ -182,6 +182,8 @@ final readonly class LlmModel
 
 **Step 3: AnalysisResult VO**
 
+> **Abweichung:** `automationGrade` wurde als `AutomationGrade`-Enum statt `string` implementiert (siehe Implementierungsnotizen).
+
 ```php
 // src/Dto/LlmAnalysisResult.php
 final readonly class LlmAnalysisResult
@@ -195,7 +197,7 @@ final readonly class LlmAnalysisResult
         public string $modelId,
         public string $promptVersion,
         public int $score,
-        public string $automationGrade,
+        public AutomationGrade $automationGrade, // Enum statt string
         public string $summary,
         public array $migrationSteps,
         public array $affectedAreas,
@@ -218,7 +220,7 @@ Add LLM DTOs for provider, model, and analysis result
 
 ---
 
-## Task 3: LlmResultRepository (SQLite)
+## Task 3: LlmResultRepository (SQLite) ✅
 
 **Files:**
 - Create: `src/Repository/LlmResultRepository.php`
@@ -313,6 +315,9 @@ final class LlmResultRepository
 - `filenameHash` verwendet xxh128 (schnell, kollisionssicher genug)
 - `UNIQUE(filename_hash, model_id, prompt_version)` verhindert Duplikate
 - `findLatest()` für die UI — zeigt immer das neueste Ergebnis unabhängig von Modell/Prompt
+- `raw_response`-Spalte nachträglich entfernt (YAGNI, siehe Implementierungsnotizen)
+- `final class` statt `final readonly class` (mutable PDO-State)
+- `mkdir()` mit `RuntimeException` bei Fehler
 
 **Step 2: Tests mit In-Memory SQLite**
 
@@ -332,7 +337,7 @@ Add SQLite-backed LlmResultRepository for persistent analysis caching
 
 ---
 
-## Task 4: LLM-Client-Abstraction
+## Task 4: LLM-Client-Abstraction ✅
 
 **Files:**
 - Create: `src/Llm/LlmClientInterface.php`
@@ -467,7 +472,7 @@ Add LLM client abstraction with Claude and OpenAI implementations
 
 ---
 
-## Task 5: LlmConfigurationService
+## Task 5: LlmConfigurationService ✅
 
 **Files:**
 - Create: `src/Service/LlmConfigurationService.php`
@@ -580,7 +585,7 @@ Add YAML-based LLM configuration service with model catalog
 
 ---
 
-## Task 6: LlmAnalysisService
+## Task 6: LlmAnalysisService ✅
 
 **Files:**
 - Create: `src/Service/LlmAnalysisService.php`
@@ -735,7 +740,7 @@ Add LlmAnalysisService for orchestrating document analysis
 
 ---
 
-## Task 7: CLI Commands
+## Task 7: CLI Commands ✅
 
 **Files:**
 - Create: `src/Command/LlmAnalyzeCommand.php`
@@ -803,7 +808,7 @@ Add CLI commands for LLM analysis and status reporting
 
 ---
 
-## Task 8: Konfigurationsseite (Web-UI)
+## Task 8: Konfigurationsseite (Web-UI) ✅
 
 **Files:**
 - Create: `src/Controller/LlmController.php`
@@ -889,7 +894,7 @@ Add LLM configuration page with provider selection and bulk analysis
 
 ---
 
-## Task 9: Detail-Seite Integration
+## Task 9: Detail-Seite Integration ✅
 
 **Files:**
 - Modify: `src/Controller/DeprecationController.php`
@@ -974,7 +979,7 @@ Show LLM analysis results on deprecation detail page
 
 ---
 
-## Task 10: Bulk-Analyse mit Fortschrittsanzeige
+## Task 10: Bulk-Analyse mit Fortschrittsanzeige ✅
 
 **Files:**
 - Modify: `templates/llm/config.html.twig`
@@ -1021,7 +1026,7 @@ Add bulk analysis with progress tracking on LLM configuration page
 
 ---
 
-## Task 11: Score-Integration
+## Task 11: Score-Integration ✅
 
 **Files:**
 - Modify: `src/Analyzer/ComplexityScorer.php`
@@ -1046,7 +1051,7 @@ public function score(RstDocument $document): ComplexityScore
         return new ComplexityScore(
             score: $llmResult->score,
             reason: $llmResult->summary,
-            automatable: $llmResult->automationGrade === 'full',
+            automatable: $llmResult->automationGrade !== AutomationGrade::Manual, // nicht === 'full'
         );
     }
 
@@ -1063,7 +1068,7 @@ Use LLM analysis score when available, fall back to heuristic scoring
 
 ---
 
-## Task 12: Tests, Code-Review, Cleanup
+## Task 12: Tests, Code-Review, Cleanup ✅
 
 **Step 1:** Vollständige Test-Suite für alle neuen Klassen
 **Step 2:** `composer ci:cgl && composer ci:rector`
@@ -1072,7 +1077,7 @@ Use LLM analysis score when available, fall back to heuristic scoring
 **Step 5:** Code-Review aller neuen Dateien
 **Step 6:** CLAUDE.md Roadmap aktualisieren
 
-**Status:** ✅ Tasks 1–11 implementiert und getestet (314 Tests grün)
+**Status:** Alle 12 Tasks implementiert, 314 Tests grün, Code-Review-Findings behoben
 
 ---
 
@@ -1158,20 +1163,44 @@ Nicht `=== 'full'`, weil `Partial` sonst als nicht-automatisierbar behandelt wü
 
 PHPUnit kann `final readonly` Klassen nicht stubben. Tests für `LlmAnalysisService` verwenden deshalb echte Instanzen (mit `LlmConfigurationService` im Temp-Verzeichnis, `LlmClientFactory` mit Symfonys `MockHttpClient`).
 
+### raw_response Spalte entfernt (YAGNI, Code-Review-Finding)
+
+Der Plan sah eine `raw_response`-Spalte für die vollständige LLM-Antwort vor. In der Implementierung wurde `$result->summary` als Platzhalter gespeichert — die rohe Antwort war nie verfügbar, da `json_decode` sie bereits parsiert. Die Spalte wurde komplett entfernt (YAGNI): kein Konsument, kein DTO-Property, `summary` wurde redundant doppelt gespeichert.
+
+### readonly class nur für Value Objects (Code-Review-Finding)
+
+Rector wendet `ReadOnlyClassRector` automatisch an, wenn alle Properties readonly sind. Services mit mutablem internen State (z.B. `LlmResultRepository` mit `PDO`-Instanz) sollten `final class` statt `final readonly class` sein. `LlmAnalysisService` und `LlmConfigurationService` bleiben `final readonly`, da alle ihre Properties constructor-promoted readonly sind und Rector dies erzwingt.
+
+### mkdir() Fehlerbehandlung (Code-Review-Finding)
+
+`mkdir()` gibt `false` bei Fehlern zurück. Beide Stellen (`LlmResultRepository`, `LlmConfigurationService`) werfen jetzt eine `RuntimeException` mit aussagekräftiger Fehlermeldung statt den Rückgabewert zu ignorieren.
+
+### PHPDoc @param Platzierung (Code-Review-Finding)
+
+`@param`-Annotationen gehören auf den Constructor-Docblock, nicht auf den Klassen-Docblock. Betraf `LlmModel` — korrigiert.
+
 ---
 
 ## Offene Verbesserungen (noch nicht implementiert)
 
 ### Retry/Backoff für API-Fehler
 
-Bei 429 (Rate Limit) oder 5xx sollten die Clients automatisch retry mit exponentiellem Backoff versuchen. Aktuell bricht ein Fehler die Analyse ab.
+Bei 429 (Rate Limit) oder 5xx sollten die Clients automatisch retry mit exponentiellem Backoff versuchen. Aktuell bricht ein Fehler die Analyse ab. Mögliche Implementierung:
+- Exponentielles Backoff: 1s → 2s → 4s → 8s (max 3 Retries)
+- Nur bei 429 und 5xx, nicht bei 4xx-Auth-Fehlern
+- Als Decorator um `LlmClientInterface` oder direkt in den Client-Implementierungen
 
 ### Request-ID und Logging
 
-Für Debugging und Nachvollziehbarkeit wäre ein optionales Logging der API-Aufrufe sinnvoll (Request-ID, Dauer, Token-Verbrauch, Fehler).
+Für Debugging und Nachvollziehbarkeit wäre ein optionales Logging der API-Aufrufe sinnvoll (Request-ID, Dauer, Token-Verbrauch, Fehler). Symfony MonologBundle könnte hier einen eigenen `llm`-Channel bekommen.
 
 ### Bulk-Analyse Strategie
 
 Die Bulk-Analyse analysiert aktuell das erste nicht-analysierte Dokument. Optimierungen:
 - Priorisierung nach Score 3–4 (wo LLM den größten Mehrwert bringt)
 - Parallelisierung (aktuell sequentiell wegen Rate Limiting)
+- Filtern nach Version oder Typ (nur Deprecations, nur bestimmte TYPO3-Version)
+
+### Raw Response Logging (optional)
+
+Falls die rohe LLM-Antwort für Debugging benötigt wird, könnte sie in einer separaten `llm_raw_logs`-Tabelle gespeichert werden — getrennt von den analysierten Ergebnissen. Aktuell nicht implementiert (YAGNI).
