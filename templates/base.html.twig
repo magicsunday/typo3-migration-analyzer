@@ -52,6 +52,11 @@
                         <i class="bi bi-cpu me-2"></i><span class="sidebar-label">Extension scannen</span>
                     </a>
                 </li>
+                <li>
+                    <a href="{{ path('llm_config') }}" class="nav-link text-white {{ app.request.attributes.get('_route') starts with 'llm' ? 'active bg-typo3' : '' }}">
+                        <i class="bi bi-robot me-2"></i><span class="sidebar-label">LLM-Analyse</span>
+                    </a>
+                </li>
             </ul>
             <hr>
             <div class="text-muted small sidebar-footer">

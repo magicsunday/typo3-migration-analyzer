@@ -1,0 +1,149 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}LLM-Konfiguration — TYPO3 Migration Analyzer{% endblock %}
+
+{% block breadcrumb %}
+    <li class="breadcrumb-item"><a href="{{ path('dashboard') }}">Dashboard</a></li>
+    <li class="breadcrumb-item active">LLM-Konfiguration</li>
+{% endblock %}
+
+{% block body %}
+    <div class="row g-4">
+        <div class="col-lg-8">
+            {% for message in app.flashes('success') %}
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-transparent">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-gear me-2"></i>LLM-Provider-Konfiguration
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="post" action="{{ path('llm_config') }}">
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Provider</label>
+                            <div class="d-flex gap-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="provider" id="provider-claude"
+                                           value="claude" {{ config.provider.value == 'claude' ? 'checked' : '' }}
+                                           data-provider-toggle>
+                                    <label class="form-check-label" for="provider-claude">Anthropic (Claude)</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="provider" id="provider-openai"
+                                           value="openai" {{ config.provider.value == 'openai' ? 'checked' : '' }}
+                                           data-provider-toggle>
+                                    <label class="form-check-label" for="provider-openai">OpenAI</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="api-key" class="form-label fw-semibold">API-Key</label>
+                            <div class="input-group">
+                                <input type="password" class="form-control" id="api-key" name="api_key"
+                                       value="{{ config.apiKey }}" placeholder="API-Key eingeben">
+                                <button class="btn btn-outline-secondary" type="button" id="toggle-api-key"
+                                        title="API-Key anzeigen/verbergen">
+                                    <i class="bi bi-eye"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="model-id" class="form-label fw-semibold">Modell</label>
+                            <select class="form-select" id="model-id" name="model_id"
+                                    data-models="{{ models|json_encode }}"
+                                    data-current-model="{{ config.modelId }}">
+                                {% for model in models %}
+                                    <option value="{{ model.modelId }}"
+                                            data-provider="{{ model.provider.value }}"
+                                            data-input-cost="{{ model.inputCostPerMillion }}"
+                                            data-output-cost="{{ model.outputCostPerMillion }}"
+                                            {{ model.modelId == config.modelId ? 'selected' : '' }}>
+                                        {{ model.label }} (${{ model.inputCostPerMillion }}/${{ model.outputCostPerMillion }} per 1M tokens)
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="analysis-prompt" class="form-label fw-semibold">
+                                Analyse-Prompt
+                                <button type="button" class="btn btn-sm btn-outline-secondary ms-2" id="reset-prompt"
+                                        data-default-prompt="{{ defaultPrompt|e('html_attr') }}">
+                                    <i class="bi bi-arrow-counterclockwise me-1"></i>Standard
+                                </button>
+                            </label>
+                            <textarea class="form-control font-monospace" id="analysis-prompt" name="analysis_prompt"
+                                      rows="12">{{ config.analysisPrompt }}</textarea>
+                        </div>
+
+                        <button type="submit" class="btn btn-typo3">
+                            <i class="bi bi-save me-1"></i>Speichern
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-transparent">
+                    <h6 class="card-title mb-0">
+                        <i class="bi bi-bar-chart me-2"></i>Analyse-Status
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted">Analysiert</span>
+                        <span class="fw-semibold">{{ progress.analyzed }} / {{ progress.total }}</span>
+                    </div>
+                    <div class="progress mb-3" style="height: 8px;">
+                        <div class="progress-bar bg-typo3" style="width: {{ progress.percent }}%"></div>
+                    </div>
+                    <p class="text-muted small mb-0">{{ progress.percent }}% abgeschlossen</p>
+                </div>
+            </div>
+
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-transparent">
+                    <h6 class="card-title mb-0">
+                        <i class="bi bi-play-circle me-2"></i>Massenanalyse
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="progress mb-3" style="height: 24px;">
+                        <div id="bulk-progress" class="progress-bar bg-typo3" style="width: {{ progress.percent }}%">
+                            {{ progress.percent }}%
+                        </div>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span id="bulk-status" class="text-muted small">{{ progress.analyzed }} / {{ progress.total }} analysiert</span>
+                        <div>
+                            <button id="bulk-stop" class="btn btn-sm btn-outline-danger d-none me-2"
+                                    data-url="{{ path('llm_analyze_bulk') }}">
+                                <i class="bi bi-stop-fill me-1"></i>Stopp
+                            </button>
+                            <button id="bulk-start" class="btn btn-sm btn-typo3"
+                                    data-url="{{ path('llm_analyze_bulk') }}"
+                                    data-progress-url="{{ path('llm_progress') }}"
+                                    {{ not config.apiKey ? 'disabled' : '' }}>
+                                <i class="bi bi-play-fill me-1"></i>Analyse starten
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block javascripts %}
+    <script src="/js/llm-config.js"></script>
+{% endblock %}
