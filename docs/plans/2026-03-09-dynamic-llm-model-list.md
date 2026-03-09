@@ -65,7 +65,7 @@ LlmConfigurationService::getAvailableModels(provider, apiKey)
 
 ---
 
-## Task 1: LlmModel nullable Preise
+## Task 1: LlmModel nullable Preise ✅
 
 **Files:**
 - Modify: `src/Dto/LlmModel.php`
@@ -166,7 +166,7 @@ Support nullable pricing in LlmModel for dynamically discovered models
 
 ---
 
-## Task 2: LlmModelProviderInterface + ClaudeModelProvider
+## Task 2: LlmModelProviderInterface + ClaudeModelProvider ✅
 
 **Files:**
 - Create: `src/Llm/LlmModelProviderInterface.php`
@@ -281,7 +281,7 @@ Add ClaudeModelProvider to fetch models from Anthropic API
 
 ---
 
-## Task 3: OpenAiModelProvider
+## Task 3: OpenAiModelProvider ✅
 
 **Files:**
 - Create: `src/Llm/OpenAiModelProvider.php`
@@ -428,7 +428,7 @@ Add OpenAiModelProvider with chat model filtering
 
 ---
 
-## Task 4: LlmModelProviderFactory
+## Task 4: LlmModelProviderFactory ✅
 
 **Files:**
 - Create: `src/Llm/LlmModelProviderFactory.php`
@@ -490,7 +490,7 @@ Add LlmModelProviderFactory for provider-specific model listing
 
 ---
 
-## Task 5: LlmConfigurationService — dynamische Modell-Liste mit Cache + Fallback
+## Task 5: LlmConfigurationService — dynamische Modell-Liste mit Cache + Fallback ✅
 
 **Files:**
 - Modify: `src/Service/LlmConfigurationService.php`
@@ -764,7 +764,7 @@ Fetch models dynamically from provider APIs with caching and static fallback
 
 ---
 
-## Task 6: Cache-Invalidierung bei Provider-Wechsel
+## Task 6: Cache-Invalidierung bei Provider-Wechsel ✅
 
 **Files:**
 - Modify: `src/Service/LlmConfigurationService.php`
@@ -797,12 +797,24 @@ Invalidate model cache when LLM configuration is saved
 
 ---
 
-## Task 7: Endgültige Tests, Code-Review, Cleanup
+## Task 7: Endgültige Tests, Code-Review, Cleanup ✅
 
 **Step 1:** `composer ci:cgl && composer ci:rector`
 **Step 2:** `composer ci:test` — alle Tests grün
 **Step 3:** Code-Review aller neuen/geänderten Dateien
 **Step 4:** CLAUDE.md Roadmap prüfen — ggf. neuen Punkt ergänzen
+
+---
+
+## Code-Review Findings & Fixes
+
+1. **Cache Key Collision** (CRITICAL) — Cache key `llm_models_{provider}` ignored the API key, causing collisions when different keys were used for the same provider. Fixed by adding `hash('xxh64', $apiKey)` to the cache key. Explicit cache invalidation in `save()` removed (TTL handles cleanup, new key combos trigger fresh API calls automatically).
+
+2. **enrichWithPricing discarded API pricing** (IMPORTANT) — Always overwrote with local pricing, even when the API model already had pricing. Fixed to `$model->inputCostPerMillion ?? $pricing[0] ?? null` — API pricing takes precedence, local map fills in unknowns.
+
+3. **Missing provider assertion in test** (IMPORTANT) — Static fallback test didn't verify that returned models had the correct provider. Added `assertSame(LlmProvider::Claude, $model->provider)`.
+
+4. **Factory bypasses DI** (SKIPPED) — Factory creates providers with `new`. Considered refactoring to inject providers, but this is YAGNI — the factory IS the DI integration point, providers are lightweight with a single dependency (HttpClient). Adding individual service registrations would add complexity without benefit.
 
 ---
 
