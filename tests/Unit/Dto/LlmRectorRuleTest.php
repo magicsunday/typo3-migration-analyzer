@@ -30,7 +30,7 @@ final class LlmRectorRuleTest extends TestCase
             filename: 'Deprecation-12345-Test.rst',
             type: RectorRuleType::RenameClass,
             ruleClassName: 'RenameClassRector',
-            configPhp: "'Old\\Class' => 'New\\Class'",
+            configEntry: ['type' => 'rename_class', 'old' => 'Old\Class', 'new' => 'New\Class'],
             rulePhp: null,
             testPhp: null,
             fixtureBeforePhp: null,
@@ -38,7 +38,7 @@ final class LlmRectorRuleTest extends TestCase
         );
 
         self::assertSame(RectorRuleType::RenameClass, $rule->type);
-        self::assertNotNull($rule->configPhp);
+        self::assertNotNull($rule->configEntry);
         self::assertNull($rule->rulePhp);
     }
 
@@ -49,7 +49,7 @@ final class LlmRectorRuleTest extends TestCase
             filename: 'Breaking-12345-Test.rst',
             type: RectorRuleType::Skeleton,
             ruleClassName: 'TestRector',
-            configPhp: null,
+            configEntry: null,
             rulePhp: '<?php class TestRector {}',
             testPhp: '<?php class TestRectorTest {}',
             fixtureBeforePhp: '<?php $old->method();',
@@ -57,7 +57,7 @@ final class LlmRectorRuleTest extends TestCase
         );
 
         self::assertSame(RectorRuleType::Skeleton, $rule->type);
-        self::assertNull($rule->configPhp);
+        self::assertNull($rule->configEntry);
         self::assertNotNull($rule->rulePhp);
         self::assertNotNull($rule->testPhp);
     }

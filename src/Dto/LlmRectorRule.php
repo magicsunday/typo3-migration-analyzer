@@ -14,16 +14,21 @@ namespace App\Dto;
 /**
  * Represents a Rector rule generated from LLM analysis data.
  *
- * Config-type rules have configPhp set (rector.php entry).
+ * Config-type rules have configEntry set (structured data for RectorConfigRenderer).
  * Skeleton-type rules have rulePhp/testPhp/fixtures set (full Rule class with test).
+ *
+ * @phpstan-type ConfigEntry array<string, string>
  */
 final readonly class LlmRectorRule
 {
+    /**
+     * @param ConfigEntry|null $configEntry Structured config entry for RectorConfigRenderer
+     */
     public function __construct(
         public string $filename,
         public RectorRuleType $type,
         public string $ruleClassName,
-        public ?string $configPhp,
+        public ?array $configEntry,
         public ?string $rulePhp,
         public ?string $testPhp,
         public ?string $fixtureBeforePhp,

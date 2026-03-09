@@ -17,10 +17,12 @@ use App\Dto\LlmRectorAssessment;
 use App\Dto\LlmRectorRule;
 use App\Dto\RectorRuleType;
 use App\Dto\RstDocument;
+use RuntimeException;
 use ZipArchive;
 
 use function array_filter;
 use function array_values;
+use function explode;
 use function file_get_contents;
 use function in_array;
 use function mb_strtolower;
@@ -82,16 +84,14 @@ final readonly class LlmRectorRuleGenerator
             return [];
         }
 
-        $rules         = [];
-        $configEntries = [];
+        $rules = [];
 
         foreach ($result->codeMappings as $mapping) {
             if (in_array($mapping->type, self::CONFIG_TYPES, true) && $mapping->new !== null) {
                 $entry = $this->toConfigEntry($mapping);
 
                 if ($entry !== []) {
-                    $configEntries[] = $entry;
-                    $rules[]         = $this->createConfigRule($mapping, $result->filename);
+                    $rules[] = $this->createConfigRule($mapping, $result->filename, $entry);
                 }
             } elseif (in_array($mapping->type, self::SKELETON_TYPES, true)) {
                 $rules[] = $this->createSkeletonRule($mapping, $result, $document);
@@ -111,15 +111,8 @@ final readonly class LlmRectorRuleGenerator
         $entries = [];
 
         foreach ($rules as $rule) {
-            if ($rule->configPhp === null) {
-                continue;
-            }
-
-            // Re-parse the config entry from the stored configPhp line
-            $entry = $this->configPhpToEntry($rule);
-
-            if ($entry !== []) {
-                $entries[] = $entry;
+            if ($rule->configEntry !== null) {
+                $entries[] = $rule->configEntry;
             }
         }
 
@@ -139,9 +132,18 @@ final readonly class LlmRectorRuleGenerator
             static fn (LlmRectorRule $r): bool => $r->type === RectorRuleType::Skeleton,
         ));
 
-        $tmpFile = tempnam('/tmp', 'rector_') . '.zip';
-        $zip     = new ZipArchive();
-        $zip->open($tmpFile, ZipArchive::CREATE);
+        $tmpFile = tempnam('/tmp', 'rector_');
+
+        if ($tmpFile === false) {
+            throw new RuntimeException('Failed to create temporary file for ZIP archive.');
+        }
+
+        $tmpFile .= '.zip';
+        $zip = new ZipArchive();
+
+        if ($zip->open($tmpFile, ZipArchive::CREATE) !== true) {
+            throw new RuntimeException('Failed to open ZIP archive for writing.');
+        }
 
         if ($config !== '') {
             $zip->addFromString('rector.php', $config);
@@ -277,8 +279,10 @@ final readonly class LlmRectorRuleGenerator
 
     /**
      * Create a config-type LlmRectorRule.
+     *
+     * @param array<string, string> $configEntry
      */
-    private function createConfigRule(LlmCodeMapping $mapping, string $filename): LlmRectorRule
+    private function createConfigRule(LlmCodeMapping $mapping, string $filename, array $configEntry): LlmRectorRule
     {
         [$ruleType, $ruleClassName] = match ($mapping->type) {
             'class_rename'    => [RectorRuleType::RenameClass, 'RenameClassRector'],
@@ -291,7 +295,7 @@ final readonly class LlmRectorRuleGenerator
             filename: $filename,
             type: $ruleType,
             ruleClassName: $ruleClassName,
-            configPhp: sprintf('%s => %s', $mapping->old, $mapping->new ?? ''),
+            configEntry: $configEntry,
             rulePhp: null,
             testPhp: null,
             fixtureBeforePhp: null,
@@ -314,7 +318,7 @@ final readonly class LlmRectorRuleGenerator
             filename: $result->filename,
             type: RectorRuleType::Skeleton,
             ruleClassName: $className,
-            configPhp: null,
+            configEntry: null,
             rulePhp: $this->renderSkeletonClass($className, $mapping, $document, $beforeCode, $afterCode),
             testPhp: $this->renderTestClass($className),
             fixtureBeforePhp: $beforeCode,
@@ -467,33 +471,6 @@ final readonly class LlmRectorRuleGenerator
         $output .= "    }\n";
 
         return $output . "}\n";
-    }
-
-    /**
-     * Reconstruct a config entry from an LlmRectorRule for combined rendering.
-     *
-     * @return array<string, string>
-     */
-    private function configPhpToEntry(LlmRectorRule $rule): array
-    {
-        return match ($rule->type) {
-            RectorRuleType::RenameClass => [
-                'type' => 'rename_class',
-                'old'  => $this->extractConfigPart($rule->configPhp ?? '', 0),
-                'new'  => $this->extractConfigPart($rule->configPhp ?? '', 1),
-            ],
-            default => [],
-        };
-    }
-
-    /**
-     * Extract part from "old => new" config string.
-     */
-    private function extractConfigPart(string $configPhp, int $index): string
-    {
-        $parts = explode(' => ', $configPhp, 2);
-
-        return $parts[$index] ?? '';
     }
 
     /**

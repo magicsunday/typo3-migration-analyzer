@@ -55,7 +55,7 @@ final class LlmRectorRuleGeneratorTest extends TestCase
 
         self::assertCount(1, $configRules);
         self::assertSame('RenameClassRector', $configRules[0]->ruleClassName);
-        self::assertNotNull($configRules[0]->configPhp);
+        self::assertNotNull($configRules[0]->configEntry);
         self::assertNull($configRules[0]->rulePhp);
     }
 

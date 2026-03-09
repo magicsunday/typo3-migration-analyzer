@@ -38,7 +38,7 @@ use function str_replace;
  *   - rename_static_method: {type, oldClass, oldMethod, newClass, newMethod}
  *   - rename_class_constant: {type, oldClass, oldConstant, newClass, newConstant}
  */
-final class RectorConfigRenderer
+final readonly class RectorConfigRenderer
 {
     /**
      * Render a rector.php configuration file from rule entries.
