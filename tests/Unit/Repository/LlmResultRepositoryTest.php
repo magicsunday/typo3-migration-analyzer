@@ -179,6 +179,8 @@ final class LlmResultRepositoryTest extends TestCase
             summary: $summary,
             migrationSteps: ['Replace old with new'],
             affectedAreas: ['PHP'],
+            codeMappings: [],
+            rectorAssessment: null,
             tokensInput: 1500,
             tokensOutput: 500,
             durationMs: 1200,

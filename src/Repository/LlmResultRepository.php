@@ -286,6 +286,8 @@ final readonly class LlmResultRepository
             summary: $row['summary'],
             migrationSteps: $migrationSteps,
             affectedAreas: $affectedAreas,
+            codeMappings: [],
+            rectorAssessment: null,
             tokensInput: (int) $row['tokens_input'],
             tokensOutput: (int) $row['tokens_output'],
             durationMs: (int) $row['duration_ms'],

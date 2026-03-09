@@ -22,8 +22,10 @@ use function is_string;
 final readonly class LlmAnalysisResult
 {
     /**
-     * @param list<string> $migrationSteps Concrete steps for migration
-     * @param list<string> $affectedAreas  Affected areas (e.g. "PHP", "Fluid", "TCA")
+     * @param list<string>             $migrationSteps   Concrete steps for migration
+     * @param list<string>             $affectedAreas    Affected areas (e.g. "PHP", "Fluid", "TCA")
+     * @param list<LlmCodeMapping>     $codeMappings     Structured old→new code mappings
+     * @param LlmRectorAssessment|null $rectorAssessment Rector automation feasibility, or null
      */
     public function __construct(
         public string $filename,
@@ -36,6 +38,9 @@ final readonly class LlmAnalysisResult
         public array $migrationSteps,
         /** @var list<string> */
         public array $affectedAreas,
+        /** @var list<LlmCodeMapping> */
+        public array $codeMappings,
+        public ?LlmRectorAssessment $rectorAssessment,
         public int $tokensInput,
         public int $tokensOutput,
         public int $durationMs,

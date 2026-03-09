@@ -174,6 +174,8 @@ final readonly class LlmAnalysisService
             summary: $data['summary'] ?? '',
             migrationSteps: LlmAnalysisResult::normalizeToStrings($data['migration_steps'] ?? []),
             affectedAreas: LlmAnalysisResult::normalizeToStrings($data['affected_areas'] ?? []),
+            codeMappings: [],
+            rectorAssessment: null,
             tokensInput: $response->inputTokens,
             tokensOutput: $response->outputTokens,
             durationMs: $response->durationMs,
