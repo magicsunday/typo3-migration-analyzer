@@ -224,6 +224,35 @@ final class LlmAnalysisServiceTest extends TestCase
     }
 
     #[Test]
+    public function analyzeHandlesControlCharactersInLlmResponse(): void
+    {
+        $configService = $this->createConfiguredService();
+
+        // Simulate LLM response with raw control characters (tabs, newlines) inside JSON string values
+        $innerJson = "{\n\"score\": 2,\n\"automation_grade\": \"full\",\n\"summary\": \"Simple\ttab\nand newline\",\n\"migration_steps\": [],\n\"affected_areas\": [\"PHP\"]\n}";
+
+        $apiResponse = new MockResponse(json_encode([
+            'content' => [
+                ['type' => 'text', 'text' => $innerJson],
+            ],
+            'usage' => ['input_tokens' => 100, 'output_tokens' => 50],
+        ], JSON_THROW_ON_ERROR), [
+            'http_code'        => 200,
+            'response_headers' => ['content-type' => 'application/json'],
+        ]);
+
+        $factory    = new LlmClientFactory(new MockHttpClient($apiResponse));
+        $repository = new LlmResultRepository(':memory:');
+
+        $service = new LlmAnalysisService($factory, $repository, $configService);
+        $result  = $service->analyze($this->createDocument());
+
+        self::assertNotNull($result);
+        self::assertSame(2, $result->score);
+        self::assertStringContainsString('Simple', $result->summary);
+    }
+
+    #[Test]
     public function getCachedResultReturnsNullWhenNotCached(): void
     {
         $configService = new LlmConfigurationService($this->tempDir, new LlmModelProviderFactory(new MockHttpClient()), new ArrayAdapter(), new NullLogger());

@@ -24,6 +24,7 @@ use function date;
 use function implode;
 use function is_array;
 use function json_decode;
+use function preg_replace;
 use function round;
 
 /**
@@ -163,8 +164,11 @@ final readonly class LlmAnalysisService
         string $modelId,
         string $promptVersion,
     ): LlmAnalysisResult {
+        // Sanitize control characters that LLMs may produce unescaped inside JSON strings
+        $sanitized = preg_replace('/[\x00-\x1F\x7F]/', ' ', $response->content) ?? $response->content;
+
         /** @var array{score?: int, automation_grade?: string, summary?: string, reasoning?: string, migration_steps?: list<string|array<string, mixed>>, affected_areas?: list<string|array<string, mixed>>, affected_components?: list<string|array<string, mixed>>, code_mappings?: list<mixed>, rector_assessment?: array{feasible?: bool, rule_type?: string|null, notes?: string}|null} $data */
-        $data = json_decode($response->content, true, 512, JSON_THROW_ON_ERROR);
+        $data = json_decode($sanitized, true, 512, JSON_THROW_ON_ERROR);
 
         $gradeValue = $data['automation_grade'] ?? 'manual';
 
