@@ -48,7 +48,7 @@ final readonly class OpenAiClient implements LlmClientInterface
             ],
             'json' => [
                 'model'           => $modelId,
-                'max_tokens'      => 2048,
+                'max_tokens'      => 8192,
                 'response_format' => ['type' => 'json_object'],
                 'messages'        => [
                     ['role' => 'system', 'content' => $systemPrompt],
@@ -58,7 +58,7 @@ final readonly class OpenAiClient implements LlmClientInterface
         ]);
 
         try {
-            /** @var array{choices: list<array{message: array{content: string}}>, usage: array{prompt_tokens: int, completion_tokens: int}} $data */
+            /** @var array{choices: list<array{message: array{content: string}, finish_reason?: string}>, usage: array{prompt_tokens: int, completion_tokens: int}} $data */
             $data = $response->toArray();
         } catch (ClientExceptionInterface $e) {
             $body = $response->getContent(false);
@@ -71,6 +71,10 @@ final readonly class OpenAiClient implements LlmClientInterface
         }
 
         $durationMs = (int) ((hrtime(true) - $startTime) / 1_000_000);
+
+        if (($data['choices'][0]['finish_reason'] ?? '') === 'length') {
+            throw new RuntimeException('OpenAI API response was truncated (max_tokens reached). The document may be too large for analysis.');
+        }
 
         return new LlmResponse(
             content: $data['choices'][0]['message']['content'],

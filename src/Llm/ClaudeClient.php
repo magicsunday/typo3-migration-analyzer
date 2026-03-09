@@ -50,7 +50,7 @@ final readonly class ClaudeClient implements LlmClientInterface
             ],
             'json' => [
                 'model'      => $modelId,
-                'max_tokens' => 2048,
+                'max_tokens' => 8192,
                 'system'     => $systemPrompt . "\n\nIMPORTANT: Respond with raw JSON only. No markdown, no code fences, no explanation.",
                 'messages'   => [
                     ['role' => 'user', 'content' => $userPrompt],
@@ -59,7 +59,7 @@ final readonly class ClaudeClient implements LlmClientInterface
         ]);
 
         try {
-            /** @var array{content: list<array{text: string}>, usage: array{input_tokens: int, output_tokens: int}} $data */
+            /** @var array{content: list<array{text: string}>, stop_reason?: string, usage: array{input_tokens: int, output_tokens: int}} $data */
             $data = $response->toArray();
         } catch (ClientExceptionInterface $e) {
             $body = $response->getContent(false);
@@ -72,6 +72,10 @@ final readonly class ClaudeClient implements LlmClientInterface
         }
 
         $durationMs = (int) ((hrtime(true) - $startTime) / 1_000_000);
+
+        if (($data['stop_reason'] ?? '') === 'max_tokens') {
+            throw new RuntimeException('Claude API response was truncated (max_tokens reached). The document may be too large for analysis.');
+        }
 
         $content = $this->stripMarkdownFences($data['content'][0]['text']);
 
