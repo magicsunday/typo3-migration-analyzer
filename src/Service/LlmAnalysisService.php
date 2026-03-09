@@ -18,8 +18,11 @@ use App\Llm\LlmClientFactory;
 use App\Llm\LlmResponse;
 use App\Repository\LlmResultRepository;
 
+use function array_filter;
+use function array_map;
 use function date;
 use function implode;
+use function is_string;
 use function json_decode;
 use function round;
 
@@ -152,6 +155,34 @@ final readonly class LlmAnalysisService
     }
 
     /**
+     * Normalize an array of mixed values (strings or objects) to a flat string list.
+     *
+     * LLMs sometimes return structured objects (e.g. {"step": 1, "description": "..."})
+     * instead of plain strings. This flattens them by joining object values.
+     *
+     * @param list<string|array<string, mixed>> $items
+     *
+     * @return list<string>
+     */
+    private function normalizeToStrings(array $items): array
+    {
+        return array_map(
+            static function (string|array $item): string {
+                if (is_string($item)) {
+                    return $item;
+                }
+
+                // Join all string values from the object
+                return implode(': ', array_filter(
+                    $item,
+                    is_string(...),
+                ));
+            },
+            $items,
+        );
+    }
+
+    /**
      * Parse the LLM JSON response into an LlmAnalysisResult.
      */
     private function parseResponse(
@@ -172,8 +203,8 @@ final readonly class LlmAnalysisService
             score: $data['score'] ?? 3,
             automationGrade: AutomationGrade::tryFrom($gradeValue) ?? AutomationGrade::Manual,
             summary: $data['summary'] ?? '',
-            migrationSteps: $data['migration_steps'] ?? [],
-            affectedAreas: $data['affected_areas'] ?? [],
+            migrationSteps: $this->normalizeToStrings($data['migration_steps'] ?? []),
+            affectedAreas: $this->normalizeToStrings($data['affected_areas'] ?? []),
             tokensInput: $response->inputTokens,
             tokensOutput: $response->outputTokens,
             durationMs: $response->durationMs,
