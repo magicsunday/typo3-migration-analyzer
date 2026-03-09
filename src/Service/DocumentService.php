@@ -114,10 +114,14 @@ final class DocumentService
 
     /**
      * Finds a single document by its filename.
+     *
+     * Searches the current version range first, then falls back to all available
+     * version directories so detail pages work even when the version range changes.
      */
     public function findDocumentByFilename(string $filename): ?RstDocument
     {
-        return $this->getDocumentIndex()[$filename] ?? null;
+        return $this->getDocumentIndex()[$filename]
+            ?? $this->locator->findByFilename($filename, $this->versionRangeProvider->getAvailableDirectories());
     }
 
     /**

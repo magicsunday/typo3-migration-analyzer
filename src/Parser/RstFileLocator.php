@@ -15,12 +15,36 @@ use App\Dto\RstDocument;
 use Symfony\Component\Finder\Finder;
 
 use function dirname;
+use function is_dir;
+use function is_file;
 
 final readonly class RstFileLocator
 {
     public function __construct(
         private RstParser $parser,
     ) {
+    }
+
+    private const string CHANGELOG_BASE_DIR = '/vendor/typo3/cms-core/Documentation/Changelog';
+
+    /**
+     * Finds a single RST document by filename across all version directories.
+     *
+     * @param string[] $versionDirectories All available version directory names
+     */
+    public function findByFilename(string $filename, array $versionDirectories): ?RstDocument
+    {
+        $changelogBaseDir = dirname(__DIR__, 2) . self::CHANGELOG_BASE_DIR;
+
+        foreach ($versionDirectories as $version) {
+            $filePath = $changelogBaseDir . '/' . $version . '/' . $filename;
+
+            if (is_file($filePath)) {
+                return $this->parser->parseFile($filePath, $version);
+            }
+        }
+
+        return null;
     }
 
     /**
@@ -30,7 +54,7 @@ final readonly class RstFileLocator
      */
     public function findAll(array $versions): array
     {
-        $changelogBaseDir = dirname(__DIR__, 2) . '/vendor/typo3/cms-core/Documentation/Changelog';
+        $changelogBaseDir = dirname(__DIR__, 2) . self::CHANGELOG_BASE_DIR;
         $documents        = [];
 
         foreach ($versions as $version) {
