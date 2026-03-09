@@ -86,23 +86,23 @@ final readonly class LlmAnalysisService
     }
 
     /**
-     * Get total token usage across all analyzed documents.
+     * Get total token usage for the current prompt version.
      *
      * @return array{input: int, output: int}
      */
     public function getTotalTokens(): array
     {
-        return $this->repository->getTotalTokens();
+        return $this->repository->getTotalTokens($this->configService->load()->promptVersion);
     }
 
     /**
-     * Returns analysis progress: how many documents are analyzed vs total.
+     * Returns analysis progress for the current prompt version.
      *
      * @return array{analyzed: int, total: int, percent: float}
      */
     public function getProgress(int $totalDocuments): array
     {
-        $analyzed = $this->repository->countAnalyzed();
+        $analyzed = $this->repository->countAnalyzed($this->configService->load()->promptVersion);
 
         return [
             'analyzed' => $analyzed,

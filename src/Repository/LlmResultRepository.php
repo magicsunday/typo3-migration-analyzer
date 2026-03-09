@@ -170,10 +170,17 @@ final readonly class LlmResultRepository
     }
 
     /**
-     * Count how many distinct documents have been analyzed.
+     * Count how many distinct documents have been analyzed for a given prompt version.
      */
-    public function countAnalyzed(): int
+    public function countAnalyzed(string $promptVersion = ''): int
     {
+        if ($promptVersion !== '') {
+            $stmt = $this->pdo->prepare('SELECT COUNT(DISTINCT filename) FROM llm_analysis_results WHERE prompt_version = :prompt');
+            $stmt->execute(['prompt' => $promptVersion]);
+
+            return (int) $stmt->fetchColumn();
+        }
+
         $result = $this->pdo->query('SELECT COUNT(DISTINCT filename) FROM llm_analysis_results');
 
         if ($result === false) {
@@ -184,23 +191,31 @@ final readonly class LlmResultRepository
     }
 
     /**
-     * Get total token usage across all analyzed documents.
+     * Get total token usage across all analyzed documents for a given prompt version.
      *
      * @return array{input: int, output: int}
      */
-    public function getTotalTokens(): array
+    public function getTotalTokens(string $promptVersion = ''): array
     {
-        $result = $this->pdo->query(
-            'SELECT COALESCE(SUM(tokens_input), 0) AS input, COALESCE(SUM(tokens_output), 0) AS output
-             FROM llm_analysis_results',
-        );
+        if ($promptVersion !== '') {
+            $stmt = $this->pdo->prepare(
+                'SELECT COALESCE(SUM(tokens_input), 0) AS input, COALESCE(SUM(tokens_output), 0) AS output
+                 FROM llm_analysis_results WHERE prompt_version = :prompt',
+            );
+            $stmt->execute(['prompt' => $promptVersion]);
+        } else {
+            $stmt = $this->pdo->query(
+                'SELECT COALESCE(SUM(tokens_input), 0) AS input, COALESCE(SUM(tokens_output), 0) AS output
+                 FROM llm_analysis_results',
+            );
+        }
 
-        if ($result === false) {
+        if ($stmt === false) {
             return ['input' => 0, 'output' => 0];
         }
 
         /** @var array{input: string, output: string} $row */
-        $row = $result->fetch(PDO::FETCH_ASSOC);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
         return [
             'input'  => (int) $row['input'],
@@ -209,12 +224,20 @@ final readonly class LlmResultRepository
     }
 
     /**
-     * Get all analyzed filenames.
+     * Get all analyzed filenames for a given prompt version.
      *
      * @return list<string>
      */
-    public function getAnalyzedFilenames(): array
+    public function getAnalyzedFilenames(string $promptVersion = ''): array
     {
+        if ($promptVersion !== '') {
+            $stmt = $this->pdo->prepare('SELECT DISTINCT filename FROM llm_analysis_results WHERE prompt_version = :prompt ORDER BY filename');
+            $stmt->execute(['prompt' => $promptVersion]);
+
+            /** @var list<string> */
+            return $stmt->fetchAll(PDO::FETCH_COLUMN);
+        }
+
         $result = $this->pdo->query('SELECT DISTINCT filename FROM llm_analysis_results ORDER BY filename');
 
         if ($result === false) {
