@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace App\Command;
 
+use App\Dto\LlmModel;
 use App\Service\DocumentService;
 use App\Service\LlmAnalysisService;
 use App\Service\LlmConfigurationService;
@@ -57,8 +58,8 @@ final class LlmStatusCommand extends Command
         $progress  = $this->analysisService->getProgress(count($documents));
 
         $model = array_find(
-            $this->configService->getAvailableModels(),
-            static fn ($m): bool => $m->modelId === $config->modelId,
+            $this->configService->getAvailableModels($config->provider, $config->apiKey),
+            static fn (LlmModel $m): bool => $m->modelId === $config->modelId,
         );
 
         $io->title('LLM Analysis Status');

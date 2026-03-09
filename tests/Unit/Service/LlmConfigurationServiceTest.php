@@ -12,12 +12,23 @@ declare(strict_types=1);
 namespace App\Tests\Unit\Service;
 
 use App\Dto\LlmConfiguration;
+use App\Dto\LlmModel;
 use App\Dto\LlmProvider;
+use App\Llm\LlmModelProviderFactory;
 use App\Service\LlmConfigurationService;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Psr\Log\NullLogger;
+use Symfony\Component\Cache\Adapter\ArrayAdapter;
+use Symfony\Component\HttpClient\MockHttpClient;
+use Symfony\Component\HttpClient\Response\MockResponse;
 
+use function array_find;
+use function file_exists;
+use function is_dir;
+use function json_encode;
+use function rmdir;
 use function sys_get_temp_dir;
 use function tempnam;
 use function unlink;
@@ -52,7 +63,7 @@ final class LlmConfigurationServiceTest extends TestCase
     #[Test]
     public function loadReturnsDefaultsWhenNoConfigExists(): void
     {
-        $service = new LlmConfigurationService($this->tempDir);
+        $service = $this->createService();
         $config  = $service->load();
 
         self::assertSame(LlmProvider::Claude, $config->provider);
@@ -65,7 +76,7 @@ final class LlmConfigurationServiceTest extends TestCase
     #[Test]
     public function saveAndLoadRoundTrip(): void
     {
-        $service = new LlmConfigurationService($this->tempDir);
+        $service = $this->createService();
         $config  = $service->load();
 
         $modified = new LlmConfiguration(
@@ -88,7 +99,7 @@ final class LlmConfigurationServiceTest extends TestCase
     #[Test]
     public function isConfiguredReturnsFalseWithoutApiKey(): void
     {
-        $service = new LlmConfigurationService($this->tempDir);
+        $service = $this->createService();
 
         self::assertFalse($service->isConfigured());
     }
@@ -96,7 +107,7 @@ final class LlmConfigurationServiceTest extends TestCase
     #[Test]
     public function isConfiguredReturnsTrueWithApiKey(): void
     {
-        $service = new LlmConfigurationService($this->tempDir);
+        $service = $this->createService();
         $config  = $service->load();
 
         $withKey = new LlmConfiguration(
@@ -113,19 +124,109 @@ final class LlmConfigurationServiceTest extends TestCase
     }
 
     #[Test]
-    public function getAvailableModelsReturnsNonEmptyList(): void
+    public function getAvailableModelsReturnsStaticFallbackWithoutApiKey(): void
     {
-        $service = new LlmConfigurationService($this->tempDir);
+        $service = $this->createService();
         $models  = $service->getAvailableModels();
 
         self::assertNotEmpty($models);
-        self::assertSame('claude-haiku-4-5-20251001', $models[0]->modelId);
+
+        // Static fallback models all have pricing
+        foreach ($models as $model) {
+            self::assertNotNull($model->inputCostPerMillion);
+        }
+    }
+
+    #[Test]
+    public function getAvailableModelsReturnsDynamicModelsFromApi(): void
+    {
+        $mockResponse = new MockResponse(json_encode([
+            'data' => [
+                ['id' => 'claude-sonnet-4-6', 'display_name' => 'Claude Sonnet 4.6', 'type' => 'model', 'created_at' => '2026-01-01T00:00:00Z'],
+                ['id' => 'claude-unknown-model', 'display_name' => 'Claude Unknown', 'type' => 'model', 'created_at' => '2026-01-01T00:00:00Z'],
+            ],
+        ], JSON_THROW_ON_ERROR));
+
+        $service = new LlmConfigurationService(
+            $this->tempDir,
+            new LlmModelProviderFactory(new MockHttpClient($mockResponse)),
+            new ArrayAdapter(),
+            new NullLogger(),
+        );
+
+        $models = $service->getAvailableModels(LlmProvider::Claude, 'test-key');
+
+        self::assertCount(2, $models);
+
+        // Known model has pricing
+        $sonnet = array_find($models, static fn (LlmModel $m): bool => $m->modelId === 'claude-sonnet-4-6');
+        self::assertNotNull($sonnet);
+        self::assertSame(3.00, $sonnet->inputCostPerMillion);
+        self::assertSame(15.00, $sonnet->outputCostPerMillion);
+
+        // Unknown model has null pricing
+        $unknown = array_find($models, static fn (LlmModel $m): bool => $m->modelId === 'claude-unknown-model');
+        self::assertNotNull($unknown);
+        self::assertNull($unknown->inputCostPerMillion);
+    }
+
+    #[Test]
+    public function getAvailableModelsFallsBackToStaticListOnApiError(): void
+    {
+        $mockResponse = new MockResponse('', ['http_code' => 500]);
+
+        $service = new LlmConfigurationService(
+            $this->tempDir,
+            new LlmModelProviderFactory(new MockHttpClient($mockResponse)),
+            new ArrayAdapter(),
+            new NullLogger(),
+        );
+
+        $models = $service->getAvailableModels(LlmProvider::Claude, 'test-key');
+
+        self::assertNotEmpty($models);
+
+        // Static fallback models all have pricing
+        foreach ($models as $model) {
+            self::assertNotNull($model->inputCostPerMillion);
+        }
+    }
+
+    #[Test]
+    public function getAvailableModelsCachesApiResults(): void
+    {
+        $callCount    = 0;
+        $mockResponse = new MockResponse(json_encode([
+            'data' => [
+                ['id' => 'claude-sonnet-4-6', 'display_name' => 'Claude Sonnet 4.6', 'type' => 'model', 'created_at' => '2026-01-01T00:00:00Z'],
+            ],
+        ], JSON_THROW_ON_ERROR));
+
+        $httpClient = new MockHttpClient(function () use ($mockResponse, &$callCount): MockResponse {
+            ++$callCount;
+
+            return $mockResponse;
+        });
+
+        $service = new LlmConfigurationService(
+            $this->tempDir,
+            new LlmModelProviderFactory($httpClient),
+            new ArrayAdapter(),
+            new NullLogger(),
+        );
+
+        // First call hits API
+        $service->getAvailableModels(LlmProvider::Claude, 'test-key');
+        // Second call uses cache
+        $service->getAvailableModels(LlmProvider::Claude, 'test-key');
+
+        self::assertSame(1, $callCount);
     }
 
     #[Test]
     public function getPromptVersionChangesWhenPromptChanges(): void
     {
-        $service  = new LlmConfigurationService($this->tempDir);
+        $service  = $this->createService();
         $version1 = $service->getPromptVersion('Prompt A');
         $version2 = $service->getPromptVersion('Prompt B');
 
@@ -135,7 +236,7 @@ final class LlmConfigurationServiceTest extends TestCase
     #[Test]
     public function getPromptVersionIsDeterministic(): void
     {
-        $service = new LlmConfigurationService($this->tempDir);
+        $service = $this->createService();
 
         self::assertSame(
             $service->getPromptVersion('Same prompt'),
@@ -146,9 +247,19 @@ final class LlmConfigurationServiceTest extends TestCase
     #[Test]
     public function getDefaultPromptReturnsNonEmptyString(): void
     {
-        $service = new LlmConfigurationService($this->tempDir);
+        $service = $this->createService();
 
         self::assertNotSame('', $service->getDefaultPrompt());
         self::assertStringContainsString('TYPO3', $service->getDefaultPrompt());
+    }
+
+    private function createService(): LlmConfigurationService
+    {
+        return new LlmConfigurationService(
+            $this->tempDir,
+            new LlmModelProviderFactory(new MockHttpClient()),
+            new ArrayAdapter(),
+            new NullLogger(),
+        );
     }
 }

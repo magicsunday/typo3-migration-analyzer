@@ -14,8 +14,13 @@ namespace App\Service;
 use App\Dto\LlmConfiguration;
 use App\Dto\LlmModel;
 use App\Dto\LlmProvider;
+use App\Llm\LlmModelProviderFactory;
+use Psr\Log\LoggerInterface;
 use RuntimeException;
 use Symfony\Component\Yaml\Yaml;
+use Symfony\Contracts\Cache\CacheInterface;
+use Symfony\Contracts\Cache\ItemInterface;
+use Throwable;
 
 use function file_exists;
 use function file_put_contents;
@@ -23,16 +28,40 @@ use function hash;
 use function is_dir;
 use function mkdir;
 use function sprintf;
+use function str_starts_with;
 
 /**
  * Manages LLM configuration (provider, model, API key, prompt) persisted in YAML.
+ *
+ * Provides dynamic model listing from provider APIs with local pricing enrichment
+ * and static fallback when the API is unreachable.
  */
 final readonly class LlmConfigurationService
 {
     private const string CONFIG_FILENAME = 'llm_config.yaml';
 
+    private const int MODEL_CACHE_TTL = 3600;
+
+    /**
+     * Known model pricing: model ID => [input cost per million, output cost per million].
+     *
+     * @var array<string, array{float, float}>
+     */
+    private const array PRICING_MAP = [
+        'claude-haiku-4-5-20251001' => [0.80, 4.00],
+        'claude-sonnet-4-6'         => [3.00, 15.00],
+        'claude-opus-4-6'           => [15.00, 75.00],
+        'gpt-4o-mini'               => [0.15, 0.60],
+        'gpt-4o'                    => [2.50, 10.00],
+        'o1-preview'                => [15.00, 60.00],
+        'o1-mini'                   => [3.00, 12.00],
+    ];
+
     public function __construct(
         private string $dataDir,
+        private LlmModelProviderFactory $modelProviderFactory,
+        private CacheInterface $cache,
+        private LoggerInterface $logger,
     ) {
     }
 
@@ -61,7 +90,7 @@ final readonly class LlmConfigurationService
     }
 
     /**
-     * Save the configuration to disk.
+     * Save the configuration to disk and invalidate the model cache.
      */
     public function save(LlmConfiguration $config): void
     {
@@ -77,6 +106,10 @@ final readonly class LlmConfigurationService
         ];
 
         file_put_contents($this->getConfigPath(), Yaml::dump($data, 4));
+
+        // Invalidate model cache so a provider switch fetches fresh models
+        $this->cache->delete('llm_models_claude');
+        $this->cache->delete('llm_models_openai');
     }
 
     /**
@@ -90,19 +123,44 @@ final readonly class LlmConfigurationService
     }
 
     /**
-     * Returns all available models with cost information.
+     * Returns available models for the given provider.
+     *
+     * Fetches models from the provider API (cached for 1 hour),
+     * enriches them with known pricing, and falls back to a static
+     * list from the pricing map if the API is unreachable.
      *
      * @return list<LlmModel>
      */
-    public function getAvailableModels(): array
+    public function getAvailableModels(?LlmProvider $provider = null, ?string $apiKey = null): array
     {
-        return [
-            new LlmModel(LlmProvider::Claude, 'claude-haiku-4-5-20251001', 'Claude Haiku 4.5', 0.80, 4.00),
-            new LlmModel(LlmProvider::Claude, 'claude-sonnet-4-6', 'Claude Sonnet 4.6', 3.00, 15.00),
-            new LlmModel(LlmProvider::Claude, 'claude-opus-4-6', 'Claude Opus 4.6', 15.00, 75.00),
-            new LlmModel(LlmProvider::OpenAi, 'gpt-4o-mini', 'GPT-4o Mini', 0.15, 0.60),
-            new LlmModel(LlmProvider::OpenAi, 'gpt-4o', 'GPT-4o', 2.50, 10.00),
-        ];
+        $config = $this->load();
+        $provider ??= $config->provider;
+        $apiKey ??= $config->apiKey;
+
+        if ($apiKey === '') {
+            return $this->getStaticModels($provider);
+        }
+
+        $cacheKey = 'llm_models_' . $provider->value;
+
+        try {
+            /** @var list<LlmModel> */
+            return $this->cache->get($cacheKey, function (ItemInterface $item) use ($provider, $apiKey): array {
+                $item->expiresAfter(self::MODEL_CACHE_TTL);
+
+                $modelProvider = $this->modelProviderFactory->create($provider);
+                $models        = $modelProvider->listModels($apiKey);
+
+                return $this->enrichWithPricing($models);
+            });
+        } catch (Throwable $e) {
+            $this->logger->warning('Failed to fetch models from API, using static fallback.', [
+                'provider' => $provider->value,
+                'error'    => $e->getMessage(),
+            ]);
+
+            return $this->getStaticModels($provider);
+        }
     }
 
     /**
@@ -144,6 +202,70 @@ final readonly class LlmConfigurationService
             - Are non-PHP files affected (Fluid templates, TCA, TypoScript)? → increase score
             - Can Rector handle this automatically? → automation_grade "full"
             PROMPT;
+    }
+
+    /**
+     * Enrich models with known pricing from the local pricing map.
+     *
+     * @param list<LlmModel> $models
+     *
+     * @return list<LlmModel>
+     */
+    private function enrichWithPricing(array $models): array
+    {
+        $enriched = [];
+
+        foreach ($models as $model) {
+            $pricing = self::PRICING_MAP[$model->modelId] ?? null;
+
+            $enriched[] = new LlmModel(
+                provider: $model->provider,
+                modelId: $model->modelId,
+                label: $model->label,
+                inputCostPerMillion: $pricing[0] ?? null,
+                outputCostPerMillion: $pricing[1] ?? null,
+            );
+        }
+
+        return $enriched;
+    }
+
+    /**
+     * Build a static model list from the pricing map as fallback.
+     *
+     * @return list<LlmModel>
+     */
+    private function getStaticModels(LlmProvider $provider): array
+    {
+        $models = [];
+
+        foreach (self::PRICING_MAP as $modelId => $pricing) {
+            if ($this->guessProvider($modelId) !== $provider) {
+                continue;
+            }
+
+            $models[] = new LlmModel(
+                provider: $provider,
+                modelId: $modelId,
+                label: $modelId,
+                inputCostPerMillion: $pricing[0],
+                outputCostPerMillion: $pricing[1],
+            );
+        }
+
+        return $models;
+    }
+
+    /**
+     * Guess the provider from a model ID based on naming conventions.
+     */
+    private function guessProvider(string $modelId): LlmProvider
+    {
+        if (str_starts_with($modelId, 'claude')) {
+            return LlmProvider::Claude;
+        }
+
+        return LlmProvider::OpenAi;
     }
 
     /**

@@ -70,7 +70,7 @@ final class LlmController extends AbstractController
 
         return $this->render('llm/config.html.twig', [
             'config'        => $config,
-            'models'        => $configService->getAvailableModels(),
+            'models'        => $configService->getAvailableModels($config->provider, $config->apiKey),
             'defaultPrompt' => $configService->getDefaultPrompt(),
             'progress'      => $progress,
             'versionRange'  => $documentService->getVersionRange(),

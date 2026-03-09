@@ -18,12 +18,15 @@ use App\Dto\LlmConfiguration;
 use App\Dto\RstDocument;
 use App\Dto\ScanStatus;
 use App\Llm\LlmClientFactory;
+use App\Llm\LlmModelProviderFactory;
 use App\Repository\LlmResultRepository;
 use App\Service\LlmAnalysisService;
 use App\Service\LlmConfigurationService;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Psr\Log\NullLogger;
+use Symfony\Component\Cache\Adapter\ArrayAdapter;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\MockResponse;
 
@@ -62,7 +65,7 @@ final class LlmAnalysisServiceTest extends TestCase
     #[Test]
     public function analyzeReturnsNullWhenNotConfigured(): void
     {
-        $configService = new LlmConfigurationService($this->tempDir);
+        $configService = new LlmConfigurationService($this->tempDir, new LlmModelProviderFactory(new MockHttpClient()), new ArrayAdapter(), new NullLogger());
         $factory       = new LlmClientFactory(new MockHttpClient());
         $repository    = new LlmResultRepository(':memory:');
 
@@ -196,7 +199,7 @@ final class LlmAnalysisServiceTest extends TestCase
     #[Test]
     public function getCachedResultReturnsNullWhenNotCached(): void
     {
-        $configService = new LlmConfigurationService($this->tempDir);
+        $configService = new LlmConfigurationService($this->tempDir, new LlmModelProviderFactory(new MockHttpClient()), new ArrayAdapter(), new NullLogger());
         $factory       = new LlmClientFactory(new MockHttpClient());
         $repository    = new LlmResultRepository(':memory:');
 
@@ -208,7 +211,7 @@ final class LlmAnalysisServiceTest extends TestCase
     #[Test]
     public function getProgressReturnsCorrectValues(): void
     {
-        $configService = new LlmConfigurationService($this->tempDir);
+        $configService = new LlmConfigurationService($this->tempDir, new LlmModelProviderFactory(new MockHttpClient()), new ArrayAdapter(), new NullLogger());
         $factory       = new LlmClientFactory(new MockHttpClient());
         $repository    = new LlmResultRepository(':memory:');
 
@@ -223,7 +226,7 @@ final class LlmAnalysisServiceTest extends TestCase
     #[Test]
     public function getProgressHandlesZeroTotal(): void
     {
-        $configService = new LlmConfigurationService($this->tempDir);
+        $configService = new LlmConfigurationService($this->tempDir, new LlmModelProviderFactory(new MockHttpClient()), new ArrayAdapter(), new NullLogger());
         $factory       = new LlmClientFactory(new MockHttpClient());
         $repository    = new LlmResultRepository(':memory:');
 
@@ -255,7 +258,7 @@ final class LlmAnalysisServiceTest extends TestCase
      */
     private function createConfiguredService(): LlmConfigurationService
     {
-        $configService = new LlmConfigurationService($this->tempDir);
+        $configService = new LlmConfigurationService($this->tempDir, new LlmModelProviderFactory(new MockHttpClient()), new ArrayAdapter(), new NullLogger());
         $config        = $configService->load();
 
         $configService->save(new LlmConfiguration(
