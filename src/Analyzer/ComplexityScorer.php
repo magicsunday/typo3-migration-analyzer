@@ -22,6 +22,7 @@ use App\Repository\LlmResultRepository;
 
 use function array_any;
 use function ltrim;
+use function mb_strlen;
 use function mb_strtolower;
 use function str_contains;
 use function trim;
@@ -78,12 +79,12 @@ final readonly class ComplexityScorer
     /**
      * Score the migration complexity of a document.
      *
-     * Uses the LLM analysis result when available, otherwise falls back
-     * to rule-based heuristic scoring.
+     * Always computes the heuristic score. When an LLM analysis result is
+     * available, it takes priority and the heuristic is attached for comparison.
      */
     public function score(RstDocument $document): ComplexityScore
     {
-        // Check for LLM result first — it provides more accurate scoring
+        $heuristic = $this->scoreByHeuristic($document);
         $llmResult = $this->repository->findLatest($document->filename);
 
         if ($llmResult instanceof LlmAnalysisResult) {
@@ -91,9 +92,18 @@ final readonly class ComplexityScorer
                 score: $llmResult->score,
                 reason: $llmResult->summary,
                 automatable: $llmResult->automationGrade !== AutomationGrade::Manual,
+                heuristicScore: $heuristic->score,
             );
         }
 
+        return $heuristic;
+    }
+
+    /**
+     * Score the document using rule-based heuristic analysis.
+     */
+    private function scoreByHeuristic(RstDocument $document): ComplexityScore
+    {
         // Rule 1: Hook → Event migration (score 4)
         if ($this->isHookToEventMigration($document)) {
             return new ComplexityScore(4, 'Hook to event migration', false);

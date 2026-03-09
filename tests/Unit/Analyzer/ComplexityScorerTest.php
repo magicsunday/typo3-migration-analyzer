@@ -421,6 +421,52 @@ final class ComplexityScorerTest extends TestCase
         self::assertFalse($result->automatable);
     }
 
+    #[Test]
+    public function scoreLlmResultIncludesHeuristicScore(): void
+    {
+        $repository = new LlmResultRepository(':memory:');
+        $scorer     = new ComplexityScorer(new MigrationMappingExtractor(), $repository);
+
+        $repository->save(new LlmAnalysisResult(
+            filename: 'Deprecation-99999-Test.rst',
+            modelId: 'claude-4',
+            promptVersion: '1.0',
+            score: 2,
+            automationGrade: AutomationGrade::Partial,
+            summary: 'LLM says partially automatable',
+            reasoning: '',
+            migrationSteps: [],
+            affectedAreas: [],
+            affectedComponents: [],
+            codeMappings: [],
+            rectorAssessment: null,
+            tokensInput: 100,
+            tokensOutput: 50,
+            durationMs: 500,
+            createdAt: '2026-03-09 08:00:00',
+        ));
+
+        // Heuristic would score 5 (no migration text, no refs)
+        $doc    = $this->createDocument(migration: null, codeReferences: []);
+        $result = $scorer->score($doc);
+
+        self::assertSame(2, $result->score);
+        self::assertTrue($result->isLlmBased());
+        self::assertSame(5, $result->heuristicScore);
+        self::assertSame(3, $result->scoreDivergence());
+    }
+
+    #[Test]
+    public function scoreHeuristicOnlyHasNoHeuristicScoreField(): void
+    {
+        $doc    = $this->createDocument(migration: null, codeReferences: []);
+        $result = $this->scorer->score($doc);
+
+        self::assertFalse($result->isLlmBased());
+        self::assertNull($result->heuristicScore);
+        self::assertSame(0, $result->scoreDivergence());
+    }
+
     /**
      * @param list<CodeReference> $codeReferences
      * @param list<CodeBlock>     $codeBlocks
