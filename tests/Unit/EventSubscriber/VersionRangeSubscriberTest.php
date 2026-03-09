@@ -55,7 +55,7 @@ final class VersionRangeSubscriberTest extends TestCase
         $request->setSession($session);
 
         $event = new ControllerEvent(
-            $this->createMock(HttpKernelInterface::class),
+            $this->createStub(HttpKernelInterface::class),
             static fn (): null => null,
             $request,
             HttpKernelInterface::MAIN_REQUEST,
@@ -85,7 +85,7 @@ final class VersionRangeSubscriberTest extends TestCase
         $request->setSession($session);
 
         $event = new ControllerEvent(
-            $this->createMock(HttpKernelInterface::class),
+            $this->createStub(HttpKernelInterface::class),
             static fn (): null => null,
             $request,
             HttpKernelInterface::MAIN_REQUEST,
@@ -108,7 +108,7 @@ final class VersionRangeSubscriberTest extends TestCase
         $request = new Request();
 
         $event = new ControllerEvent(
-            $this->createMock(HttpKernelInterface::class),
+            $this->createStub(HttpKernelInterface::class),
             static fn (): null => null,
             $request,
             HttpKernelInterface::MAIN_REQUEST,
@@ -135,7 +135,7 @@ final class VersionRangeSubscriberTest extends TestCase
         $request->setSession($session);
 
         $event = new ControllerEvent(
-            $this->createMock(HttpKernelInterface::class),
+            $this->createStub(HttpKernelInterface::class),
             static fn (): null => null,
             $request,
             HttpKernelInterface::SUB_REQUEST,
