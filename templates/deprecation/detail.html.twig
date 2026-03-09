@@ -34,6 +34,16 @@
             {% else %}
                 <span class="badge text-bg-danger" title="{{ complexity.reason }}">Complexity {{ complexity.score }}/5</span>
             {% endif %}
+            {% if complexity.isLlmBased %}
+                <span class="badge text-bg-primary" title="Score basiert auf LLM-Analyse">
+                    <i class="bi bi-robot me-1"></i>LLM
+                </span>
+            {% endif %}
+            {% if complexity.scoreDivergence > 0 %}
+                <span class="badge text-bg-secondary" title="Heuristik-Score weicht ab (Differenz: {{ complexity.scoreDivergence }})">
+                    Heuristik: {{ complexity.heuristicScore }}/5
+                </span>
+            {% endif %}
             {% if complexity.automatable %}
                 <span class="badge text-bg-info">Automatable</span>
             {% endif %}
