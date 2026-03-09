@@ -48,13 +48,33 @@ final readonly class LlmConfigurationService
      * @var array<string, array{float, float}>
      */
     private const array PRICING_MAP = [
-        'claude-haiku-4-5-20251001' => [0.80, 4.00],
+        // Claude
+        'claude-opus-4-6'           => [5.00, 25.00],
+        'claude-opus-4-5'           => [5.00, 25.00],
+        'claude-opus-4-1'           => [15.00, 75.00],
         'claude-sonnet-4-6'         => [3.00, 15.00],
-        'claude-opus-4-6'           => [15.00, 75.00],
-        'gpt-4o-mini'               => [0.15, 0.60],
-        'gpt-4o'                    => [2.50, 10.00],
-        'o1-preview'                => [15.00, 60.00],
-        'o1-mini'                   => [3.00, 12.00],
+        'claude-sonnet-4-5'         => [3.00, 15.00],
+        'claude-sonnet-4'           => [3.00, 15.00],
+        'claude-haiku-4-5-20251001' => [1.00, 5.00],
+        // OpenAI — GPT-5 series
+        'gpt-5.4'    => [2.50, 15.00],
+        'gpt-5.2'    => [1.75, 14.00],
+        'gpt-5.1'    => [1.25, 10.00],
+        'gpt-5'      => [1.25, 10.00],
+        'gpt-5-mini' => [0.25, 2.00],
+        'gpt-5-nano' => [0.05, 0.40],
+        // OpenAI — GPT-4 series
+        'gpt-4.1'      => [2.00, 8.00],
+        'gpt-4.1-mini' => [0.40, 1.60],
+        'gpt-4.1-nano' => [0.10, 0.40],
+        'gpt-4o'       => [2.50, 10.00],
+        'gpt-4o-mini'  => [0.15, 0.60],
+        // OpenAI — Reasoning models
+        'o1'      => [15.00, 60.00],
+        'o3'      => [2.00, 8.00],
+        'o3-mini' => [1.10, 4.40],
+        'o4-mini' => [1.10, 4.40],
+        'o1-mini' => [1.10, 4.40],
     ];
 
     public function __construct(
