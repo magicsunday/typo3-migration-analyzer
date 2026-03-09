@@ -20,6 +20,8 @@ use App\Llm\LlmClientFactory;
 use App\Llm\LlmResponse;
 use App\Repository\LlmResultRepository;
 
+use function array_intersect;
+use function count;
 use function date;
 use function implode;
 use function is_array;
@@ -106,19 +108,27 @@ final readonly class LlmAnalysisService
     }
 
     /**
-     * Returns analysis progress for the current prompt version.
+     * Returns analysis progress for the current prompt version within the given document set.
+     *
+     * Only counts documents that exist in the provided filename list, ensuring the progress
+     * reflects the active version range rather than all analyzed documents across all versions.
+     *
+     * @param string[] $documentFilenames Filenames of documents in the current version range
      *
      * @return array{analyzed: int, total: int, percent: float}
      */
-    public function getProgress(int $totalDocuments): array
+    public function getProgress(array $documentFilenames): array
     {
-        $analyzed = $this->repository->countAnalyzed($this->configService->load()->promptVersion);
+        $config           = $this->configService->load();
+        $analyzedNames    = $this->repository->getAnalyzedFilenames($config->promptVersion);
+        $relevantAnalyzed = count(array_intersect($analyzedNames, $documentFilenames));
+        $total            = count($documentFilenames);
 
         return [
-            'analyzed' => $analyzed,
-            'total'    => $totalDocuments,
-            'percent'  => $totalDocuments > 0
-                ? round($analyzed / $totalDocuments * 100, 1)
+            'analyzed' => $relevantAnalyzed,
+            'total'    => $total,
+            'percent'  => $total > 0
+                ? round($relevantAnalyzed / $total * 100, 1)
                 : 0.0,
         ];
     }

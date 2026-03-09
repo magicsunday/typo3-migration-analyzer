@@ -26,6 +26,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use Throwable;
 
+use function array_map;
 use function count;
 use function usleep;
 
@@ -126,9 +127,10 @@ final class LlmAnalyzeCommand extends Command
     private function analyzeBulk(SymfonyStyle $io, OutputInterface $output, bool $force, bool $missingOnly): int
     {
         $documents = $this->documentService->getDocuments();
+        $filenames = array_map(static fn (RstDocument $doc): string => $doc->filename, $documents);
 
         if ($missingOnly) {
-            $analyzedFilenames = $this->analysisService->getProgress(count($documents));
+            $analyzedFilenames = $this->analysisService->getProgress($filenames);
             $io->info(sprintf('Already analyzed: %d/%d', $analyzedFilenames['analyzed'], $analyzedFilenames['total']));
         }
 

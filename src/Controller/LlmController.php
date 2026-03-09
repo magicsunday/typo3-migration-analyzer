@@ -30,7 +30,6 @@ use Throwable;
 
 use function array_map;
 use function array_merge;
-use function count;
 
 /**
  * Handles LLM configuration, single analysis, and bulk analysis.
@@ -70,7 +69,7 @@ final class LlmController extends AbstractController
 
         $config    = $configService->load();
         $documents = $documentService->getDocuments();
-        $progress  = $analysisService->getProgress(count($documents));
+        $progress  = $analysisService->getProgress($this->extractFilenames($documents));
 
         return $this->render('llm/config.html.twig', [
             'config' => $config,
@@ -155,7 +154,7 @@ final class LlmController extends AbstractController
 
             try {
                 $result   = $analysisService->analyze($document);
-                $progress = $analysisService->getProgress(count($documents));
+                $progress = $analysisService->getProgress($this->extractFilenames($documents));
 
                 return $this->json([
                     'filename' => $document->filename,
@@ -166,7 +165,7 @@ final class LlmController extends AbstractController
                     'progress' => $progress,
                 ]);
             } catch (Throwable $e) {
-                $progress = $analysisService->getProgress(count($documents));
+                $progress = $analysisService->getProgress($this->extractFilenames($documents));
 
                 return $this->json([
                     'filename' => $document->filename,
@@ -177,7 +176,7 @@ final class LlmController extends AbstractController
         }
 
         // All documents analyzed
-        $progress = $analysisService->getProgress(count($documents));
+        $progress = $analysisService->getProgress($this->extractFilenames($documents));
 
         return $this->json([
             'filename' => null,
@@ -193,6 +192,21 @@ final class LlmController extends AbstractController
     ): JsonResponse {
         $documents = $documentService->getDocuments();
 
-        return $this->json($analysisService->getProgress(count($documents)));
+        return $this->json($analysisService->getProgress($this->extractFilenames($documents)));
+    }
+
+    /**
+     * Extract filenames from a list of RST documents.
+     *
+     * @param RstDocument[] $documents
+     *
+     * @return string[]
+     */
+    private function extractFilenames(array $documents): array
+    {
+        return array_map(
+            static fn (RstDocument $doc): string => $doc->filename,
+            $documents,
+        );
     }
 }

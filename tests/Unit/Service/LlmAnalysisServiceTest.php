@@ -30,6 +30,7 @@ use Symfony\Component\Cache\Adapter\ArrayAdapter;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\MockResponse;
 
+use function array_fill;
 use function json_encode;
 use function sys_get_temp_dir;
 use function tempnam;
@@ -283,8 +284,9 @@ final class LlmAnalysisServiceTest extends TestCase
         $factory       = new LlmClientFactory(new MockHttpClient());
         $repository    = new LlmResultRepository(':memory:');
 
-        $service  = new LlmAnalysisService($factory, $repository, $configService);
-        $progress = $service->getProgress(100);
+        $service   = new LlmAnalysisService($factory, $repository, $configService);
+        $filenames = array_fill(0, 100, 'doc.rst');
+        $progress  = $service->getProgress($filenames);
 
         self::assertSame(0, $progress['analyzed']);
         self::assertSame(100, $progress['total']);
@@ -299,7 +301,7 @@ final class LlmAnalysisServiceTest extends TestCase
         $repository    = new LlmResultRepository(':memory:');
 
         $service  = new LlmAnalysisService($factory, $repository, $configService);
-        $progress = $service->getProgress(0);
+        $progress = $service->getProgress([]);
 
         self::assertSame(0.0, $progress['percent']);
     }

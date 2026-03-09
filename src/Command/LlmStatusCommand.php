@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace App\Command;
 
 use App\Dto\LlmModel;
+use App\Dto\RstDocument;
 use App\Service\DocumentService;
 use App\Service\LlmAnalysisService;
 use App\Service\LlmConfigurationService;
@@ -22,7 +23,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
 use function array_find;
-use function count;
+use function array_map;
 use function number_format;
 use function sprintf;
 
@@ -55,7 +56,8 @@ final class LlmStatusCommand extends Command
 
         $config    = $this->configService->load();
         $documents = $this->documentService->getDocuments();
-        $progress  = $this->analysisService->getProgress(count($documents));
+        $filenames = array_map(static fn (RstDocument $doc): string => $doc->filename, $documents);
+        $progress  = $this->analysisService->getProgress($filenames);
 
         $model = array_find(
             $this->configService->getAvailableModels($config->provider, $config->apiKey),
