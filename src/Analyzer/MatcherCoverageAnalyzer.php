@@ -109,7 +109,7 @@ final class MatcherCoverageAnalyzer
             }
         }
 
-        ksort($groups);
+        ksort($groups, SORT_NATURAL);
 
         $breakdowns = [];
 
