@@ -17,7 +17,11 @@ use App\Dto\LlmRectorAssessment;
 use App\Dto\LlmRectorRule;
 use App\Dto\RectorRuleType;
 use App\Dto\RstDocument;
+use ZipArchive;
 
+use function array_filter;
+use function array_values;
+use function file_get_contents;
 use function in_array;
 use function mb_strtolower;
 use function pathinfo;
@@ -25,7 +29,9 @@ use function preg_replace;
 use function sprintf;
 use function str_contains;
 use function str_replace;
+use function tempnam;
 use function ucwords;
+use function unlink;
 
 use const PATHINFO_FILENAME;
 
@@ -118,6 +124,53 @@ final readonly class LlmRectorRuleGenerator
         }
 
         return $this->configRenderer->render($entries);
+    }
+
+    /**
+     * Create a ZIP archive containing rector.php, rule classes, and test fixtures.
+     *
+     * @param list<LlmRectorRule> $rules
+     */
+    public function createZipContent(array $rules): string
+    {
+        $config    = $this->renderCombinedConfig($rules);
+        $skeletons = array_values(array_filter(
+            $rules,
+            static fn (LlmRectorRule $r): bool => $r->type === RectorRuleType::Skeleton,
+        ));
+
+        $tmpFile = tempnam('/tmp', 'rector_') . '.zip';
+        $zip     = new ZipArchive();
+        $zip->open($tmpFile, ZipArchive::CREATE);
+
+        if ($config !== '') {
+            $zip->addFromString('rector.php', $config);
+        }
+
+        foreach ($skeletons as $rule) {
+            if ($rule->rulePhp !== null) {
+                $zip->addFromString(sprintf('rules/%s.php', $rule->ruleClassName), $rule->rulePhp);
+            }
+
+            if ($rule->testPhp !== null) {
+                $zip->addFromString(sprintf('tests/%sTest.php', $rule->ruleClassName), $rule->testPhp);
+            }
+
+            if ($rule->fixtureBeforePhp !== null) {
+                $zip->addFromString(sprintf('fixtures/%s/before.php.inc', $rule->ruleClassName), $rule->fixtureBeforePhp);
+            }
+
+            if ($rule->fixtureAfterPhp !== null) {
+                $zip->addFromString(sprintf('fixtures/%s/after.php.inc', $rule->ruleClassName), $rule->fixtureAfterPhp);
+            }
+        }
+
+        $zip->close();
+
+        $content = (string) file_get_contents($tmpFile);
+        unlink($tmpFile);
+
+        return $content;
     }
 
     /**

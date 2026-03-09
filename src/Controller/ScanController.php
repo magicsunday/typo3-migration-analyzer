@@ -13,13 +13,16 @@ namespace App\Controller;
 
 use App\Analyzer\ActionPlanGenerator;
 use App\Dto\AutomationGrade;
+use App\Dto\LlmAnalysisResult;
 use App\Dto\ScanResult;
+use App\Generator\LlmRectorRuleGenerator;
 use App\Generator\RectorRuleGenerator;
 use App\Scanner\ExtensionScanner;
 use App\Scanner\GitRepositoryHandler;
 use App\Scanner\ScanReportExporter;
 use App\Scanner\ZipUploadHandler;
 use App\Service\DocumentService;
+use App\Service\LlmAnalysisService;
 use App\Service\VersionRangeProvider;
 use InvalidArgumentException;
 use RuntimeException;
@@ -46,6 +49,8 @@ final class ScanController extends AbstractController
         private readonly VersionRangeProvider $versionRangeProvider,
         private readonly ActionPlanGenerator $actionPlanGenerator,
         private readonly RectorRuleGenerator $rectorGenerator,
+        private readonly LlmRectorRuleGenerator $llmRectorGenerator,
+        private readonly LlmAnalysisService $llmService,
     ) {
     }
 
@@ -304,6 +309,47 @@ final class ScanController extends AbstractController
         $response->headers->set('Content-Disposition', $disposition);
 
         return $response;
+    }
+
+    /**
+     * Export LLM-generated Rector rules as a ZIP for all analyzed documents in the action plan.
+     */
+    #[Route('/scan/export-llm-rector', name: 'scan_export_llm_rector')]
+    public function exportLlmRector(Request $request): Response
+    {
+        $result = $this->getSessionResult($request);
+
+        if (!$result instanceof ScanResult) {
+            return $this->redirectToRoute('scan_index');
+        }
+
+        $documents = array_values($this->documentService->getDocuments());
+        $allRules  = [];
+
+        foreach ($documents as $doc) {
+            $llmResult = $this->llmService->getLatestResult($doc->filename);
+
+            if (!$llmResult instanceof LlmAnalysisResult) {
+                continue;
+            }
+
+            $rules = $this->llmRectorGenerator->generate($llmResult, $doc);
+
+            foreach ($rules as $rule) {
+                $allRules[] = $rule;
+            }
+        }
+
+        if ($allRules === []) {
+            $this->addFlash('warning', 'Keine LLM-basierten Rector-Rules gefunden.');
+
+            return $this->redirectToRoute('scan_action_plan');
+        }
+
+        return new Response($this->llmRectorGenerator->createZipContent($allRules), Response::HTTP_OK, [
+            'Content-Type'        => 'application/zip',
+            'Content-Disposition' => 'attachment; filename="llm-rector-rules.zip"',
+        ]);
     }
 
     /**
