@@ -19,6 +19,7 @@ use App\Dto\RstDocument;
 use App\Llm\LlmClientFactory;
 use App\Llm\LlmResponse;
 use App\Repository\LlmResultRepository;
+use JsonException;
 
 use function array_intersect;
 use function count;
@@ -26,8 +27,11 @@ use function date;
 use function implode;
 use function is_array;
 use function json_decode;
+use function mb_substr;
+use function preg_match;
 use function preg_replace;
 use function round;
+use function sprintf;
 
 /**
  * Orchestrates LLM-based analysis of RST documents.
@@ -198,7 +202,7 @@ final readonly class LlmAnalysisService
         $sanitized = preg_replace('/[\x00-\x1F\x7F]/', ' ', $response->content) ?? $response->content;
 
         /** @var array{score?: int, automation_grade?: string, summary?: string, reasoning?: string, migration_steps?: list<string|array<string, mixed>>, affected_areas?: list<string|array<string, mixed>>, affected_components?: list<string|array<string, mixed>>, code_mappings?: list<mixed>, rector_assessment?: array{feasible?: bool, rule_type?: string|null, notes?: string}|null} $data */
-        $data = json_decode($sanitized, true, 512, JSON_THROW_ON_ERROR);
+        $data = $this->decodeJson($sanitized, $filename);
 
         $gradeValue = $data['automation_grade'] ?? 'manual';
 
@@ -247,5 +251,45 @@ final readonly class LlmAnalysisService
             durationMs: $response->durationMs,
             createdAt: date('Y-m-d H:i:s'),
         );
+    }
+
+    /**
+     * Decode JSON from LLM output, with fallback extraction and descriptive errors.
+     *
+     * LLMs occasionally wrap their JSON in explanatory text. This method first tries
+     * a direct decode, then falls back to extracting the first JSON object from the
+     * response. On failure, the exception message includes the filename and a preview
+     * of the raw content.
+     *
+     * @return array<string, mixed>
+     */
+    private function decodeJson(string $content, string $filename): array
+    {
+        // Try direct decode first
+        /** @var array<string, mixed>|null $data */
+        $data = json_decode($content, true, 512);
+
+        if (is_array($data)) {
+            return $data;
+        }
+
+        // Fallback: extract JSON object from surrounding text
+        if (preg_match('/\{(?:[^{}]|(?:\{[^{}]*\}))*\}/s', $content, $matches) === 1) {
+            /** @var array<string, mixed>|null $extracted */
+            $extracted = json_decode($matches[0], true, 512);
+
+            if (is_array($extracted)) {
+                return $extracted;
+            }
+        }
+
+        $preview = mb_substr($content, 0, 200);
+
+        throw new JsonException(sprintf(
+            'Invalid JSON from LLM for "%s": %s — Response preview: %s',
+            $filename,
+            json_last_error_msg(),
+            $preview,
+        ));
     }
 }
