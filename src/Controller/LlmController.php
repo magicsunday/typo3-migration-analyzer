@@ -26,6 +26,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Throwable;
 
+use function array_merge;
 use function count;
 
 /**
@@ -69,8 +70,11 @@ final class LlmController extends AbstractController
         $progress  = $analysisService->getProgress(count($documents));
 
         return $this->render('llm/config.html.twig', [
-            'config'        => $config,
-            'models'        => $configService->getAvailableModels($config->provider, $config->apiKey),
+            'config' => $config,
+            'models' => array_merge(
+                $configService->getAvailableModels(LlmProvider::Claude, $config->provider === LlmProvider::Claude ? $config->apiKey : null),
+                $configService->getAvailableModels(LlmProvider::OpenAi, $config->provider === LlmProvider::OpenAi ? $config->apiKey : null),
+            ),
             'defaultPrompt' => $configService->getDefaultPrompt(),
             'progress'      => $progress,
             'versionRange'  => $documentService->getVersionRange(),
