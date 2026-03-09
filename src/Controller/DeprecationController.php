@@ -14,8 +14,12 @@ namespace App\Controller;
 use App\Analyzer\ComplexityScorer;
 use App\Analyzer\MigrationMappingExtractor;
 use App\Dto\DocumentType;
+use App\Dto\LlmAnalysisResult;
+use App\Dto\LlmRectorRule;
+use App\Dto\RectorRuleType;
 use App\Dto\RstDocument;
 use App\Dto\ScanStatus;
+use App\Generator\LlmRectorRuleGenerator;
 use App\Service\DocumentService;
 use App\Service\LlmAnalysisService;
 use App\Service\VersionRangeProvider;
@@ -23,14 +27,21 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
+use ZipArchive;
 
 use function array_filter;
 use function array_flip;
 use function array_values;
+use function file_get_contents;
 use function mb_strtolower;
+use function pathinfo;
 use function sprintf;
 use function str_contains;
 use function strtolower;
+use function tempnam;
+use function unlink;
+
+use const PATHINFO_FILENAME;
 
 final class DeprecationController extends AbstractController
 {
@@ -160,5 +171,99 @@ final class DeprecationController extends AbstractController
             'versionRange'  => $documentService->getVersionRange(),
             'majorVersions' => $versionRangeProvider->getAvailableMajorVersions(),
         ]);
+    }
+
+    /**
+     * Export LLM-generated Rector rules for a single document.
+     *
+     * Returns a PHP file directly for config-only rules, or a ZIP for mixed rules.
+     */
+    #[Route('/rector/llm-export/{filename}', name: 'rector_llm_export', requirements: ['filename' => '[A-Za-z0-9_.\-]+\.rst'])]
+    public function rectorLlmExport(
+        string $filename,
+        DocumentService $documentService,
+        LlmAnalysisService $llmService,
+        LlmRectorRuleGenerator $rectorGenerator,
+    ): Response {
+        $doc = $documentService->findDocumentByFilename($filename);
+
+        if (!$doc instanceof RstDocument) {
+            throw $this->createNotFoundException(sprintf('Document "%s" not found.', $filename));
+        }
+
+        $llmResult = $llmService->getLatestResult($filename);
+
+        if (!$llmResult instanceof LlmAnalysisResult) {
+            throw $this->createNotFoundException('No LLM analysis available.');
+        }
+
+        $rules = $rectorGenerator->generate($llmResult, $doc);
+
+        if ($rules === []) {
+            throw $this->createNotFoundException('No Rector rules could be generated.');
+        }
+
+        $config    = $rectorGenerator->renderCombinedConfig($rules);
+        $skeletons = array_values(array_filter(
+            $rules,
+            static fn (LlmRectorRule $r): bool => $r->type === RectorRuleType::Skeleton,
+        ));
+
+        // Config-only rules: return rector.php directly
+        if ($skeletons === [] && $config !== '') {
+            return new Response($config, Response::HTTP_OK, [
+                'Content-Type'        => 'application/x-php',
+                'Content-Disposition' => 'attachment; filename="rector.php"',
+            ]);
+        }
+
+        // Mixed or skeleton-only: create ZIP
+        return $this->createRectorZip($config, $skeletons, $filename);
+    }
+
+    /**
+     * Create a ZIP archive containing rector.php, rule classes, and test fixtures.
+     *
+     * @param list<LlmRectorRule> $skeletons
+     */
+    private function createRectorZip(string $config, array $skeletons, string $filename): Response
+    {
+        $basename = pathinfo($filename, PATHINFO_FILENAME);
+        $tmpFile  = tempnam('/tmp', 'rector_') . '.zip';
+        $zip      = new ZipArchive();
+        $zip->open($tmpFile, ZipArchive::CREATE);
+
+        if ($config !== '') {
+            $zip->addFromString('rector.php', $config);
+        }
+
+        foreach ($skeletons as $rule) {
+            if ($rule->rulePhp !== null) {
+                $zip->addFromString(sprintf('rules/%s.php', $rule->ruleClassName), $rule->rulePhp);
+            }
+
+            if ($rule->testPhp !== null) {
+                $zip->addFromString(sprintf('tests/%sTest.php', $rule->ruleClassName), $rule->testPhp);
+            }
+
+            if ($rule->fixtureBeforePhp !== null) {
+                $zip->addFromString(sprintf('fixtures/%s/before.php.inc', $rule->ruleClassName), $rule->fixtureBeforePhp);
+            }
+
+            if ($rule->fixtureAfterPhp !== null) {
+                $zip->addFromString(sprintf('fixtures/%s/after.php.inc', $rule->ruleClassName), $rule->fixtureAfterPhp);
+            }
+        }
+
+        $zip->close();
+
+        $response = new Response((string) file_get_contents($tmpFile), Response::HTTP_OK, [
+            'Content-Type'        => 'application/zip',
+            'Content-Disposition' => sprintf('attachment; filename="rector-%s.zip"', $basename),
+        ]);
+
+        unlink($tmpFile);
+
+        return $response;
     }
 }
