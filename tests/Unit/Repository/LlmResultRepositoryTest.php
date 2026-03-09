@@ -13,6 +13,8 @@ namespace App\Tests\Unit\Repository;
 
 use App\Dto\AutomationGrade;
 use App\Dto\LlmAnalysisResult;
+use App\Dto\LlmCodeMapping;
+use App\Dto\LlmRectorAssessment;
 use App\Repository\LlmResultRepository;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
@@ -54,6 +56,53 @@ final class LlmResultRepositoryTest extends TestCase
         self::assertSame($result->tokensInput, $found->tokensInput);
         self::assertSame($result->tokensOutput, $found->tokensOutput);
         self::assertSame($result->durationMs, $found->durationMs);
+    }
+
+    #[Test]
+    public function saveAndFindRoundTripWithCodeMappingsAndRectorAssessment(): void
+    {
+        $repository = $this->createRepository();
+
+        $result = new LlmAnalysisResult(
+            filename: 'Deprecation-12345-Rename.rst',
+            modelId: 'claude-haiku-4-5-20251001',
+            promptVersion: 'abc123',
+            score: 1,
+            automationGrade: AutomationGrade::Full,
+            summary: 'Simple class rename.',
+            migrationSteps: ['Rename the class'],
+            affectedAreas: ['PHP'],
+            codeMappings: [
+                new LlmCodeMapping('TYPO3\\CMS\\Core\\OldClass', 'TYPO3\\CMS\\Core\\NewClass', 'class_rename'),
+                new LlmCodeMapping('OldClass::method', null, 'method_removal'),
+            ],
+            rectorAssessment: new LlmRectorAssessment(
+                feasible: true,
+                ruleType: 'RenameClassRector',
+                notes: 'Straightforward 1:1 rename.',
+            ),
+            tokensInput: 500,
+            tokensOutput: 200,
+            durationMs: 300,
+            createdAt: '2026-03-09 12:00:00',
+        );
+
+        $repository->save($result);
+        $found = $repository->find($result->filename, $result->modelId, $result->promptVersion);
+
+        self::assertNotNull($found);
+        self::assertCount(2, $found->codeMappings);
+        self::assertSame('TYPO3\\CMS\\Core\\OldClass', $found->codeMappings[0]->old);
+        self::assertSame('TYPO3\\CMS\\Core\\NewClass', $found->codeMappings[0]->new);
+        self::assertSame('class_rename', $found->codeMappings[0]->type);
+        self::assertSame('OldClass::method', $found->codeMappings[1]->old);
+        self::assertNull($found->codeMappings[1]->new);
+        self::assertSame('method_removal', $found->codeMappings[1]->type);
+
+        self::assertNotNull($found->rectorAssessment);
+        self::assertTrue($found->rectorAssessment->feasible);
+        self::assertSame('RenameClassRector', $found->rectorAssessment->ruleType);
+        self::assertSame('Straightforward 1:1 rename.', $found->rectorAssessment->notes);
     }
 
     #[Test]

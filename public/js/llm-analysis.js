@@ -58,6 +58,41 @@
             html += '</div>';
         }
 
+        if (data.codeMappings && data.codeMappings.length > 0) {
+            html += '<h6 class="small fw-bold text-muted mt-3 mb-1">Code-Mappings</h6>';
+            html += '<div class="small mb-2">';
+            data.codeMappings.forEach(function (mapping) {
+                html += '<div class="d-flex align-items-start gap-2 mb-1">';
+                html += '<code class="text-danger text-break">' + escapeHtml(mapping.old) + '</code>';
+                html += '<i class="bi bi-arrow-right text-muted flex-shrink-0"></i>';
+                if (mapping['new']) {
+                    html += '<code class="text-success text-break">' + escapeHtml(mapping['new']) + '</code>';
+                } else {
+                    html += '<span class="text-muted fst-italic">entfernt</span>';
+                }
+                html += '<span class="badge bg-light text-muted border ms-auto flex-shrink-0">' + escapeHtml(mapping.type) + '</span>';
+                html += '</div>';
+            });
+            html += '</div>';
+        }
+
+        if (data.rectorAssessment) {
+            html += '<div class="mt-2 small border-top pt-2">';
+            html += '<i class="bi bi-gear me-1"></i><strong>Rector:</strong> ';
+            if (data.rectorAssessment.feasible) {
+                html += '<span class="text-success">Automatisierbar</span>';
+                if (data.rectorAssessment.ruleType) {
+                    html += ' <span class="text-muted">via ' + escapeHtml(data.rectorAssessment.ruleType) + '</span>';
+                }
+            } else {
+                html += '<span class="text-danger">Nicht automatisierbar</span>';
+            }
+            if (data.rectorAssessment.notes) {
+                html += '<br><span class="text-muted">' + escapeHtml(data.rectorAssessment.notes) + '</span>';
+            }
+            html += '</div>';
+        }
+
         html += '<div class="text-muted small mt-3 border-top pt-2">' +
             '<i class="bi bi-cpu me-1"></i>' + escapeHtml(data.modelId) + '<br>' +
             '<i class="bi bi-lightning me-1"></i>' + (data.tokensInput + data.tokensOutput) + ' Tokens, ' + data.durationMs + 'ms' +

@@ -256,6 +256,40 @@
                             {% endfor %}
                         </div>
                     {% endif %}
+                    {% if llmResult.codeMappings|length > 0 %}
+                        <h6 class="small fw-bold text-muted mt-3 mb-1">Code-Mappings</h6>
+                        <div class="small mb-2">
+                            {% for mapping in llmResult.codeMappings %}
+                                <div class="d-flex align-items-start gap-2 mb-1">
+                                    <code class="text-danger text-break">{{ mapping.old }}</code>
+                                    <i class="bi bi-arrow-right text-muted flex-shrink-0"></i>
+                                    {% if mapping.new %}
+                                        <code class="text-success text-break">{{ mapping.new }}</code>
+                                    {% else %}
+                                        <span class="text-muted fst-italic">entfernt</span>
+                                    {% endif %}
+                                    <span class="badge bg-light text-muted border ms-auto flex-shrink-0">{{ mapping.type }}</span>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                    {% if llmResult.rectorAssessment is not null %}
+                        <div class="mt-2 small border-top pt-2">
+                            <i class="bi bi-gear me-1"></i>
+                            <strong>Rector:</strong>
+                            {% if llmResult.rectorAssessment.feasible %}
+                                <span class="text-success">Automatisierbar</span>
+                                {% if llmResult.rectorAssessment.ruleType %}
+                                    <span class="text-muted">via {{ llmResult.rectorAssessment.ruleType }}</span>
+                                {% endif %}
+                            {% else %}
+                                <span class="text-danger">Nicht automatisierbar</span>
+                            {% endif %}
+                            {% if llmResult.rectorAssessment.notes %}
+                                <br><span class="text-muted">{{ llmResult.rectorAssessment.notes }}</span>
+                            {% endif %}
+                        </div>
+                    {% endif %}
                     <div class="text-muted small mt-3 border-top pt-2">
                         <i class="bi bi-cpu me-1"></i>{{ llmResult.modelId }}<br>
                         <i class="bi bi-lightning me-1"></i>{{ llmResult.tokensInput + llmResult.tokensOutput }} Tokens, {{ llmResult.durationMs }}ms

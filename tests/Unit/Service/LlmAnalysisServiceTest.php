@@ -120,6 +120,14 @@ final class LlmAnalysisServiceTest extends TestCase
             'summary'          => 'Method signature changed',
             'migration_steps'  => ['Update call sites'],
             'affected_areas'   => ['PHP', 'TCA'],
+            'code_mappings'    => [
+                ['old' => 'OldClass::method', 'new' => 'NewClass::method', 'type' => 'method_rename'],
+            ],
+            'rector_assessment' => [
+                'feasible'  => true,
+                'rule_type' => 'RenameMethodRector',
+                'notes'     => 'Straightforward rename.',
+            ],
         ], JSON_THROW_ON_ERROR);
 
         $apiResponse = new MockResponse(json_encode([
@@ -144,6 +152,14 @@ final class LlmAnalysisServiceTest extends TestCase
         self::assertSame('Method signature changed', $result->summary);
         self::assertSame(['Update call sites'], $result->migrationSteps);
         self::assertSame(['PHP', 'TCA'], $result->affectedAreas);
+        self::assertCount(1, $result->codeMappings);
+        self::assertSame('OldClass::method', $result->codeMappings[0]->old);
+        self::assertSame('NewClass::method', $result->codeMappings[0]->new);
+        self::assertSame('method_rename', $result->codeMappings[0]->type);
+        self::assertNotNull($result->rectorAssessment);
+        self::assertTrue($result->rectorAssessment->feasible);
+        self::assertSame('RenameMethodRector', $result->rectorAssessment->ruleType);
+        self::assertSame('Straightforward rename.', $result->rectorAssessment->notes);
         self::assertSame(1500, $result->tokensInput);
         self::assertSame(500, $result->tokensOutput);
     }
