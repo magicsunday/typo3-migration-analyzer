@@ -20,6 +20,8 @@
             return;
         }
 
+        console.debug('LLM renderResult:', {codeMappings: (data.codeMappings || []).length, rectorAssessment: !!data.rectorAssessment});
+
         var scoreBadge = data.score <= 2 ? 'text-bg-success' :
             data.score === 3 ? 'text-bg-warning' : 'text-bg-danger';
 
