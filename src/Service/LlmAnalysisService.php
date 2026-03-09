@@ -78,9 +78,19 @@ final readonly class LlmAnalysisService
     }
 
     /**
-     * Get cached result without triggering analysis.
+     * Get cached result for the current model and prompt version.
      */
     public function getCachedResult(string $filename): ?LlmAnalysisResult
+    {
+        $config = $this->configService->load();
+
+        return $this->repository->find($filename, $config->modelId, $config->promptVersion);
+    }
+
+    /**
+     * Get the most recent cached result regardless of model or prompt version.
+     */
+    public function getLatestResult(string $filename): ?LlmAnalysisResult
     {
         return $this->repository->findLatest($filename);
     }
@@ -116,7 +126,7 @@ final readonly class LlmAnalysisService
     /**
      * Build the user prompt from the RST document content.
      */
-    private function buildUserPrompt(RstDocument $document): string
+    public function buildUserPrompt(RstDocument $document): string
     {
         $parts = [
             'Document: ' . $document->filename,

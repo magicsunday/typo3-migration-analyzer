@@ -265,6 +265,18 @@ final class LlmAnalysisServiceTest extends TestCase
     }
 
     #[Test]
+    public function getLatestResultReturnsNullWhenNotCached(): void
+    {
+        $configService = new LlmConfigurationService($this->tempDir, new LlmModelProviderFactory(new MockHttpClient()), new ArrayAdapter(), new NullLogger());
+        $factory       = new LlmClientFactory(new MockHttpClient());
+        $repository    = new LlmResultRepository(':memory:');
+
+        $service = new LlmAnalysisService($factory, $repository, $configService);
+
+        self::assertNull($service->getLatestResult('nonexistent.rst'));
+    }
+
+    #[Test]
     public function getProgressReturnsCorrectValues(): void
     {
         $configService = new LlmConfigurationService($this->tempDir, new LlmModelProviderFactory(new MockHttpClient()), new ArrayAdapter(), new NullLogger());

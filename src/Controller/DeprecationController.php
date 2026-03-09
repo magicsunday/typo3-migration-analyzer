@@ -150,7 +150,7 @@ final class DeprecationController extends AbstractController
             'doc'           => $doc,
             'mappings'      => $extractor->extract($doc->migration, $doc->description),
             'complexity'    => $complexityScorer->score($doc),
-            'llmResult'     => $llmService->getCachedResult($filename),
+            'llmResult'     => $llmService->getLatestResult($filename),
             'versionRange'  => $documentService->getVersionRange(),
             'majorVersions' => $versionRangeProvider->getAvailableMajorVersions(),
         ]);
