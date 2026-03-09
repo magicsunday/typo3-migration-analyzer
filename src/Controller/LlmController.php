@@ -12,8 +12,10 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use App\Dto\LlmAnalysisResult;
+use App\Dto\LlmCodeMapping;
 use App\Dto\LlmConfiguration;
 use App\Dto\LlmProvider;
+use App\Dto\LlmRectorAssessment;
 use App\Dto\RstDocument;
 use App\Service\DocumentService;
 use App\Service\LlmAnalysisService;
@@ -26,6 +28,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Throwable;
 
+use function array_map;
 use function array_merge;
 use function count;
 
@@ -109,11 +112,24 @@ final class LlmController extends AbstractController
                 'summary'         => $result->summary,
                 'migrationSteps'  => $result->migrationSteps,
                 'affectedAreas'   => $result->affectedAreas,
-                'tokensInput'     => $result->tokensInput,
-                'tokensOutput'    => $result->tokensOutput,
-                'durationMs'      => $result->durationMs,
-                'modelId'         => $result->modelId,
-                'createdAt'       => $result->createdAt,
+                'codeMappings'    => array_map(
+                    static fn (LlmCodeMapping $m): array => [
+                        'old'  => $m->old,
+                        'new'  => $m->new,
+                        'type' => $m->type,
+                    ],
+                    $result->codeMappings,
+                ),
+                'rectorAssessment' => $result->rectorAssessment instanceof LlmRectorAssessment ? [
+                    'feasible' => $result->rectorAssessment->feasible,
+                    'ruleType' => $result->rectorAssessment->ruleType,
+                    'notes'    => $result->rectorAssessment->notes,
+                ] : null,
+                'tokensInput'  => $result->tokensInput,
+                'tokensOutput' => $result->tokensOutput,
+                'durationMs'   => $result->durationMs,
+                'modelId'      => $result->modelId,
+                'createdAt'    => $result->createdAt,
             ]);
         } catch (Throwable $e) {
             return $this->json(['error' => $e->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);

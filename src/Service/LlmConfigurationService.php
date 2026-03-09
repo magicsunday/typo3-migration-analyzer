@@ -196,30 +196,45 @@ final readonly class LlmConfigurationService
     public function getDefaultPrompt(): string
     {
         return <<<'PROMPT'
-            You are a TYPO3 migration expert. Analyze the following RST deprecation/breaking
-            change document and provide a structured assessment.
+            You are a TYPO3 migration expert. Analyze the following RST deprecation/breaking change document and provide a structured assessment.
 
-            Respond in JSON format with these fields:
-            - score (1-5): Migration complexity
+            Respond with a single JSON object (no markdown, no code fences). Required fields:
+
+            "score" (integer 1-5): Migration complexity.
               1 = trivial rename/move (fully automatable via Rector)
               2 = simple replacement with clear instructions
               3 = moderate changes requiring code review
               4 = complex refactoring (hook→event, TCA restructure)
               5 = architectural change requiring manual redesign
-            - automation_grade: "full", "partial", or "manual"
-            - summary: One-sentence description of what changed and why
-            - migration_steps: Array of concrete, actionable steps to migrate
-            - affected_areas: Array of affected areas (e.g. "PHP", "Fluid", "TCA",
-              "TypoScript", "JavaScript", "YAML", "Flexform", "ext_localconf",
-              "ext_tables", "Services.yaml")
 
-            Consider ALL aspects:
-            - Is there a 1:1 replacement? → score 1-2
-            - Does the signature change? → score 3
-            - Is it a pattern change (hook→event, middleware)? → score 4
-            - Is there no replacement at all? → score 5
-            - Are non-PHP files affected (Fluid templates, TCA, TypoScript)? → increase score
-            - Can Rector handle this automatically? → automation_grade "full"
+            "automation_grade" (string): One of "full", "partial", or "manual".
+              "full" = Rector or search-and-replace can handle it completely
+              "partial" = Some parts automatable, some require manual review
+              "manual" = Requires manual code changes and review
+
+            "summary" (string): One concise sentence describing what changed and why.
+
+            "migration_steps" (array of strings): Concrete, actionable steps to migrate. Each step must be a plain string. Use fully qualified class names where applicable.
+
+            "affected_areas" (array of strings): Which parts of a TYPO3 project are affected. Use values from: "PHP", "Fluid", "TCA", "TypoScript", "TSconfig", "JavaScript", "YAML", "Flexform", "ext_localconf.php", "ext_tables.php", "Services.yaml", "Configuration/Icons.php", "SQL".
+
+            "code_mappings" (array of objects): Structured old→new code mappings extracted from the document. Each object has:
+              "old" (string): The old class, method, constant, hook, or configuration path (fully qualified).
+              "new" (string or null): The replacement (fully qualified), or null if removed without replacement.
+              "type" (string): One of "class_rename", "method_rename", "constant_rename", "argument_change", "method_removal", "class_removal", "hook_to_event", "typoscript_change", "tca_change", "behavior_change".
+
+            "rector_assessment" (object): Assessment of Rector automation feasibility.
+              "feasible" (boolean): Whether a Rector rule can handle this migration automatically.
+              "rule_type" (string or null): Suggested Rector rule type (e.g. "RenameClassRector", "RenameMethodRector", "RemoveMethodCallRector"), or null if not feasible.
+              "notes" (string): Brief explanation of automation limitations or edge cases.
+
+            Scoring guidelines:
+            - 1:1 class/method rename with no signature change → score 1, automation_grade "full"
+            - Simple replacement with clear before/after → score 2, automation_grade "full" or "partial"
+            - Signature change or conditional logic needed → score 3, automation_grade "partial"
+            - Pattern change (hook→PSR-14 event, middleware) → score 4, automation_grade "partial" or "manual"
+            - No replacement, architectural redesign needed → score 5, automation_grade "manual"
+            - Non-PHP files affected (Fluid, TCA, TypoScript) → increase score by 1
             PROMPT;
     }
 

@@ -13,6 +13,8 @@ namespace App\Service;
 
 use App\Dto\AutomationGrade;
 use App\Dto\LlmAnalysisResult;
+use App\Dto\LlmCodeMapping;
+use App\Dto\LlmRectorAssessment;
 use App\Dto\RstDocument;
 use App\Llm\LlmClientFactory;
 use App\Llm\LlmResponse;
@@ -20,6 +22,7 @@ use App\Repository\LlmResultRepository;
 
 use function date;
 use function implode;
+use function is_array;
 use function json_decode;
 use function round;
 
@@ -160,10 +163,37 @@ final readonly class LlmAnalysisService
         string $modelId,
         string $promptVersion,
     ): LlmAnalysisResult {
-        /** @var array{score?: int, automation_grade?: string, summary?: string, migration_steps?: list<string>, affected_areas?: list<string>} $data */
+        /** @var array{score?: int, automation_grade?: string, summary?: string, migration_steps?: list<string|array<string, mixed>>, affected_areas?: list<string|array<string, mixed>>, code_mappings?: list<mixed>, rector_assessment?: array{feasible?: bool, rule_type?: string|null, notes?: string}|null} $data */
         $data = json_decode($response->content, true, 512, JSON_THROW_ON_ERROR);
 
         $gradeValue = $data['automation_grade'] ?? 'manual';
+
+        // Parse code_mappings
+        $rawMappings  = $data['code_mappings'] ?? [];
+        $codeMappings = [];
+
+        foreach ($rawMappings as $mapping) {
+            if (is_array($mapping)) {
+                /** @var array{old?: string, new?: string|null, type?: string} $mapping */
+                $codeMappings[] = new LlmCodeMapping(
+                    $mapping['old'] ?? '',
+                    $mapping['new'] ?? null,
+                    $mapping['type'] ?? 'behavior_change',
+                );
+            }
+        }
+
+        // Parse rector_assessment
+        $rectorAssessment = null;
+        $rawAssessment    = $data['rector_assessment'] ?? null;
+
+        if (is_array($rawAssessment)) {
+            $rectorAssessment = new LlmRectorAssessment(
+                feasible: (bool) ($rawAssessment['feasible'] ?? false),
+                ruleType: $rawAssessment['rule_type'] ?? null,
+                notes: (string) ($rawAssessment['notes'] ?? ''),
+            );
+        }
 
         return new LlmAnalysisResult(
             filename: $filename,
@@ -174,8 +204,8 @@ final readonly class LlmAnalysisService
             summary: $data['summary'] ?? '',
             migrationSteps: LlmAnalysisResult::normalizeToStrings($data['migration_steps'] ?? []),
             affectedAreas: LlmAnalysisResult::normalizeToStrings($data['affected_areas'] ?? []),
-            codeMappings: [],
-            rectorAssessment: null,
+            codeMappings: $codeMappings,
+            rectorAssessment: $rectorAssessment,
             tokensInput: $response->inputTokens,
             tokensOutput: $response->outputTokens,
             durationMs: $response->durationMs,

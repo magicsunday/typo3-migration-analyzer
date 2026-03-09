@@ -13,11 +13,16 @@ namespace App\Repository;
 
 use App\Dto\AutomationGrade;
 use App\Dto\LlmAnalysisResult;
+use App\Dto\LlmCodeMapping;
+use App\Dto\LlmRectorAssessment;
 use PDO;
 use RuntimeException;
 
+use function array_column;
+use function array_map;
 use function dirname;
 use function hash;
+use function in_array;
 use function is_dir;
 use function json_decode;
 use function json_encode;
@@ -105,10 +110,10 @@ final readonly class LlmResultRepository
         $stmt = $this->pdo->prepare(
             'INSERT OR REPLACE INTO llm_analysis_results
              (filename_hash, filename, model_id, prompt_version, score, automation_grade,
-              summary, migration_steps, affected_areas,
+              summary, migration_steps, affected_areas, code_mappings, rector_assessment,
               tokens_input, tokens_output, duration_ms, created_at)
              VALUES (:hash, :filename, :model, :prompt, :score, :grade,
-                     :summary, :steps, :areas,
+                     :summary, :steps, :areas, :mappings, :rector,
                      :input, :output, :duration, :created)',
         );
 
@@ -122,6 +127,20 @@ final readonly class LlmResultRepository
             'summary'  => $result->summary,
             'steps'    => json_encode($result->migrationSteps, JSON_THROW_ON_ERROR),
             'areas'    => json_encode($result->affectedAreas, JSON_THROW_ON_ERROR),
+            'mappings' => json_encode(
+                array_map(
+                    static fn (LlmCodeMapping $m): array => ['old' => $m->old, 'new' => $m->new, 'type' => $m->type],
+                    $result->codeMappings,
+                ),
+                JSON_THROW_ON_ERROR,
+            ),
+            'rector' => $result->rectorAssessment instanceof LlmRectorAssessment
+                ? json_encode([
+                    'feasible'  => $result->rectorAssessment->feasible,
+                    'rule_type' => $result->rectorAssessment->ruleType,
+                    'notes'     => $result->rectorAssessment->notes,
+                ], JSON_THROW_ON_ERROR)
+                : null,
             'input'    => $result->tokensInput,
             'output'   => $result->tokensOutput,
             'duration' => $result->durationMs,
@@ -219,6 +238,8 @@ final readonly class LlmResultRepository
                 summary TEXT NOT NULL,
                 migration_steps TEXT NOT NULL,
                 affected_areas TEXT NOT NULL,
+                code_mappings TEXT NOT NULL DEFAULT \'[]\',
+                rector_assessment TEXT DEFAULT NULL,
                 tokens_input INTEGER NOT NULL DEFAULT 0,
                 tokens_output INTEGER NOT NULL DEFAULT 0,
                 duration_ms INTEGER NOT NULL DEFAULT 0,
@@ -253,12 +274,19 @@ final readonly class LlmResultRepository
         /** @var list<array{name: string}> $columns */
         $columns = $result->fetchAll(PDO::FETCH_ASSOC);
 
-        foreach ($columns as $column) {
-            if ($column['name'] === 'raw_response') {
-                $this->pdo->exec('ALTER TABLE llm_analysis_results DROP COLUMN raw_response');
+        $columnNames = array_column($columns, 'name');
 
-                break;
-            }
+        if (in_array('raw_response', $columnNames, true)) {
+            $this->pdo->exec('ALTER TABLE llm_analysis_results DROP COLUMN raw_response');
+        }
+
+        // Add code_mappings and rector_assessment columns for enhanced prompt results
+        if (!in_array('code_mappings', $columnNames, true)) {
+            $this->pdo->exec("ALTER TABLE llm_analysis_results ADD COLUMN code_mappings TEXT NOT NULL DEFAULT '[]'");
+        }
+
+        if (!in_array('rector_assessment', $columnNames, true)) {
+            $this->pdo->exec('ALTER TABLE llm_analysis_results ADD COLUMN rector_assessment TEXT DEFAULT NULL');
         }
     }
 
@@ -277,6 +305,29 @@ final readonly class LlmResultRepository
         $rawAreas      = json_decode($row['affected_areas'], true, 512, JSON_THROW_ON_ERROR);
         $affectedAreas = LlmAnalysisResult::normalizeToStrings($rawAreas);
 
+        /** @var list<array{old: string, new: string|null, type: string}> $rawMappings */
+        $rawMappings  = json_decode($row['code_mappings'] ?? '[]', true, 512, JSON_THROW_ON_ERROR);
+        $codeMappings = array_map(
+            static fn (array $m): LlmCodeMapping => new LlmCodeMapping(
+                $m['old'],
+                $m['new'],
+                $m['type'],
+            ),
+            $rawMappings,
+        );
+
+        $rectorAssessment = null;
+
+        if (isset($row['rector_assessment']) && $row['rector_assessment'] !== '') {
+            /** @var array{feasible: bool, rule_type: string|null, notes: string} $rawAssessment */
+            $rawAssessment    = json_decode($row['rector_assessment'], true, 512, JSON_THROW_ON_ERROR);
+            $rectorAssessment = new LlmRectorAssessment(
+                $rawAssessment['feasible'],
+                $rawAssessment['rule_type'],
+                $rawAssessment['notes'],
+            );
+        }
+
         return new LlmAnalysisResult(
             filename: $row['filename'],
             modelId: $row['model_id'],
@@ -286,8 +337,8 @@ final readonly class LlmResultRepository
             summary: $row['summary'],
             migrationSteps: $migrationSteps,
             affectedAreas: $affectedAreas,
-            codeMappings: [],
-            rectorAssessment: null,
+            codeMappings: $codeMappings,
+            rectorAssessment: $rectorAssessment,
             tokensInput: (int) $row['tokens_input'],
             tokensOutput: (int) $row['tokens_output'],
             durationMs: (int) $row['duration_ms'],
