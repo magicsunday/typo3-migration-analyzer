@@ -82,6 +82,16 @@ final readonly class LlmAnalysisService
     }
 
     /**
+     * Get total token usage across all analyzed documents.
+     *
+     * @return array{input: int, output: int}
+     */
+    public function getTotalTokens(): array
+    {
+        return $this->repository->getTotalTokens();
+    }
+
+    /**
      * Returns analysis progress: how many documents are analyzed vs total.
      *
      * @return array{analyzed: int, total: int, percent: float}

@@ -14,6 +14,7 @@ namespace App\Repository;
 use App\Dto\AutomationGrade;
 use App\Dto\LlmAnalysisResult;
 use PDO;
+use RuntimeException;
 
 use function dirname;
 use function hash;
@@ -21,6 +22,7 @@ use function is_dir;
 use function json_decode;
 use function json_encode;
 use function mkdir;
+use function sprintf;
 
 /**
  * SQLite-backed repository for persisting LLM analysis results.
@@ -34,8 +36,8 @@ final readonly class LlmResultRepository
         if ($sqlitePath !== ':memory:') {
             $directory = dirname($sqlitePath);
 
-            if (!is_dir($directory)) {
-                mkdir($directory, 0o755, true);
+            if (!is_dir($directory) && !mkdir($directory, 0o755, true)) {
+                throw new RuntimeException(sprintf('Failed to create directory: %s', $directory));
             }
         }
 
@@ -103,10 +105,10 @@ final readonly class LlmResultRepository
         $stmt = $this->pdo->prepare(
             'INSERT OR REPLACE INTO llm_analysis_results
              (filename_hash, filename, model_id, prompt_version, score, automation_grade,
-              summary, migration_steps, affected_areas, raw_response,
+              summary, migration_steps, affected_areas,
               tokens_input, tokens_output, duration_ms, created_at)
              VALUES (:hash, :filename, :model, :prompt, :score, :grade,
-                     :summary, :steps, :areas, :raw,
+                     :summary, :steps, :areas,
                      :input, :output, :duration, :created)',
         );
 
@@ -120,7 +122,6 @@ final readonly class LlmResultRepository
             'summary'  => $result->summary,
             'steps'    => json_encode($result->migrationSteps, JSON_THROW_ON_ERROR),
             'areas'    => json_encode($result->affectedAreas, JSON_THROW_ON_ERROR),
-            'raw'      => $result->summary,
             'input'    => $result->tokensInput,
             'output'   => $result->tokensOutput,
             'duration' => $result->durationMs,
@@ -160,6 +161,31 @@ final readonly class LlmResultRepository
     }
 
     /**
+     * Get total token usage across all analyzed documents.
+     *
+     * @return array{input: int, output: int}
+     */
+    public function getTotalTokens(): array
+    {
+        $result = $this->pdo->query(
+            'SELECT COALESCE(SUM(tokens_input), 0) AS input, COALESCE(SUM(tokens_output), 0) AS output
+             FROM llm_analysis_results',
+        );
+
+        if ($result === false) {
+            return ['input' => 0, 'output' => 0];
+        }
+
+        /** @var array{input: string, output: string} $row */
+        $row = $result->fetch(PDO::FETCH_ASSOC);
+
+        return [
+            'input'  => (int) $row['input'],
+            'output' => (int) $row['output'],
+        ];
+    }
+
+    /**
      * Get all analyzed filenames.
      *
      * @return list<string>
@@ -193,7 +219,6 @@ final readonly class LlmResultRepository
                 summary TEXT NOT NULL,
                 migration_steps TEXT NOT NULL,
                 affected_areas TEXT NOT NULL,
-                raw_response TEXT NOT NULL,
                 tokens_input INTEGER NOT NULL DEFAULT 0,
                 tokens_output INTEGER NOT NULL DEFAULT 0,
                 duration_ms INTEGER NOT NULL DEFAULT 0,

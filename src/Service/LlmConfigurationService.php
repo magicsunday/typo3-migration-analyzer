@@ -14,6 +14,7 @@ namespace App\Service;
 use App\Dto\LlmConfiguration;
 use App\Dto\LlmModel;
 use App\Dto\LlmProvider;
+use RuntimeException;
 use Symfony\Component\Yaml\Yaml;
 
 use function file_exists;
@@ -21,6 +22,7 @@ use function file_put_contents;
 use function hash;
 use function is_dir;
 use function mkdir;
+use function sprintf;
 
 /**
  * Manages LLM configuration (provider, model, API key, prompt) persisted in YAML.
@@ -63,8 +65,8 @@ final readonly class LlmConfigurationService
      */
     public function save(LlmConfiguration $config): void
     {
-        if (!is_dir($this->dataDir)) {
-            mkdir($this->dataDir, 0o755, true);
+        if (!is_dir($this->dataDir) && !mkdir($this->dataDir, 0o755, true)) {
+            throw new RuntimeException(sprintf('Failed to create directory: %s', $this->dataDir));
         }
 
         $data = [

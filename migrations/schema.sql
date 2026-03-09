@@ -9,7 +9,6 @@ CREATE TABLE IF NOT EXISTS llm_analysis_results (
     summary TEXT NOT NULL,
     migration_steps TEXT NOT NULL,
     affected_areas TEXT NOT NULL,
-    raw_response TEXT NOT NULL,
     tokens_input INTEGER NOT NULL DEFAULT 0,
     tokens_output INTEGER NOT NULL DEFAULT 0,
     duration_ms INTEGER NOT NULL DEFAULT 0,

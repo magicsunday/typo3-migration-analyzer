@@ -13,12 +13,13 @@ namespace App\Dto;
 
 /**
  * Represents an LLM model with its provider, identifier, and cost information.
- *
- * @param float $inputCostPerMillion  Cost per million input tokens in USD
- * @param float $outputCostPerMillion Cost per million output tokens in USD
  */
 final readonly class LlmModel
 {
+    /**
+     * @param float $inputCostPerMillion  Cost per million input tokens in USD
+     * @param float $outputCostPerMillion Cost per million output tokens in USD
+     */
     public function __construct(
         public LlmProvider $provider,
         public string $modelId,
