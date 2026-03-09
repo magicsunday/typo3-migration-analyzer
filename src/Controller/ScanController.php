@@ -312,7 +312,7 @@ final class ScanController extends AbstractController
     }
 
     /**
-     * Export LLM-generated Rector rules as a ZIP for all analyzed documents in the action plan.
+     * Export LLM-generated Rector rules as a ZIP for analyzed documents in the action plan.
      */
     #[Route('/scan/export-llm-rector', name: 'scan_export_llm_rector')]
     public function exportLlmRector(Request $request): Response
@@ -324,16 +324,21 @@ final class ScanController extends AbstractController
         }
 
         $documents = array_values($this->documentService->getDocuments());
+        $plan      = $this->actionPlanGenerator->generate($result, $documents);
         $allRules  = [];
 
-        foreach ($documents as $doc) {
-            $llmResult = $this->llmService->getLatestResult($doc->filename);
+        foreach ($plan->items as $item) {
+            if ($item->automationGrade === AutomationGrade::Manual) {
+                continue;
+            }
+
+            $llmResult = $this->llmService->getLatestResult($item->document->filename);
 
             if (!$llmResult instanceof LlmAnalysisResult) {
                 continue;
             }
 
-            $rules = $this->llmRectorGenerator->generate($llmResult, $doc);
+            $rules = $this->llmRectorGenerator->generate($llmResult, $item->document);
 
             foreach ($rules as $rule) {
                 $allRules[] = $rule;
