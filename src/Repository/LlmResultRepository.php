@@ -16,13 +16,9 @@ use App\Dto\LlmAnalysisResult;
 use PDO;
 use RuntimeException;
 
-use function array_filter;
-use function array_map;
 use function dirname;
 use function hash;
-use function implode;
 use function is_dir;
-use function is_string;
 use function json_decode;
 use function json_encode;
 use function mkdir;
@@ -275,11 +271,11 @@ final readonly class LlmResultRepository
     {
         /** @var list<string|array<string, mixed>> $rawSteps */
         $rawSteps       = json_decode($row['migration_steps'], true, 512, JSON_THROW_ON_ERROR);
-        $migrationSteps = $this->normalizeToStrings($rawSteps);
+        $migrationSteps = LlmAnalysisResult::normalizeToStrings($rawSteps);
 
         /** @var list<string|array<string, mixed>> $rawAreas */
         $rawAreas      = json_decode($row['affected_areas'], true, 512, JSON_THROW_ON_ERROR);
-        $affectedAreas = $this->normalizeToStrings($rawAreas);
+        $affectedAreas = LlmAnalysisResult::normalizeToStrings($rawAreas);
 
         return new LlmAnalysisResult(
             filename: $row['filename'],
@@ -303,28 +299,5 @@ final readonly class LlmResultRepository
     private function filenameHash(string $filename): string
     {
         return hash('xxh128', $filename);
-    }
-
-    /**
-     * Normalize an array of mixed values to a flat string list.
-     *
-     * Handles legacy data where the LLM stored objects instead of plain strings.
-     *
-     * @param list<string|array<string, mixed>> $items
-     *
-     * @return list<string>
-     */
-    private function normalizeToStrings(array $items): array
-    {
-        return array_map(
-            static function (string|array $item): string {
-                if (is_string($item)) {
-                    return $item;
-                }
-
-                return implode(': ', array_filter($item, is_string(...)));
-            },
-            $items,
-        );
     }
 }

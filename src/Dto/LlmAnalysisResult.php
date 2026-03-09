@@ -11,6 +11,11 @@ declare(strict_types=1);
 
 namespace App\Dto;
 
+use function array_filter;
+use function array_map;
+use function implode;
+use function is_string;
+
 /**
  * Represents the result of an LLM-based analysis of an RST document.
  */
@@ -36,5 +41,29 @@ final readonly class LlmAnalysisResult
         public int $durationMs,
         public string $createdAt,
     ) {
+    }
+
+    /**
+     * Normalize an array of mixed values (strings or objects) to a flat string list.
+     *
+     * LLMs sometimes return structured objects (e.g. {"step": 1, "description": "..."})
+     * instead of plain strings. This flattens them by joining string values.
+     *
+     * @param list<string|array<string, mixed>> $items
+     *
+     * @return list<string>
+     */
+    public static function normalizeToStrings(array $items): array
+    {
+        return array_map(
+            static function (string|array $item): string {
+                if (is_string($item)) {
+                    return $item;
+                }
+
+                return implode(': ', array_filter($item, is_string(...)));
+            },
+            $items,
+        );
     }
 }
