@@ -25,6 +25,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 
 use function array_filter;
+use function array_flip;
 use function array_values;
 use function mb_strtolower;
 use function sprintf;
@@ -38,6 +39,7 @@ final class DeprecationController extends AbstractController
         Request $request,
         DocumentService $documentService,
         ComplexityScorer $complexityScorer,
+        LlmAnalysisService $llmService,
         VersionRangeProvider $versionRangeProvider,
     ): Response {
         $documents = $documentService->getDocuments();
@@ -121,13 +123,17 @@ final class DeprecationController extends AbstractController
 
         $documents = array_values($documents);
 
+        // Build a lookup set of filenames that have been LLM-analyzed
+        $analyzedFilenames = array_flip($llmService->getAnalyzedFilenames());
+
         return $this->render('deprecation/list.html.twig', [
-            'documents'     => $documents,
-            'versions'      => $documentService->getVersions(),
-            'filters'       => $filters,
-            'scores'        => $scores,
-            'versionRange'  => $documentService->getVersionRange(),
-            'majorVersions' => $versionRangeProvider->getAvailableMajorVersions(),
+            'documents'         => $documents,
+            'versions'          => $documentService->getVersions(),
+            'filters'           => $filters,
+            'scores'            => $scores,
+            'analyzedFilenames' => $analyzedFilenames,
+            'versionRange'      => $documentService->getVersionRange(),
+            'majorVersions'     => $versionRangeProvider->getAvailableMajorVersions(),
         ]);
     }
 

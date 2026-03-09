@@ -98,6 +98,16 @@ final readonly class LlmAnalysisService
     }
 
     /**
+     * Get all filenames that have been analyzed with the current prompt version.
+     *
+     * @return list<string>
+     */
+    public function getAnalyzedFilenames(): array
+    {
+        return $this->repository->getAnalyzedFilenames($this->configService->load()->promptVersion);
+    }
+
+    /**
      * Get total token usage for the current prompt version.
      *
      * @return array{input: int, output: int}

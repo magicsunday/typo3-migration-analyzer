@@ -294,6 +294,50 @@ final class LlmAnalysisServiceTest extends TestCase
     }
 
     #[Test]
+    public function getAnalyzedFilenamesReturnsEmptyWhenNoneAnalyzed(): void
+    {
+        $configService = new LlmConfigurationService($this->tempDir, new LlmModelProviderFactory(new MockHttpClient()), new ArrayAdapter(), new NullLogger());
+        $factory       = new LlmClientFactory(new MockHttpClient());
+        $repository    = new LlmResultRepository(':memory:');
+
+        $service = new LlmAnalysisService($factory, $repository, $configService);
+
+        self::assertSame([], $service->getAnalyzedFilenames());
+    }
+
+    #[Test]
+    public function getAnalyzedFilenamesReturnsCachedFilenames(): void
+    {
+        $configService = $this->createConfiguredService();
+        $config        = $configService->load();
+        $repository    = new LlmResultRepository(':memory:');
+
+        $repository->save(new LlmAnalysisResult(
+            filename: 'Deprecation-12345-Test.rst',
+            modelId: $config->modelId,
+            promptVersion: $config->promptVersion,
+            score: 2,
+            automationGrade: AutomationGrade::Full,
+            summary: 'Test result',
+            reasoning: '',
+            migrationSteps: [],
+            affectedAreas: [],
+            affectedComponents: [],
+            codeMappings: [],
+            rectorAssessment: null,
+            tokensInput: 100,
+            tokensOutput: 50,
+            durationMs: 500,
+            createdAt: '2026-03-09 12:00:00',
+        ));
+
+        $factory = new LlmClientFactory(new MockHttpClient());
+        $service = new LlmAnalysisService($factory, $repository, $configService);
+
+        self::assertSame(['Deprecation-12345-Test.rst'], $service->getAnalyzedFilenames());
+    }
+
+    #[Test]
     public function getProgressHandlesZeroTotal(): void
     {
         $configService = new LlmConfigurationService($this->tempDir, new LlmModelProviderFactory(new MockHttpClient()), new ArrayAdapter(), new NullLogger());

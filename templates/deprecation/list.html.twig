@@ -104,8 +104,10 @@
                     <th>Titel</th>
                     <th>Version</th>
                     <th>Scan-Status</th>
-                    <th class="text-center">Complexity</th>
+                    <th class="text-center">Komplexität</th>
+                    <th class="text-center">Automatisierung</th>
                     <th class="text-center">Referenzen</th>
+                    <th class="text-center">LLM-Analyse</th>
                 </tr>
             </thead>
             <tbody>
@@ -145,8 +147,12 @@
                         {% else %}
                             <span class="badge text-bg-danger" title="{{ score.reason }}">{{ score.score }}</span>
                         {% endif %}
+                    </td>
+                    <td class="text-center">
                         {% if score.automatable %}
-                            <i class="bi bi-robot text-info ms-1" title="Automatable"></i>
+                            <i class="bi bi-robot text-info" title="Automatable"></i>
+                        {% else %}
+                            <span class="text-muted">&mdash;</span>
                         {% endif %}
                     </td>
                     <td class="text-center">
@@ -156,10 +162,71 @@
                             <span class="text-muted">&mdash;</span>
                         {% endif %}
                     </td>
+                    <td class="text-center">
+                        {% if doc.filename in analyzedFilenames|keys %}
+                            <span class="badge text-bg-success llm-status-badge" data-filename="{{ doc.filename }}">
+                                <i class="bi bi-check-lg"></i>
+                            </span>
+                        {% else %}
+                            <button class="btn btn-sm btn-outline-secondary llm-analyze-btn"
+                                    data-filename="{{ doc.filename }}"
+                                    data-url="{{ path('llm_analyze_single', {filename: doc.filename}) }}"
+                                    title="LLM-Analyse starten">
+                                <i class="bi bi-play-fill"></i>
+                            </button>
+                        {% endif %}
+                    </td>
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
     </div>
 </div>
+{% endblock %}
+
+{% block javascripts %}
+<script>
+(function () {
+    'use strict';
+
+    document.querySelectorAll('.llm-analyze-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            var url = btn.dataset.url;
+            var filename = btn.dataset.filename;
+
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span>';
+
+            fetch(url, {
+                method: 'POST',
+                headers: { 'X-Requested-With': 'XMLHttpRequest' },
+            })
+                .then(function (response) { return response.json(); })
+                .then(function (data) {
+                    if (data.error) {
+                        btn.classList.remove('btn-outline-secondary');
+                        btn.classList.add('btn-outline-danger');
+                        btn.innerHTML = '<i class="bi bi-exclamation-triangle"></i>';
+                        btn.title = data.error;
+                        btn.disabled = false;
+                        return;
+                    }
+
+                    var badge = document.createElement('span');
+                    badge.className = 'badge text-bg-success llm-status-badge';
+                    badge.dataset.filename = filename;
+                    badge.innerHTML = '<i class="bi bi-check-lg"></i>';
+                    btn.replaceWith(badge);
+                })
+                .catch(function (error) {
+                    btn.classList.remove('btn-outline-secondary');
+                    btn.classList.add('btn-outline-danger');
+                    btn.innerHTML = '<i class="bi bi-exclamation-triangle"></i>';
+                    btn.title = error.message;
+                    btn.disabled = false;
+                });
+        });
+    });
+})();
+</script>
 {% endblock %}
