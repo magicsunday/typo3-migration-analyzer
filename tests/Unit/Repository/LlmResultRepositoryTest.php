@@ -52,7 +52,9 @@ final class LlmResultRepositoryTest extends TestCase
         self::assertSame($result->automationGrade, $found->automationGrade);
         self::assertSame($result->summary, $found->summary);
         self::assertSame($result->migrationSteps, $found->migrationSteps);
+        self::assertSame($result->reasoning, $found->reasoning);
         self::assertSame($result->affectedAreas, $found->affectedAreas);
+        self::assertSame($result->affectedComponents, $found->affectedComponents);
         self::assertSame($result->tokensInput, $found->tokensInput);
         self::assertSame($result->tokensOutput, $found->tokensOutput);
         self::assertSame($result->durationMs, $found->durationMs);
@@ -100,6 +102,9 @@ final class LlmResultRepositoryTest extends TestCase
         self::assertSame('OldClass::method', $found->codeMappings[1]->old);
         self::assertNull($found->codeMappings[1]->new);
         self::assertSame('method_removal', $found->codeMappings[1]->type);
+
+        self::assertSame('Direct 1:1 class rename with no signature changes.', $found->reasoning);
+        self::assertSame(['Core API'], $found->affectedComponents);
 
         self::assertNotNull($found->rectorAssessment);
         self::assertTrue($found->rectorAssessment->feasible);
