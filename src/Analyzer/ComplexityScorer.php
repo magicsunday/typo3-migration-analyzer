@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace App\Analyzer;
 
+use App\Dto\AutomationGrade;
 use App\Dto\CodeReference;
 use App\Dto\CodeReferenceType;
 use App\Dto\ComplexityScore;
@@ -89,7 +90,7 @@ final readonly class ComplexityScorer
             return new ComplexityScore(
                 score: $llmResult->score,
                 reason: $llmResult->summary,
-                automatable: $llmResult->automationGrade->value === 'full',
+                automatable: $llmResult->automationGrade !== AutomationGrade::Manual,
             );
         }
 

@@ -13,10 +13,12 @@ namespace App\Tests\Unit\Analyzer;
 
 use App\Analyzer\ComplexityScorer;
 use App\Analyzer\MigrationMappingExtractor;
+use App\Dto\AutomationGrade;
 use App\Dto\CodeBlock;
 use App\Dto\CodeReference;
 use App\Dto\CodeReferenceType;
 use App\Dto\DocumentType;
+use App\Dto\LlmAnalysisResult;
 use App\Dto\RstDocument;
 use App\Dto\ScanStatus;
 use App\Repository\LlmResultRepository;
@@ -318,6 +320,92 @@ final class ComplexityScorerTest extends TestCase
         $result = $this->scorer->score($doc);
 
         self::assertSame(2, $result->score);
+        self::assertFalse($result->automatable);
+    }
+
+    #[Test]
+    public function scorePrefersLlmResultOverHeuristic(): void
+    {
+        $repository = new LlmResultRepository(':memory:');
+        $scorer     = new ComplexityScorer(new MigrationMappingExtractor(), $repository);
+
+        $repository->save(new LlmAnalysisResult(
+            filename: 'Deprecation-99999-Test.rst',
+            modelId: 'claude-4',
+            promptVersion: '1.0',
+            score: 2,
+            automationGrade: AutomationGrade::Partial,
+            summary: 'LLM says partially automatable',
+            migrationSteps: ['Step 1'],
+            affectedAreas: ['PHP'],
+            tokensInput: 100,
+            tokensOutput: 50,
+            durationMs: 500,
+            createdAt: '2026-03-09 08:00:00',
+        ));
+
+        // Heuristic would score 5 (no migration text, no refs)
+        $doc    = $this->createDocument(migration: null, codeReferences: []);
+        $result = $scorer->score($doc);
+
+        self::assertSame(2, $result->score);
+        self::assertSame('LLM says partially automatable', $result->reason);
+        self::assertTrue($result->automatable);
+    }
+
+    #[Test]
+    public function scoreLlmFullGradeIsAutomatable(): void
+    {
+        $repository = new LlmResultRepository(':memory:');
+        $scorer     = new ComplexityScorer(new MigrationMappingExtractor(), $repository);
+
+        $repository->save(new LlmAnalysisResult(
+            filename: 'Deprecation-99999-Test.rst',
+            modelId: 'claude-4',
+            promptVersion: '1.0',
+            score: 1,
+            automationGrade: AutomationGrade::Full,
+            summary: 'Simple rename',
+            migrationSteps: [],
+            affectedAreas: [],
+            tokensInput: 80,
+            tokensOutput: 40,
+            durationMs: 300,
+            createdAt: '2026-03-09 08:00:00',
+        ));
+
+        $doc    = $this->createDocument();
+        $result = $scorer->score($doc);
+
+        self::assertSame(1, $result->score);
+        self::assertTrue($result->automatable);
+    }
+
+    #[Test]
+    public function scoreLlmManualGradeIsNotAutomatable(): void
+    {
+        $repository = new LlmResultRepository(':memory:');
+        $scorer     = new ComplexityScorer(new MigrationMappingExtractor(), $repository);
+
+        $repository->save(new LlmAnalysisResult(
+            filename: 'Deprecation-99999-Test.rst',
+            modelId: 'claude-4',
+            promptVersion: '1.0',
+            score: 5,
+            automationGrade: AutomationGrade::Manual,
+            summary: 'Requires full manual rewrite',
+            migrationSteps: [],
+            affectedAreas: [],
+            tokensInput: 80,
+            tokensOutput: 40,
+            durationMs: 300,
+            createdAt: '2026-03-09 08:00:00',
+        ));
+
+        $doc    = $this->createDocument();
+        $result = $scorer->score($doc);
+
+        self::assertSame(5, $result->score);
         self::assertFalse($result->automatable);
     }
 
