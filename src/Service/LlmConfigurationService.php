@@ -107,9 +107,8 @@ final readonly class LlmConfigurationService
 
         file_put_contents($this->getConfigPath(), Yaml::dump($data, 4));
 
-        // Invalidate model cache so a provider switch fetches fresh models
-        $this->cache->delete('llm_models_claude');
-        $this->cache->delete('llm_models_openai');
+        // No explicit cache invalidation needed — cache keys include API key hash,
+        // so a new key automatically triggers a fresh API call. Old entries expire via TTL.
     }
 
     /**
@@ -141,7 +140,7 @@ final readonly class LlmConfigurationService
             return $this->getStaticModels($provider);
         }
 
-        $cacheKey = 'llm_models_' . $provider->value;
+        $cacheKey = 'llm_models_' . $provider->value . '_' . hash('xxh64', $apiKey);
 
         try {
             /** @var list<LlmModel> */
@@ -222,8 +221,8 @@ final readonly class LlmConfigurationService
                 provider: $model->provider,
                 modelId: $model->modelId,
                 label: $model->label,
-                inputCostPerMillion: $pricing[0] ?? null,
-                outputCostPerMillion: $pricing[1] ?? null,
+                inputCostPerMillion: $model->inputCostPerMillion ?? $pricing[0] ?? null,
+                outputCostPerMillion: $model->outputCostPerMillion ?? $pricing[1] ?? null,
             );
         }
 

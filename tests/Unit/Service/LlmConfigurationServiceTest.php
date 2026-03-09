@@ -131,8 +131,9 @@ final class LlmConfigurationServiceTest extends TestCase
 
         self::assertNotEmpty($models);
 
-        // Static fallback models all have pricing
+        // Static fallback models all have pricing and correct provider
         foreach ($models as $model) {
+            self::assertSame(LlmProvider::Claude, $model->provider);
             self::assertNotNull($model->inputCostPerMillion);
         }
     }
