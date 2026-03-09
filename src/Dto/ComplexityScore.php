@@ -11,6 +11,8 @@ declare(strict_types=1);
 
 namespace App\Dto;
 
+use function abs;
+
 /**
  * Represents the complexity assessment of a migration document.
  *
@@ -20,6 +22,9 @@ namespace App\Dto;
  *   3 = medium (argument signature changed)
  *   4 = complex (hook->event migration, TCA restructure)
  *   5 = manual (architecture change without clear replacement)
+ *
+ * When an LLM analysis result is available, the primary score reflects the LLM
+ * assessment and heuristicScore holds the rule-based score for comparison.
  */
 final readonly class ComplexityScore
 {
@@ -27,6 +32,25 @@ final readonly class ComplexityScore
         public int $score,
         public string $reason,
         public bool $automatable,
+        public ?int $heuristicScore = null,
     ) {
+    }
+
+    /**
+     * Whether the primary score comes from an LLM analysis.
+     */
+    public function isLlmBased(): bool
+    {
+        return $this->heuristicScore !== null;
+    }
+
+    /**
+     * Absolute difference between LLM and heuristic score, or 0 if heuristic-only.
+     */
+    public function scoreDivergence(): int
+    {
+        return $this->heuristicScore !== null
+            ? abs($this->score - $this->heuristicScore)
+            : 0;
     }
 }

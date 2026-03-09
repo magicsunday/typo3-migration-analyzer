@@ -58,4 +58,44 @@ final class ComplexityScoreTest extends TestCase
         self::assertSame(5, $score->score);
         self::assertFalse($score->automatable);
     }
+
+    #[Test]
+    public function isLlmBasedReturnsFalseWhenNoHeuristicScore(): void
+    {
+        $score = new ComplexityScore(3, 'Some reason', false);
+
+        self::assertFalse($score->isLlmBased());
+    }
+
+    #[Test]
+    public function isLlmBasedReturnsTrueWhenHeuristicScorePresent(): void
+    {
+        $score = new ComplexityScore(3, 'LLM reason', false, heuristicScore: 5);
+
+        self::assertTrue($score->isLlmBased());
+    }
+
+    #[Test]
+    public function scoreDivergenceReturnsZeroWithoutHeuristicScore(): void
+    {
+        $score = new ComplexityScore(3, 'Some reason', false);
+
+        self::assertSame(0, $score->scoreDivergence());
+    }
+
+    #[Test]
+    public function scoreDivergenceReturnsAbsoluteDifference(): void
+    {
+        $score = new ComplexityScore(2, 'LLM reason', true, heuristicScore: 5);
+
+        self::assertSame(3, $score->scoreDivergence());
+    }
+
+    #[Test]
+    public function scoreDivergenceReturnsZeroWhenScoresMatch(): void
+    {
+        $score = new ComplexityScore(3, 'LLM reason', false, heuristicScore: 3);
+
+        self::assertSame(0, $score->scoreDivergence());
+    }
 }
