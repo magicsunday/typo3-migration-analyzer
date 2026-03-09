@@ -252,6 +252,8 @@ final class LlmConfigurationServiceTest extends TestCase
 
         self::assertNotSame('', $service->getDefaultPrompt());
         self::assertStringContainsString('TYPO3', $service->getDefaultPrompt());
+        self::assertStringContainsString('reasoning', $service->getDefaultPrompt());
+        self::assertStringContainsString('affected_components', $service->getDefaultPrompt());
         self::assertStringContainsString('code_mappings', $service->getDefaultPrompt());
         self::assertStringContainsString('rector_assessment', $service->getDefaultPrompt());
     }

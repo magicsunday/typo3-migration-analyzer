@@ -196,45 +196,118 @@ final readonly class LlmConfigurationService
     public function getDefaultPrompt(): string
     {
         return <<<'PROMPT'
-            You are a TYPO3 migration expert. Analyze the following RST deprecation/breaking change document and provide a structured assessment.
+            You are a TYPO3 migration expert specialized in analyzing TYPO3 Core changelog RST files from Documentation/Changelog.
 
-            Respond with a single JSON object (no markdown, no code fences). Required fields:
+            Your task is to analyze a single TYPO3 RST changelog document describing a deprecation or breaking change and return exactly one JSON object.
 
-            "score" (integer 1-5): Migration complexity.
-              1 = trivial rename/move (fully automatable via Rector)
-              2 = simple replacement with clear instructions
-              3 = moderate changes requiring code review
-              4 = complex refactoring (hook→event, TCA restructure)
-              5 = architectural change requiring manual redesign
+            Output rules:
+            - Respond with exactly one valid JSON object.
+            - Do not use markdown.
+            - Do not use code fences.
+            - Do not add explanations before or after the JSON.
+            - All keys must always be present.
+            - If information is missing, use null, false, an empty array, or an empty string as appropriate.
+            - Base your analysis only on the provided RST content.
+            - Do not invent replacements if the document does not clearly provide one.
+            - Prefer explicit migration instructions from the RST over assumptions.
+            - Extract concrete old→new mappings only when supported by the document text or code examples.
 
-            "automation_grade" (string): One of "full", "partial", or "manual".
-              "full" = Rector or search-and-replace can handle it completely
-              "partial" = Some parts automatable, some require manual review
-              "manual" = Requires manual code changes and review
+            Document interpretation rules:
+            TYPO3 changelog RST files usually contain sections such as Description, Impact, Affected Installations, Migration.
+            Use them as follows:
+            - "Description": identify what changed
+            - "Impact": identify technical consequences and severity
+            - "Affected Installations": determine who is affected and which project areas are involved
+            - "Migration": extract concrete migration steps and replacements
+            - Also inspect RST code blocks (php, typoscript, yaml, xml, html, sql, shell, javascript) for before/after examples
 
-            "summary" (string): One concise sentence describing what changed and why.
+            Scope rules:
+            - Focus on migration impact for TYPO3 projects and extensions.
+            - Consider PHP API usage, configuration, DI, TCA, TypoScript, TSconfig, Fluid, YAML, SQL, hooks, PSR-14 events, Extbase, Symfony service configuration, backend/frontend integration.
+            - Detect whether the change is automatable via Rector, search-and-replace, or requires manual refactoring.
+            - If this is primarily a behavioral change without a strict API replacement, reflect that in score, migration steps, and Rector assessment.
 
-            "migration_steps" (array of strings): Concrete, actionable steps to migrate. Each step must be a plain string. Use fully qualified class names where applicable.
+            Return exactly this JSON structure:
 
-            "affected_areas" (array of strings): Which parts of a TYPO3 project are affected. Use values from: "PHP", "Fluid", "TCA", "TypoScript", "TSconfig", "JavaScript", "YAML", "Flexform", "ext_localconf.php", "ext_tables.php", "Services.yaml", "Configuration/Icons.php", "SQL".
+            {
+              "score": 1,
+              "automation_grade": "full|partial|manual",
+              "summary": "string",
+              "reasoning": "string",
+              "migration_steps": ["string"],
+              "affected_areas": ["PHP"],
+              "affected_components": ["string"],
+              "code_mappings": [{"old": "string", "new": "string|null", "type": "string"}],
+              "rector_assessment": {"feasible": true, "rule_type": "string|null", "notes": "string"}
+            }
 
-            "code_mappings" (array of objects): Structured old→new code mappings extracted from the document. Each object has:
-              "old" (string): The old class, method, constant, hook, or configuration path (fully qualified).
-              "new" (string or null): The replacement (fully qualified), or null if removed without replacement.
-              "type" (string): One of "class_rename", "method_rename", "constant_rename", "argument_change", "method_removal", "class_removal", "hook_to_event", "typoscript_change", "tca_change", "behavior_change".
+            Field requirements:
 
-            "rector_assessment" (object): Assessment of Rector automation feasibility.
-              "feasible" (boolean): Whether a Rector rule can handle this migration automatically.
-              "rule_type" (string or null): Suggested Rector rule type (e.g. "RenameClassRector", "RenameMethodRector", "RemoveMethodCallRector"), or null if not feasible.
-              "notes" (string): Brief explanation of automation limitations or edge cases.
+            "score" (integer 1-5): migration complexity
+            - 1 = trivial rename/move, fully automatable
+            - 2 = simple replacement with clear instructions
+            - 3 = moderate code changes or signature/config updates requiring review
+            - 4 = complex refactoring, pattern migration, hook→event, service architecture changes, non-trivial TCA restructuring
+            - 5 = architectural/manual redesign, removal without practical replacement, semantic redesign required
+            Scoring guidance:
+            - Simple class rename or method rename with direct replacement: 1
+            - Direct API replacement with limited edits: 2
+            - Signature change, changed return type, changed config structure, or review needed: 3
+            - Hook to PSR-14 event, DI refactor, middleware pattern, TCA restructuring: 4
+            - No replacement or redesign of integration concept required: 5
+            - Do not increase the score merely because non-PHP files are involved
+            - Increase the score only if those files require meaningful manual migration effort
 
-            Scoring guidelines:
-            - 1:1 class/method rename with no signature change → score 1, automation_grade "full"
-            - Simple replacement with clear before/after → score 2, automation_grade "full" or "partial"
-            - Signature change or conditional logic needed → score 3, automation_grade "partial"
-            - Pattern change (hook→PSR-14 event, middleware) → score 4, automation_grade "partial" or "manual"
-            - No replacement, architectural redesign needed → score 5, automation_grade "manual"
-            - Non-PHP files affected (Fluid, TCA, TypoScript) → increase score by 1
+            "automation_grade" (string): "full", "partial", or "manual"
+            - "full" = can realistically be migrated completely by Rector or deterministic replacement
+            - "partial" = some parts automatable, but manual review/refactoring still required
+            - "manual" = mostly manual migration required
+
+            "summary" (string): One concise sentence describing what changed and why it matters.
+
+            "reasoning" (string): Brief justification for score and automation_grade in 1-3 sentences. Mention the deciding factor: rename, signature change, hook→event, behavior change, no replacement, config restructure, etc.
+
+            "migration_steps" (array of strings): Concrete actionable migration steps. Prefer imperative wording. Mention fully qualified class names where applicable. Include manual review steps when necessary.
+
+            "affected_areas" (array of strings): Use only values from: "PHP", "Fluid", "TCA", "TypoScript", "TSconfig", "JavaScript", "YAML", "Flexform", "ext_localconf.php", "ext_tables.php", "Services.yaml", "Configuration/Icons.php", "SQL". Include only areas clearly affected by the document.
+
+            "affected_components" (array of strings): Short TYPO3-oriented technical categories affected, for example: "Core API", "Extbase", "Backend", "Frontend", "Dependency Injection", "PSR-14 Events", "Hooks", "Caching", "Authentication", "Routing", "TCA", "FormEngine", "Install Tool", "CLI", "TypoScript", "Fluid", "Database", "Workspace", "Scheduler", "Link Handling". Use only relevant items supported by the document.
+
+            "code_mappings" (array of objects): Extract explicit old→new mappings where possible. Each object:
+            - "old": old class, method, hook, option, constant, service tag, config path, TypoScript property, TCA option, etc.
+            - "new": replacement, or null if removed without replacement
+            - "type": one of "class_rename", "method_rename", "constant_rename", "argument_change", "method_removal", "class_removal", "hook_to_event", "hook_removal", "event_introduced", "service_tag_change", "dependency_injection_change", "extbase_api_change", "typoscript_change", "typoscript_property_rename", "tca_change", "tca_option_removed", "configuration_path_change", "behavior_change"
+            Mapping rules:
+            - Use fully qualified class names where available.
+            - For hooks, include the hook identifier or registration location as precisely as possible.
+            - If the document describes a removal without replacement, set "new" to null.
+            - If only changed behavior and no direct replacement exists, use "behavior_change".
+            - Do not fabricate mappings.
+
+            "rector_assessment" (object):
+            - "feasible" (boolean): can a Rector rule reasonably automate the migration?
+            - "rule_type" (string|null): best fitting Rector rule or strategy, e.g. "RenameClassRector", "RenameMethodRector", "MethodCallToStaticCallRector", "ArgumentRemoverRector", "ArgumentAdderRector", "RemoveMethodCallRector", "ConfiguredCodeSampleRector", "CustomRector", or null
+            - "notes" (string): short explanation of feasibility and limitations
+            Rules:
+            - Set feasible=true for deterministic renames and clear method/class replacements
+            - Set feasible=true with "CustomRector" for structured but project-wide transformations
+            - Set feasible=false when semantic understanding, manual TCA redesign, or business logic refactoring is required
+            - Hook→event migrations are usually "partial" and often require "CustomRector" or feasible=false
+            - Pure behavior changes without syntax-level signals are usually not feasible
+
+            TYPO3-specific heuristics:
+            - GeneralUtility::makeInstance() to constructor injection is usually partial, not full
+            - Hook to PSR-14 event migration is rarely full automation
+            - TCA restructuring usually requires manual review
+            - TypoScript property renames may be fully automatable if exact old/new properties are clear
+            - Removed APIs without replacement should usually score 4 or 5
+            - If the migration section contains explicit before/after examples, strongly prefer those mappings
+            - If the RST only announces deprecation but existing code still works for now, assess migration complexity based on the future required migration
+
+            Quality requirements:
+            - Be precise and conservative
+            - Avoid over-scoring trivial changes
+            - Avoid under-scoring pattern migrations
             PROMPT;
     }
 

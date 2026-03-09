@@ -22,10 +22,11 @@ use function is_string;
 final readonly class LlmAnalysisResult
 {
     /**
-     * @param list<string>             $migrationSteps   Concrete steps for migration
-     * @param list<string>             $affectedAreas    Affected areas (e.g. "PHP", "Fluid", "TCA")
-     * @param list<LlmCodeMapping>     $codeMappings     Structured old→new code mappings
-     * @param LlmRectorAssessment|null $rectorAssessment Rector automation feasibility, or null
+     * @param list<string>             $migrationSteps     Concrete steps for migration
+     * @param list<string>             $affectedAreas      Affected areas (e.g. "PHP", "Fluid", "TCA")
+     * @param list<string>             $affectedComponents TYPO3 components (e.g. "Extbase", "Backend", "PSR-14 Events")
+     * @param list<LlmCodeMapping>     $codeMappings       Structured old→new code mappings
+     * @param LlmRectorAssessment|null $rectorAssessment   Rector automation feasibility, or null
      */
     public function __construct(
         public string $filename,
@@ -34,10 +35,13 @@ final readonly class LlmAnalysisResult
         public int $score,
         public AutomationGrade $automationGrade,
         public string $summary,
+        public string $reasoning,
         /** @var list<string> */
         public array $migrationSteps,
         /** @var list<string> */
         public array $affectedAreas,
+        /** @var list<string> */
+        public array $affectedComponents,
         /** @var list<LlmCodeMapping> */
         public array $codeMappings,
         public ?LlmRectorAssessment $rectorAssessment,

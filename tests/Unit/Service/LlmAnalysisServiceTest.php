@@ -91,8 +91,10 @@ final class LlmAnalysisServiceTest extends TestCase
             score: 2,
             automationGrade: AutomationGrade::Full,
             summary: 'Cached result',
+            reasoning: '',
             migrationSteps: ['Step 1'],
             affectedAreas: ['PHP'],
+            affectedComponents: [],
             codeMappings: [],
             rectorAssessment: null,
             tokensInput: 100,
@@ -115,12 +117,14 @@ final class LlmAnalysisServiceTest extends TestCase
         $configService = $this->createConfiguredService();
 
         $innerJson = json_encode([
-            'score'            => 3,
-            'automation_grade' => 'partial',
-            'summary'          => 'Method signature changed',
-            'migration_steps'  => ['Update call sites'],
-            'affected_areas'   => ['PHP', 'TCA'],
-            'code_mappings'    => [
+            'score'               => 3,
+            'automation_grade'    => 'partial',
+            'summary'             => 'Method signature changed',
+            'reasoning'           => 'The method signature was changed to accept a new parameter.',
+            'migration_steps'     => ['Update call sites'],
+            'affected_areas'      => ['PHP', 'TCA'],
+            'affected_components' => ['Core API'],
+            'code_mappings'       => [
                 ['old' => 'OldClass::method', 'new' => 'NewClass::method', 'type' => 'method_rename'],
             ],
             'rector_assessment' => [
@@ -150,8 +154,10 @@ final class LlmAnalysisServiceTest extends TestCase
         self::assertSame(3, $result->score);
         self::assertSame(AutomationGrade::Partial, $result->automationGrade);
         self::assertSame('Method signature changed', $result->summary);
+        self::assertSame('The method signature was changed to accept a new parameter.', $result->reasoning);
         self::assertSame(['Update call sites'], $result->migrationSteps);
         self::assertSame(['PHP', 'TCA'], $result->affectedAreas);
+        self::assertSame(['Core API'], $result->affectedComponents);
         self::assertCount(1, $result->codeMappings);
         self::assertSame('OldClass::method', $result->codeMappings[0]->old);
         self::assertSame('NewClass::method', $result->codeMappings[0]->new);
@@ -179,8 +185,10 @@ final class LlmAnalysisServiceTest extends TestCase
             score: 2,
             automationGrade: AutomationGrade::Full,
             summary: 'Old cached result',
+            reasoning: '',
             migrationSteps: [],
             affectedAreas: [],
+            affectedComponents: [],
             codeMappings: [],
             rectorAssessment: null,
             tokensInput: 100,

@@ -110,24 +110,28 @@ final readonly class LlmResultRepository
         $stmt = $this->pdo->prepare(
             'INSERT OR REPLACE INTO llm_analysis_results
              (filename_hash, filename, model_id, prompt_version, score, automation_grade,
-              summary, migration_steps, affected_areas, code_mappings, rector_assessment,
+              summary, reasoning, migration_steps, affected_areas, affected_components,
+              code_mappings, rector_assessment,
               tokens_input, tokens_output, duration_ms, created_at)
              VALUES (:hash, :filename, :model, :prompt, :score, :grade,
-                     :summary, :steps, :areas, :mappings, :rector,
+                     :summary, :reasoning, :steps, :areas, :components,
+                     :mappings, :rector,
                      :input, :output, :duration, :created)',
         );
 
         $stmt->execute([
-            'hash'     => $this->filenameHash($result->filename),
-            'filename' => $result->filename,
-            'model'    => $result->modelId,
-            'prompt'   => $result->promptVersion,
-            'score'    => $result->score,
-            'grade'    => $result->automationGrade->value,
-            'summary'  => $result->summary,
-            'steps'    => json_encode($result->migrationSteps, JSON_THROW_ON_ERROR),
-            'areas'    => json_encode($result->affectedAreas, JSON_THROW_ON_ERROR),
-            'mappings' => json_encode(
+            'hash'       => $this->filenameHash($result->filename),
+            'filename'   => $result->filename,
+            'model'      => $result->modelId,
+            'prompt'     => $result->promptVersion,
+            'score'      => $result->score,
+            'grade'      => $result->automationGrade->value,
+            'summary'    => $result->summary,
+            'reasoning'  => $result->reasoning,
+            'steps'      => json_encode($result->migrationSteps, JSON_THROW_ON_ERROR),
+            'areas'      => json_encode($result->affectedAreas, JSON_THROW_ON_ERROR),
+            'components' => json_encode($result->affectedComponents, JSON_THROW_ON_ERROR),
+            'mappings'   => json_encode(
                 array_map(
                     static fn (LlmCodeMapping $m): array => ['old' => $m->old, 'new' => $m->new, 'type' => $m->type],
                     $result->codeMappings,
@@ -236,8 +240,10 @@ final readonly class LlmResultRepository
                 score INTEGER NOT NULL,
                 automation_grade TEXT NOT NULL,
                 summary TEXT NOT NULL,
+                reasoning TEXT NOT NULL DEFAULT \'\',
                 migration_steps TEXT NOT NULL,
                 affected_areas TEXT NOT NULL,
+                affected_components TEXT NOT NULL DEFAULT \'[]\',
                 code_mappings TEXT NOT NULL DEFAULT \'[]\',
                 rector_assessment TEXT DEFAULT NULL,
                 tokens_input INTEGER NOT NULL DEFAULT 0,
@@ -280,6 +286,15 @@ final readonly class LlmResultRepository
             $this->pdo->exec('ALTER TABLE llm_analysis_results DROP COLUMN raw_response');
         }
 
+        // Add reasoning and affected_components columns for enhanced prompt
+        if (!in_array('reasoning', $columnNames, true)) {
+            $this->pdo->exec("ALTER TABLE llm_analysis_results ADD COLUMN reasoning TEXT NOT NULL DEFAULT ''");
+        }
+
+        if (!in_array('affected_components', $columnNames, true)) {
+            $this->pdo->exec("ALTER TABLE llm_analysis_results ADD COLUMN affected_components TEXT NOT NULL DEFAULT '[]'");
+        }
+
         // Add code_mappings and rector_assessment columns for enhanced prompt results
         if (!in_array('code_mappings', $columnNames, true)) {
             $this->pdo->exec("ALTER TABLE llm_analysis_results ADD COLUMN code_mappings TEXT NOT NULL DEFAULT '[]'");
@@ -304,6 +319,10 @@ final readonly class LlmResultRepository
         /** @var list<string|array<string, mixed>> $rawAreas */
         $rawAreas      = json_decode($row['affected_areas'], true, 512, JSON_THROW_ON_ERROR);
         $affectedAreas = LlmAnalysisResult::normalizeToStrings($rawAreas);
+
+        /** @var list<string|array<string, mixed>> $rawComponents */
+        $rawComponents      = json_decode($row['affected_components'] ?? '[]', true, 512, JSON_THROW_ON_ERROR);
+        $affectedComponents = LlmAnalysisResult::normalizeToStrings($rawComponents);
 
         /** @var list<array{old: string, new: string|null, type: string}> $rawMappings */
         $rawMappings  = json_decode($row['code_mappings'] ?? '[]', true, 512, JSON_THROW_ON_ERROR);
@@ -335,8 +354,10 @@ final readonly class LlmResultRepository
             score: (int) $row['score'],
             automationGrade: AutomationGrade::from($row['automation_grade']),
             summary: $row['summary'],
+            reasoning: $row['reasoning'] ?? '',
             migrationSteps: $migrationSteps,
             affectedAreas: $affectedAreas,
+            affectedComponents: $affectedComponents,
             codeMappings: $codeMappings,
             rectorAssessment: $rectorAssessment,
             tokensInput: (int) $row['tokens_input'],

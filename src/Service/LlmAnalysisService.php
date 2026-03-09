@@ -163,7 +163,7 @@ final readonly class LlmAnalysisService
         string $modelId,
         string $promptVersion,
     ): LlmAnalysisResult {
-        /** @var array{score?: int, automation_grade?: string, summary?: string, migration_steps?: list<string|array<string, mixed>>, affected_areas?: list<string|array<string, mixed>>, code_mappings?: list<mixed>, rector_assessment?: array{feasible?: bool, rule_type?: string|null, notes?: string}|null} $data */
+        /** @var array{score?: int, automation_grade?: string, summary?: string, reasoning?: string, migration_steps?: list<string|array<string, mixed>>, affected_areas?: list<string|array<string, mixed>>, affected_components?: list<string|array<string, mixed>>, code_mappings?: list<mixed>, rector_assessment?: array{feasible?: bool, rule_type?: string|null, notes?: string}|null} $data */
         $data = json_decode($response->content, true, 512, JSON_THROW_ON_ERROR);
 
         $gradeValue = $data['automation_grade'] ?? 'manual';
@@ -202,8 +202,10 @@ final readonly class LlmAnalysisService
             score: $data['score'] ?? 3,
             automationGrade: AutomationGrade::tryFrom($gradeValue) ?? AutomationGrade::Manual,
             summary: $data['summary'] ?? '',
+            reasoning: $data['reasoning'] ?? '',
             migrationSteps: LlmAnalysisResult::normalizeToStrings($data['migration_steps'] ?? []),
             affectedAreas: LlmAnalysisResult::normalizeToStrings($data['affected_areas'] ?? []),
+            affectedComponents: LlmAnalysisResult::normalizeToStrings($data['affected_components'] ?? []),
             codeMappings: $codeMappings,
             rectorAssessment: $rectorAssessment,
             tokensInput: $response->inputTokens,

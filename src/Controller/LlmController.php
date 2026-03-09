@@ -107,12 +107,14 @@ final class LlmController extends AbstractController
             }
 
             return $this->json([
-                'score'           => $result->score,
-                'automationGrade' => $result->automationGrade->value,
-                'summary'         => $result->summary,
-                'migrationSteps'  => $result->migrationSteps,
-                'affectedAreas'   => $result->affectedAreas,
-                'codeMappings'    => array_map(
+                'score'              => $result->score,
+                'automationGrade'    => $result->automationGrade->value,
+                'summary'            => $result->summary,
+                'reasoning'          => $result->reasoning,
+                'migrationSteps'     => $result->migrationSteps,
+                'affectedAreas'      => $result->affectedAreas,
+                'affectedComponents' => $result->affectedComponents,
+                'codeMappings'       => array_map(
                     static fn (LlmCodeMapping $m): array => [
                         'old'  => $m->old,
                         'new'  => $m->new,

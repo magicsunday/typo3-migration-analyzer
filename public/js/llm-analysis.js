@@ -42,6 +42,10 @@
             '</div>' +
             '<p class="small mb-2">' + escapeHtml(data.summary) + '</p>';
 
+        if (data.reasoning) {
+            html += '<p class="small text-muted fst-italic mb-2">' + escapeHtml(data.reasoning) + '</p>';
+        }
+
         if (data.migrationSteps && data.migrationSteps.length > 0) {
             html += '<h6 class="small fw-bold text-muted mt-3 mb-1">Migrationsschritte</h6><ol class="small mb-2">';
             data.migrationSteps.forEach(function (step) {
@@ -54,6 +58,14 @@
             html += '<div class="mt-2">';
             data.affectedAreas.forEach(function (area) {
                 html += '<span class="badge bg-light text-muted border me-1">' + escapeHtml(area) + '</span>';
+            });
+            html += '</div>';
+        }
+
+        if (data.affectedComponents && data.affectedComponents.length > 0) {
+            html += '<div class="mt-2">';
+            data.affectedComponents.forEach(function (component) {
+                html += '<span class="badge bg-info bg-opacity-10 text-info border border-info border-opacity-25 me-1">' + escapeHtml(component) + '</span>';
             });
             html += '</div>';
         }

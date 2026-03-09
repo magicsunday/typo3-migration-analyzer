@@ -241,6 +241,9 @@
                         {% endif %}
                     </div>
                     <p class="small mb-2">{{ llmResult.summary }}</p>
+                    {% if llmResult.reasoning %}
+                        <p class="small text-muted fst-italic mb-2">{{ llmResult.reasoning }}</p>
+                    {% endif %}
                     {% if llmResult.migrationSteps|length > 0 %}
                         <h6 class="small fw-bold text-muted mt-3 mb-1">Migrationsschritte</h6>
                         <ol class="small mb-2">
@@ -253,6 +256,13 @@
                         <div class="mt-2">
                             {% for area in llmResult.affectedAreas %}
                                 <span class="badge bg-light text-muted border me-1">{{ area }}</span>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                    {% if llmResult.affectedComponents|length > 0 %}
+                        <div class="mt-2">
+                            {% for component in llmResult.affectedComponents %}
+                                <span class="badge bg-info bg-opacity-10 text-info border border-info border-opacity-25 me-1">{{ component }}</span>
                             {% endfor %}
                         </div>
                     {% endif %}
