@@ -21,7 +21,7 @@
                     <i class="bi bi-arrow-repeat fs-4 text-typo3"></i>
                     <span class="fs-5 fw-semibold ms-2">TYPO3 Migration</span>
                 </a>
-                <button class="sidebar-toggle d-none d-lg-block" type="button" onclick="toggleSidebar()" title="Sidebar ein-/ausklappen">
+                <button id="sidebar-toggle" class="sidebar-toggle d-none d-lg-block" type="button" title="Sidebar ein-/ausklappen">
                     <i class="bi bi-layout-sidebar-inset"></i>
                 </button>
             </div>
@@ -64,7 +64,7 @@
             {# Top bar #}
             <header class="navbar navbar-expand-lg bg-white border-bottom px-4 py-2">
                 <div class="container-fluid">
-                    <button class="btn btn-sm btn-outline-secondary d-lg-none me-3" type="button" onclick="document.getElementById('sidebar').classList.toggle('d-none')">
+                    <button id="sidebar-mobile-toggle" class="btn btn-sm btn-outline-secondary d-lg-none me-3" type="button">
                         <i class="bi bi-list"></i>
                     </button>
                     <nav aria-label="breadcrumb">
@@ -77,7 +77,8 @@
                     {% if majorVersions is defined and majorVersions|length > 2 %}
                     <div class="ms-auto d-flex align-items-center gap-2">
                         <span class="text-muted small d-none d-md-inline">Migration:</span>
-                        <select id="migration-source" class="form-select form-select-sm" style="width: auto;" onchange="updateTargetOptions()">
+                        <select id="migration-source" class="form-select form-select-sm" style="width: auto;"
+                                data-versions="[{% for v in majorVersions %}{{ v }}{{ not loop.last ? ',' : '' }}{% endfor %}]">
                             {% for v in majorVersions %}
                                 {% if not loop.last %}
                                 <option value="{{ v }}" {{ versionRange is defined and versionRange.sourceVersion == v ? 'selected' : '' }}>{{ v }}</option>
@@ -85,7 +86,8 @@
                             {% endfor %}
                         </select>
                         <i class="bi bi-arrow-right text-muted"></i>
-                        <select id="migration-target" class="form-select form-select-sm" style="width: auto;" onchange="applyMigrationPath()">
+                        <select id="migration-target" class="form-select form-select-sm" style="width: auto;"
+                                data-selected="{{ versionRange is defined ? versionRange.targetVersion : '' }}">
                         </select>
                     </div>
                     {% endif %}
@@ -99,53 +101,12 @@
         </div>
     </div>
 
-    <script src="/js/sidebar.js"></script>
-    <script>
-    var allVersions = [{% for v in majorVersions %}{{ v }}{{ not loop.last ? ',' : '' }}{% endfor %}];
-    var currentTarget = {{ versionRange is defined ? versionRange.targetVersion : 'null' }};
-
-    function updateTargetOptions() {
-        var source = parseInt(document.getElementById('migration-source').value);
-        var targetSelect = document.getElementById('migration-target');
-        var previousTarget = parseInt(targetSelect.value) || currentTarget;
-
-        targetSelect.innerHTML = '';
-
-        allVersions.forEach(function(v) {
-            if (v <= source) { return; }
-            var option = document.createElement('option');
-            option.value = v;
-            option.textContent = v;
-            if (v === previousTarget) { option.selected = true; }
-            targetSelect.appendChild(option);
-        });
-
-        if (!targetSelect.value && targetSelect.options.length > 0) {
-            targetSelect.options[0].selected = true;
-        }
-    }
-
-    function applyMigrationPath() {
-        var source = document.getElementById('migration-source').value;
-        var target = document.getElementById('migration-target').value;
-        window.location.href = window.location.pathname + '?migration_source=' + source + '&migration_target=' + target;
-    }
-
-    updateTargetOptions();
-    </script>
     <script src="/libs/bootstrap/js/bootstrap.bundle.min.js"></script>
     <script src="/libs/highlightjs/highlight.min.js"></script>
     <script src="/libs/highlightjs/php.min.js"></script>
     <script src="/libs/highlightjs/yaml.min.js"></script>
     <script src="/libs/highlightjs/typescript.min.js"></script>
-    <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        document.querySelectorAll('pre code.hljs-code').forEach(function(el) {
-            if (!el.dataset.highlighted) {
-                hljs.highlightElement(el);
-            }
-        });
-    });
-    </script>
+    <script src="/js/app.js"></script>
+    {% block javascripts %}{% endblock %}
 </body>
 </html>
