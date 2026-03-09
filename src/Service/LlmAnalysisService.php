@@ -1,0 +1,173 @@
+<?php
+
+/**
+ * This file is part of the package magicsunday/typo3-migration-analyzer.
+ *
+ * For the full copyright and license information, please read the
+ * LICENSE file that was distributed with this source code.
+ */
+
+declare(strict_types=1);
+
+namespace App\Service;
+
+use App\Dto\AutomationGrade;
+use App\Dto\LlmAnalysisResult;
+use App\Dto\RstDocument;
+use App\Llm\LlmClientFactory;
+use App\Llm\LlmResponse;
+use App\Repository\LlmResultRepository;
+
+use function date;
+use function implode;
+use function json_decode;
+use function round;
+
+/**
+ * Orchestrates LLM-based analysis of RST documents.
+ *
+ * Checks the cache first, calls the configured LLM provider if needed,
+ * parses the JSON response, and persists the result.
+ */
+final readonly class LlmAnalysisService
+{
+    public function __construct(
+        private LlmClientFactory $clientFactory,
+        private LlmResultRepository $repository,
+        private LlmConfigurationService $configService,
+    ) {
+    }
+
+    /**
+     * Analyze a single document, using cached results if available.
+     */
+    public function analyze(RstDocument $document, bool $forceReanalyze = false): ?LlmAnalysisResult
+    {
+        if (!$this->configService->isConfigured()) {
+            return null;
+        }
+
+        $config        = $this->configService->load();
+        $promptVersion = $config->promptVersion;
+
+        // Check cache unless forced
+        if (!$forceReanalyze) {
+            $cached = $this->repository->find($document->filename, $config->modelId, $promptVersion);
+
+            if ($cached instanceof LlmAnalysisResult) {
+                return $cached;
+            }
+        }
+
+        // Build prompt with document context
+        $userPrompt = $this->buildUserPrompt($document);
+
+        // Call LLM
+        $client   = $this->clientFactory->create($config->provider, $config->apiKey);
+        $response = $client->analyze($config->analysisPrompt, $userPrompt, $config->modelId);
+
+        // Parse JSON response and persist
+        $result = $this->parseResponse($response, $document->filename, $config->modelId, $promptVersion);
+        $this->repository->save($result);
+
+        return $result;
+    }
+
+    /**
+     * Get cached result without triggering analysis.
+     */
+    public function getCachedResult(string $filename): ?LlmAnalysisResult
+    {
+        return $this->repository->findLatest($filename);
+    }
+
+    /**
+     * Returns analysis progress: how many documents are analyzed vs total.
+     *
+     * @return array{analyzed: int, total: int, percent: float}
+     */
+    public function getProgress(int $totalDocuments): array
+    {
+        $analyzed = $this->repository->countAnalyzed();
+
+        return [
+            'analyzed' => $analyzed,
+            'total'    => $totalDocuments,
+            'percent'  => $totalDocuments > 0
+                ? round($analyzed / $totalDocuments * 100, 1)
+                : 0.0,
+        ];
+    }
+
+    /**
+     * Build the user prompt from the RST document content.
+     */
+    private function buildUserPrompt(RstDocument $document): string
+    {
+        $parts = [
+            'Document: ' . $document->filename,
+            'Type: ' . $document->type->value,
+            'Version: ' . $document->version,
+            'Title: ' . $document->title,
+            '',
+            '## Description',
+            $document->description,
+        ];
+
+        if ($document->impact !== null && $document->impact !== '') {
+            $parts[] = '';
+            $parts[] = '## Impact';
+            $parts[] = $document->impact;
+        }
+
+        if ($document->migration !== null && $document->migration !== '') {
+            $parts[] = '';
+            $parts[] = '## Migration';
+            $parts[] = $document->migration;
+        }
+
+        if ($document->codeBlocks !== []) {
+            $parts[] = '';
+            $parts[] = '## Code Examples';
+
+            foreach ($document->codeBlocks as $block) {
+                $label   = ($block->label !== null && $block->label !== '') ? sprintf(' (%s)', $block->label) : '';
+                $parts[] = sprintf('```%s%s', $block->language, $label);
+                $parts[] = $block->code;
+                $parts[] = '```';
+            }
+        }
+
+        return implode("\n", $parts);
+    }
+
+    /**
+     * Parse the LLM JSON response into an LlmAnalysisResult.
+     */
+    private function parseResponse(
+        LlmResponse $response,
+        string $filename,
+        string $modelId,
+        string $promptVersion,
+    ): LlmAnalysisResult {
+        /** @var array{score?: int, automation_grade?: string, summary?: string, migration_steps?: list<string>, affected_areas?: list<string>} $data */
+        $data = json_decode($response->content, true, 512, JSON_THROW_ON_ERROR);
+
+        $gradeValue = $data['automation_grade'] ?? 'manual';
+
+        return new LlmAnalysisResult(
+            filename: $filename,
+            modelId: $modelId,
+            promptVersion: $promptVersion,
+            score: $data['score'] ?? 3,
+            automationGrade: AutomationGrade::tryFrom($gradeValue) ?? AutomationGrade::Manual,
+            summary: $data['summary'] ?? '',
+            migrationSteps: $data['migration_steps'] ?? [],
+            affectedAreas: $data['affected_areas'] ?? [],
+            tokensInput: $response->inputTokens,
+            tokensOutput: $response->outputTokens,
+            durationMs: $response->durationMs,
+            createdAt: date('Y-m-d H:i:s'),
+        );
+    }
+}
