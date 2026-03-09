@@ -303,11 +303,14 @@ final readonly class LlmConfigurationService
             - Removed APIs without replacement should usually score 4 or 5
             - If the migration section contains explicit before/after examples, strongly prefer those mappings
             - If the RST only announces deprecation but existing code still works for now, assess migration complexity based on the future required migration
+            - If the document explicitly states the change affects practically no installations or has only one internal implementation, score 1 and consider full automation
+            - Interface signature additions (new methods, added type hints) on interfaces with a single known implementation are trivially automatable via Rector
 
             Quality requirements:
             - Be precise and conservative
             - Avoid over-scoring trivial changes
             - Avoid under-scoring pattern migrations
+            - Score and automation_grade must be consistent: score 1-2 with "manual" is only valid for configuration-only changes where no code transformation exists
             PROMPT;
     }
 
