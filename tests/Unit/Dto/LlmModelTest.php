@@ -71,6 +71,23 @@ final class LlmModelTest extends TestCase
     }
 
     #[Test]
+    public function estimateCostReturnsNullWhenPricingUnknown(): void
+    {
+        $model = new LlmModel(LlmProvider::Claude, 'claude-unknown', 'Unknown', null, null);
+
+        self::assertNull($model->estimateCost(1_000_000, 500_000));
+    }
+
+    #[Test]
+    public function constructionAllowsNullPricing(): void
+    {
+        $model = new LlmModel(LlmProvider::OpenAi, 'gpt-new', 'GPT New', null, null);
+
+        self::assertNull($model->inputCostPerMillion);
+        self::assertNull($model->outputCostPerMillion);
+    }
+
+    #[Test]
     public function estimateCostWithTypicalDocumentTokens(): void
     {
         $model = new LlmModel(

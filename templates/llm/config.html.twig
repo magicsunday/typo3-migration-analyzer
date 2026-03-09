@@ -63,10 +63,10 @@
                                 {% for model in models %}
                                     <option value="{{ model.modelId }}"
                                             data-provider="{{ model.provider.value }}"
-                                            data-input-cost="{{ model.inputCostPerMillion }}"
-                                            data-output-cost="{{ model.outputCostPerMillion }}"
+                                            data-input-cost="{{ model.inputCostPerMillion ?? '' }}"
+                                            data-output-cost="{{ model.outputCostPerMillion ?? '' }}"
                                             {{ model.modelId == config.modelId ? 'selected' : '' }}>
-                                        {{ model.label }} (${{ model.inputCostPerMillion }}/${{ model.outputCostPerMillion }} per 1M tokens)
+                                        {{ model.label }}{% if model.inputCostPerMillion is not null %} (${{ model.inputCostPerMillion }}/${{ model.outputCostPerMillion }} per 1M tokens){% endif %}
                                     </option>
                                 {% endfor %}
                             </select>

@@ -76,13 +76,16 @@ final class LlmStatusCommand extends Command
         );
 
         if ($model !== null) {
-            // Estimate cost based on typical token counts
             $estimatedCost = $model->estimateCost(
                 $progress['analyzed'] * 1500,
                 $progress['analyzed'] * 500,
             );
 
-            $io->note(sprintf('Estimated cost so far: $%s', number_format($estimatedCost, 2)));
+            if ($estimatedCost !== null) {
+                $io->note(sprintf('Estimated cost so far: $%s', number_format($estimatedCost, 2)));
+            } else {
+                $io->note('Cost estimation not available for this model.');
+            }
         }
 
         return Command::SUCCESS;
