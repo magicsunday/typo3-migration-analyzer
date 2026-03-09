@@ -109,15 +109,18 @@ final class LlmAnalysisServiceTest extends TestCase
     {
         $configService = $this->createConfiguredService();
 
+        // Claude API text omits leading "{" since the assistant prefill handles it
+        $innerJson = json_encode([
+            'score'            => 3,
+            'automation_grade' => 'partial',
+            'summary'          => 'Method signature changed',
+            'migration_steps'  => ['Update call sites'],
+            'affected_areas'   => ['PHP', 'TCA'],
+        ], JSON_THROW_ON_ERROR);
+
         $apiResponse = new MockResponse(json_encode([
             'content' => [
-                ['type' => 'text', 'text' => json_encode([
-                    'score'            => 3,
-                    'automation_grade' => 'partial',
-                    'summary'          => 'Method signature changed',
-                    'migration_steps'  => ['Update call sites'],
-                    'affected_areas'   => ['PHP', 'TCA'],
-                ], JSON_THROW_ON_ERROR)],
+                ['type' => 'text', 'text' => ltrim($innerJson, '{')],
             ],
             'usage' => ['input_tokens' => 1500, 'output_tokens' => 500],
         ], JSON_THROW_ON_ERROR), [
@@ -165,15 +168,16 @@ final class LlmAnalysisServiceTest extends TestCase
         );
         $repository->save($cached);
 
+        $innerJson = json_encode([
+            'score'            => 4,
+            'automation_grade' => 'manual',
+            'summary'          => 'Fresh analysis',
+            'migration_steps'  => [],
+            'affected_areas'   => [],
+        ], JSON_THROW_ON_ERROR);
         $apiResponse = new MockResponse(json_encode([
             'content' => [
-                ['type' => 'text', 'text' => json_encode([
-                    'score'            => 4,
-                    'automation_grade' => 'manual',
-                    'summary'          => 'Fresh analysis',
-                    'migration_steps'  => [],
-                    'affected_areas'   => [],
-                ], JSON_THROW_ON_ERROR)],
+                ['type' => 'text', 'text' => ltrim($innerJson, '{')],
             ],
             'usage' => ['input_tokens' => 1500, 'output_tokens' => 500],
         ], JSON_THROW_ON_ERROR), [

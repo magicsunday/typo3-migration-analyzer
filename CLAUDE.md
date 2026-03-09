@@ -12,7 +12,8 @@
 - typo3/cms-core + typo3/cms-install als Composer-Dependency (Datenquelle)
 - PHPUnit, PHPStan Level max, PHP-CS-Fixer (@PER-CS2x0 + @Symfony)
 - Kein Webpack/Node — AssetMapper only
-- Keine Datenbank — alles wird zur Laufzeit aus Dateien geparsed + gecacht
+- Keine relationale Server-Datenbank (MySQL/Postgres), aber lokales SQLite für Caching erlaubt
+- Laufzeit-Daten werden aus Dateien geparsed + gecacht
 
 ## Architektur
 - `src/Dto/` — Value Objects (RstDocument, CodeReference, MatcherEntry, CoverageResult, Enums)

@@ -17,10 +17,14 @@ use function hrtime;
 
 /**
  * LLM client for the OpenAI Chat Completions API.
+ *
+ * Uses response_format: json_object to enforce JSON output.
  */
 final readonly class OpenAiClient implements LlmClientInterface
 {
     private const string API_URL = 'https://api.openai.com/v1/chat/completions';
+
+    private const int TIMEOUT_SECONDS = 60;
 
     public function __construct(
         private HttpClientInterface $httpClient,
@@ -33,14 +37,16 @@ final readonly class OpenAiClient implements LlmClientInterface
         $startTime = hrtime(true);
 
         $response = $this->httpClient->request('POST', self::API_URL, [
+            'timeout' => self::TIMEOUT_SECONDS,
             'headers' => [
                 'Authorization' => 'Bearer ' . $this->apiKey,
                 'Content-Type'  => 'application/json',
             ],
             'json' => [
-                'model'      => $modelId,
-                'max_tokens' => 2048,
-                'messages'   => [
+                'model'           => $modelId,
+                'max_tokens'      => 2048,
+                'response_format' => ['type' => 'json_object'],
+                'messages'        => [
                     ['role' => 'system', 'content' => $systemPrompt],
                     ['role' => 'user', 'content' => $userPrompt],
                 ],

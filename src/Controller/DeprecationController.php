@@ -17,6 +17,7 @@ use App\Dto\DocumentType;
 use App\Dto\RstDocument;
 use App\Dto\ScanStatus;
 use App\Service\DocumentService;
+use App\Service\LlmAnalysisService;
 use App\Service\VersionRangeProvider;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -136,6 +137,7 @@ final class DeprecationController extends AbstractController
         DocumentService $documentService,
         MigrationMappingExtractor $extractor,
         ComplexityScorer $complexityScorer,
+        LlmAnalysisService $llmService,
         VersionRangeProvider $versionRangeProvider,
     ): Response {
         $doc = $documentService->findDocumentByFilename($filename);
@@ -148,6 +150,7 @@ final class DeprecationController extends AbstractController
             'doc'           => $doc,
             'mappings'      => $extractor->extract($doc->migration, $doc->description),
             'complexity'    => $complexityScorer->score($doc),
+            'llmResult'     => $llmService->getCachedResult($filename),
             'versionRange'  => $documentService->getVersionRange(),
             'majorVersions' => $versionRangeProvider->getAvailableMajorVersions(),
         ]);
