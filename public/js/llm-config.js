@@ -78,7 +78,20 @@
     var bulkStopBtn = document.getElementById('bulk-stop');
     var bulkProgress = document.getElementById('bulk-progress');
     var bulkStatus = document.getElementById('bulk-status');
+    var bulkCurrent = document.getElementById('bulk-current');
+    var bulkErrors = document.getElementById('bulk-errors');
+    var bulkErrorCount = document.getElementById('bulk-error-count');
+    var bulkErrorList = document.getElementById('bulk-error-list');
     var isRunning = false;
+    var errorCount = 0;
+    var failedFilenames = [];
+
+    function escapeHtml(text) {
+        var div = document.createElement('div');
+        div.appendChild(document.createTextNode(text));
+
+        return div.innerHTML;
+    }
 
     function updateProgress(progress) {
         if (bulkProgress) {
@@ -91,19 +104,69 @@
         }
     }
 
+    function showCurrentFile(filename) {
+        if (bulkCurrent && filename) {
+            bulkCurrent.textContent = filename;
+            bulkCurrent.title = filename;
+            bulkCurrent.classList.remove('d-none');
+        }
+    }
+
+    function addError(filename, message) {
+        errorCount++;
+        failedFilenames.push(filename);
+
+        if (bulkErrors) {
+            bulkErrors.classList.remove('d-none');
+        }
+
+        if (bulkErrorCount) {
+            bulkErrorCount.textContent = errorCount;
+        }
+
+        if (bulkErrorList) {
+            var entry = document.createElement('div');
+            entry.className = 'text-danger mb-1 border-bottom pb-1';
+            entry.innerHTML = '<code class="text-break">' + escapeHtml(filename) + '</code><br>' +
+                '<span class="text-muted">' + escapeHtml(message) + '</span>';
+            bulkErrorList.appendChild(entry);
+        }
+    }
+
     function runNextAnalysis() {
         if (!isRunning || !bulkStartBtn) {
             return;
         }
 
+        var body = new FormData();
+        failedFilenames.forEach(function (name) {
+            body.append('skip[]', name);
+        });
+
         fetch(bulkStartBtn.dataset.url, {
             method: 'POST',
-            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            headers: { 'X-Requested-With': 'XMLHttpRequest' },
+            body: body
         })
-            .then(function (response) { return response.json(); })
+            .then(function (response) {
+                if (!response.ok) {
+                    return response.json().catch(function () {
+                        return { error: 'Server error: ' + response.status };
+                    });
+                }
+                return response.json();
+            })
             .then(function (data) {
                 if (data.progress) {
                     updateProgress(data.progress);
+                }
+
+                if (data.filename) {
+                    showCurrentFile(data.filename);
+                }
+
+                if (data.error && data.filename) {
+                    addError(data.filename, data.error);
                 }
 
                 if (data.complete || !isRunning) {
@@ -115,7 +178,9 @@
                 setTimeout(runNextAnalysis, 1000);
             })
             .catch(function (error) {
-                bulkStatus.textContent = 'Fehler: ' + error.message;
+                if (bulkStatus) {
+                    bulkStatus.textContent = 'Fehler: ' + error.message;
+                }
                 stopBulk();
             });
     }
@@ -131,11 +196,26 @@
         if (bulkStopBtn) {
             bulkStopBtn.classList.add('d-none');
         }
+
+        if (bulkCurrent) {
+            bulkCurrent.classList.add('d-none');
+        }
     }
 
     if (bulkStartBtn) {
         bulkStartBtn.addEventListener('click', function () {
             isRunning = true;
+            errorCount = 0;
+            failedFilenames = [];
+
+            if (bulkErrors) {
+                bulkErrors.classList.add('d-none');
+            }
+
+            if (bulkErrorList) {
+                bulkErrorList.innerHTML = '';
+            }
+
             bulkStartBtn.disabled = true;
             bulkStartBtn.innerHTML = '<i class="bi bi-hourglass-split me-1"></i>Läuft...';
 

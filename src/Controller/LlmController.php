@@ -28,6 +28,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Throwable;
 
+use function array_flip;
 use function array_map;
 use function array_merge;
 
@@ -139,13 +140,22 @@ final class LlmController extends AbstractController
 
     #[Route('/llm/analyze-bulk', name: 'llm_analyze_bulk', methods: ['POST'])]
     public function analyzeBulk(
+        Request $request,
         LlmAnalysisService $analysisService,
         DocumentService $documentService,
     ): JsonResponse {
         $documents = $documentService->getDocuments();
 
-        // Find the first document without a cached result
+        /** @var string[] $skipFilenames */
+        $skipFilenames = $request->request->all('skip');
+        $skipSet       = array_flip($skipFilenames);
+
+        // Find the first document without a cached result, skipping failed ones
         foreach ($documents as $document) {
+            if (isset($skipSet[$document->filename])) {
+                continue;
+            }
+
             $cached = $analysisService->getCachedResult($document->filename);
 
             if ($cached instanceof LlmAnalysisResult) {
@@ -175,7 +185,7 @@ final class LlmController extends AbstractController
             }
         }
 
-        // All documents analyzed
+        // All documents analyzed (or skipped)
         $progress = $analysisService->getProgress($this->extractFilenames($documents));
 
         return $this->json([
