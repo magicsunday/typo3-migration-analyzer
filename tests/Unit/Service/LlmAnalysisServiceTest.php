@@ -112,7 +112,6 @@ final class LlmAnalysisServiceTest extends TestCase
     {
         $configService = $this->createConfiguredService();
 
-        // Claude API text omits leading "{" since the assistant prefill handles it
         $innerJson = json_encode([
             'score'            => 3,
             'automation_grade' => 'partial',
@@ -123,7 +122,7 @@ final class LlmAnalysisServiceTest extends TestCase
 
         $apiResponse = new MockResponse(json_encode([
             'content' => [
-                ['type' => 'text', 'text' => ltrim($innerJson, '{')],
+                ['type' => 'text', 'text' => $innerJson],
             ],
             'usage' => ['input_tokens' => 1500, 'output_tokens' => 500],
         ], JSON_THROW_ON_ERROR), [
@@ -180,7 +179,7 @@ final class LlmAnalysisServiceTest extends TestCase
         ], JSON_THROW_ON_ERROR);
         $apiResponse = new MockResponse(json_encode([
             'content' => [
-                ['type' => 'text', 'text' => ltrim($innerJson, '{')],
+                ['type' => 'text', 'text' => $innerJson],
             ],
             'usage' => ['input_tokens' => 1500, 'output_tokens' => 500],
         ], JSON_THROW_ON_ERROR), [

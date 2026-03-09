@@ -27,10 +27,9 @@ final class ClaudeClientTest extends TestCase
     #[Test]
     public function analyzeReturnsStructuredResponse(): void
     {
-        // Claude continues from the "{" assistant prefill, so the API text omits the leading "{"
         $responseBody = json_encode([
             'content' => [
-                ['type' => 'text', 'text' => '"score": 3, "summary": "Test analysis"}'],
+                ['type' => 'text', 'text' => '{"score": 3, "summary": "Test analysis"}'],
             ],
             'usage' => [
                 'input_tokens'  => 1500,
@@ -48,7 +47,6 @@ final class ClaudeClientTest extends TestCase
 
         $response = $client->analyze('System prompt', 'User prompt', 'claude-haiku-4-5-20251001');
 
-        // The client prepends "{" to reconstruct the full JSON
         self::assertSame('{"score": 3, "summary": "Test analysis"}', $response->content);
         self::assertSame(1500, $response->inputTokens);
         self::assertSame(500, $response->outputTokens);
@@ -59,7 +57,7 @@ final class ClaudeClientTest extends TestCase
     public function analyzeSendsCorrectRequestHeaders(): void
     {
         $mockResponse = new MockResponse(json_encode([
-            'content' => [['type' => 'text', 'text' => '}']],
+            'content' => [['type' => 'text', 'text' => '{}']],
             'usage'   => ['input_tokens' => 100, 'output_tokens' => 50],
         ], JSON_THROW_ON_ERROR), [
             'http_code'        => 200,

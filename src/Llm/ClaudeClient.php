@@ -17,13 +17,12 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 use function hrtime;
 use function json_decode;
-use function ltrim;
 use function sprintf;
 
 /**
  * LLM client for the Anthropic Messages API.
  *
- * Uses an assistant prefill ("{") to force JSON output and strips any
+ * Appends a JSON-only instruction to the system prompt and strips any
  * markdown code fences from the response before returning.
  */
 final readonly class ClaudeClient implements LlmClientInterface
@@ -52,11 +51,9 @@ final readonly class ClaudeClient implements LlmClientInterface
             'json' => [
                 'model'      => $modelId,
                 'max_tokens' => 2048,
-                'system'     => $systemPrompt,
+                'system'     => $systemPrompt . "\n\nIMPORTANT: Respond with raw JSON only. No markdown, no code fences, no explanation.",
                 'messages'   => [
                     ['role' => 'user', 'content' => $userPrompt],
-                    // Assistant prefill to force JSON output
-                    ['role' => 'assistant', 'content' => '{'],
                 ],
             ],
         ]);
@@ -76,9 +73,7 @@ final readonly class ClaudeClient implements LlmClientInterface
 
         $durationMs = (int) ((hrtime(true) - $startTime) / 1_000_000);
 
-        // Prepend the "{" prefill that Claude continues from
-        $content = '{' . ltrim($data['content'][0]['text']);
-        $content = $this->stripMarkdownFences($content);
+        $content = $this->stripMarkdownFences($data['content'][0]['text']);
 
         return new LlmResponse(
             content: $content,
