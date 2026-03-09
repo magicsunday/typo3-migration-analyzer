@@ -19,6 +19,7 @@ use App\Dto\CodeReferenceType;
 use App\Dto\DocumentType;
 use App\Dto\RstDocument;
 use App\Dto\ScanStatus;
+use App\Repository\LlmResultRepository;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -30,7 +31,10 @@ final class ComplexityScorerTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->scorer = new ComplexityScorer(new MigrationMappingExtractor());
+        $this->scorer = new ComplexityScorer(
+            new MigrationMappingExtractor(),
+            new LlmResultRepository(':memory:'),
+        );
     }
 
     #[Test]

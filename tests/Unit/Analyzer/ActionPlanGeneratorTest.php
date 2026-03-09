@@ -24,6 +24,7 @@ use App\Dto\ScanFinding;
 use App\Dto\ScanResult;
 use App\Dto\ScanStatus;
 use App\Generator\RectorRuleGenerator;
+use App\Repository\LlmResultRepository;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -38,7 +39,7 @@ final class ActionPlanGeneratorTest extends TestCase
         $extractor = new MigrationMappingExtractor();
 
         $this->generator = new ActionPlanGenerator(
-            new ComplexityScorer($extractor),
+            new ComplexityScorer($extractor, new LlmResultRepository(':memory:')),
             $extractor,
             new RectorRuleGenerator($extractor),
         );

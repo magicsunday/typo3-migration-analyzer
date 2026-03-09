@@ -14,8 +14,10 @@ namespace App\Analyzer;
 use App\Dto\CodeReference;
 use App\Dto\CodeReferenceType;
 use App\Dto\ComplexityScore;
+use App\Dto\LlmAnalysisResult;
 use App\Dto\MigrationMapping;
 use App\Dto\RstDocument;
+use App\Repository\LlmResultRepository;
 
 use function array_any;
 use function ltrim;
@@ -26,8 +28,8 @@ use function trim;
 /**
  * Scores the complexity of migrating a deprecated/breaking RST document.
  *
- * Uses a rule-based approach analyzing migration text, code references,
- * index tags, and migration mappings to assign a score from 1 (trivial) to 5 (manual).
+ * When an LLM analysis result is available, it takes priority over the
+ * heuristic scoring. Falls back to rule-based analysis otherwise.
  */
 final readonly class ComplexityScorer
 {
@@ -68,14 +70,29 @@ final readonly class ComplexityScorer
 
     public function __construct(
         private MigrationMappingExtractor $extractor,
+        private LlmResultRepository $repository,
     ) {
     }
 
     /**
      * Score the migration complexity of a document.
+     *
+     * Uses the LLM analysis result when available, otherwise falls back
+     * to rule-based heuristic scoring.
      */
     public function score(RstDocument $document): ComplexityScore
     {
+        // Check for LLM result first — it provides more accurate scoring
+        $llmResult = $this->repository->findLatest($document->filename);
+
+        if ($llmResult instanceof LlmAnalysisResult) {
+            return new ComplexityScore(
+                score: $llmResult->score,
+                reason: $llmResult->summary,
+                automatable: $llmResult->automationGrade->value === 'full',
+            );
+        }
+
         // Rule 1: Hook → Event migration (score 4)
         if ($this->isHookToEventMigration($document)) {
             return new ComplexityScore(4, 'Hook to event migration', false);
