@@ -19,6 +19,7 @@ use App\Dto\RectorRule;
 use App\Dto\RectorRuleType;
 use App\Dto\RstDocument;
 use App\Dto\ScanStatus;
+use App\Generator\RectorConfigRenderer;
 use App\Generator\RectorRuleGenerator;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -34,6 +35,7 @@ final class RectorRuleGeneratorTest extends TestCase
     {
         $this->generator = new RectorRuleGenerator(
             new MigrationMappingExtractor(),
+            new RectorConfigRenderer(),
         );
     }
 

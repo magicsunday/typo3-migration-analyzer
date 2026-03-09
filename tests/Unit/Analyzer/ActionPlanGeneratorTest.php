@@ -23,6 +23,7 @@ use App\Dto\ScanFileResult;
 use App\Dto\ScanFinding;
 use App\Dto\ScanResult;
 use App\Dto\ScanStatus;
+use App\Generator\RectorConfigRenderer;
 use App\Generator\RectorRuleGenerator;
 use App\Repository\LlmResultRepository;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -41,7 +42,7 @@ final class ActionPlanGeneratorTest extends TestCase
         $this->generator = new ActionPlanGenerator(
             new ComplexityScorer($extractor, new LlmResultRepository(':memory:')),
             $extractor,
-            new RectorRuleGenerator($extractor),
+            new RectorRuleGenerator($extractor, new RectorConfigRenderer()),
         );
     }
 

@@ -18,21 +18,11 @@ use App\Dto\MigrationMapping;
 use App\Dto\RectorRule;
 use App\Dto\RectorRuleType;
 use App\Dto\RstDocument;
-use Rector\Config\RectorConfig;
-use Rector\Renaming\Rector\ClassConstFetch\RenameClassConstFetchRector;
-use Rector\Renaming\Rector\MethodCall\RenameMethodRector;
-use Rector\Renaming\Rector\Name\RenameClassRector;
-use Rector\Renaming\Rector\StaticCall\RenameStaticMethodRector;
-use Rector\Renaming\ValueObject\MethodCallRename;
-use Rector\Renaming\ValueObject\RenameClassAndConstFetch;
-use Rector\Renaming\ValueObject\RenameStaticMethod;
 
 use function array_filter;
-use function array_unique;
 use function array_values;
 use function pathinfo;
 use function preg_replace;
-use function sort;
 use function sprintf;
 use function str_replace;
 use function ucwords;
@@ -65,6 +55,7 @@ final readonly class RectorRuleGenerator
 
     public function __construct(
         private MigrationMappingExtractor $extractor,
+        private RectorConfigRenderer $configRenderer,
     ) {
     }
 
@@ -160,109 +151,59 @@ final readonly class RectorRuleGenerator
             return '';
         }
 
-        $imports = [RectorConfig::class];
-        $groups  = [];
+        $entries = [];
 
         foreach ($configRules as $rule) {
-            [$rectorShortName, $ruleImports, $entry] = $this->resolveRectorConfig($rule);
+            $entry = $this->toConfigEntry($rule);
 
-            foreach ($ruleImports as $import) {
-                $imports[] = $import;
+            if ($entry !== []) {
+                $entries[] = $entry;
             }
-
-            $groups[$rectorShortName][] = $entry;
         }
 
-        $imports = array_values(array_unique($imports));
-        sort($imports);
-
-        $output = "<?php\n\ndeclare(strict_types=1);\n\n";
-
-        foreach ($imports as $import) {
-            $output .= sprintf("use %s;\n", $import);
-        }
-
-        $output .= "\nreturn RectorConfig::configure()\n";
-        $output .= "    ->withConfiguredRules([\n";
-
-        foreach ($groups as $shortName => $entries) {
-            $output .= sprintf("        %s::class => [\n", $shortName);
-
-            foreach ($entries as $entry) {
-                $output .= sprintf("            %s,\n", $entry);
-            }
-
-            $output .= "        ],\n";
-        }
-
-        return $output . "    ]);\n";
+        return $this->configRenderer->render($entries);
     }
 
     /**
-     * Resolve Rector class, imports, and config entry for a single rule.
+     * Convert a RectorRule into a generic config entry array for RectorConfigRenderer.
      *
-     * @return array{string, list<string>, string}
+     * @return array<string, string>
      */
-    private function resolveRectorConfig(RectorRule $rule): array
+    private function toConfigEntry(RectorRule $rule): array
     {
         $target = $rule->target;
 
         if (!$target instanceof CodeReference) {
-            return ['', [], ''];
+            return [];
         }
 
         return match ($rule->type) {
             RectorRuleType::RenameClass => [
-                'RenameClassRector',
-                [RenameClassRector::class],
-                sprintf(
-                    "'%s' => '%s'",
-                    $this->escapePhpString($rule->source->className),
-                    $this->escapePhpString($target->className),
-                ),
+                'type' => 'rename_class',
+                'old'  => $rule->source->className,
+                'new'  => $target->className,
             ],
             RectorRuleType::RenameMethod => [
-                'RenameMethodRector',
-                [
-                    RenameMethodRector::class,
-                    MethodCallRename::class,
-                ],
-                sprintf(
-                    "new MethodCallRename('%s', '%s', '%s')",
-                    $this->escapePhpString($rule->source->className),
-                    $this->escapePhpString($rule->source->member ?? ''),
-                    $this->escapePhpString($target->member ?? ''),
-                ),
+                'type'      => 'rename_method',
+                'className' => $rule->source->className,
+                'oldMethod' => $rule->source->member ?? '',
+                'newMethod' => $target->member ?? '',
             ],
             RectorRuleType::RenameStaticMethod => [
-                'RenameStaticMethodRector',
-                [
-                    RenameStaticMethodRector::class,
-                    RenameStaticMethod::class,
-                ],
-                sprintf(
-                    "new RenameStaticMethod('%s', '%s', '%s', '%s')",
-                    $this->escapePhpString($rule->source->className),
-                    $this->escapePhpString($rule->source->member ?? ''),
-                    $this->escapePhpString($target->className),
-                    $this->escapePhpString($target->member ?? ''),
-                ),
+                'type'      => 'rename_static_method',
+                'oldClass'  => $rule->source->className,
+                'oldMethod' => $rule->source->member ?? '',
+                'newClass'  => $target->className,
+                'newMethod' => $target->member ?? '',
             ],
             RectorRuleType::RenameClassConstant => [
-                'RenameClassConstFetchRector',
-                [
-                    RenameClassConstFetchRector::class,
-                    RenameClassAndConstFetch::class,
-                ],
-                sprintf(
-                    "new RenameClassAndConstFetch('%s', '%s', '%s', '%s')",
-                    $this->escapePhpString($rule->source->className),
-                    $this->escapePhpString($rule->source->member ?? ''),
-                    $this->escapePhpString($target->className),
-                    $this->escapePhpString($target->member ?? ''),
-                ),
+                'type'        => 'rename_class_constant',
+                'oldClass'    => $rule->source->className,
+                'oldConstant' => $rule->source->member ?? '',
+                'newClass'    => $target->className,
+                'newConstant' => $target->member ?? '',
             ],
-            default => ['', [], ''],
+            default => [],
         };
     }
 
