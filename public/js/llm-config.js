@@ -82,6 +82,9 @@
     var bulkErrors = document.getElementById('bulk-errors');
     var bulkErrorCount = document.getElementById('bulk-error-count');
     var bulkErrorList = document.getElementById('bulk-error-list');
+    var statusCount = document.getElementById('status-count');
+    var statusProgress = document.getElementById('status-progress');
+    var statusPercent = document.getElementById('status-percent');
     var isRunning = false;
     var errorCount = 0;
     var failedFilenames = [];
@@ -101,6 +104,19 @@
 
         if (bulkStatus) {
             bulkStatus.textContent = progress.analyzed + ' / ' + progress.total + ' analysiert';
+        }
+
+        // Update the status card as well
+        if (statusCount) {
+            statusCount.textContent = progress.analyzed + ' / ' + progress.total;
+        }
+
+        if (statusProgress) {
+            statusProgress.style.width = progress.percent + '%';
+        }
+
+        if (statusPercent) {
+            statusPercent.textContent = progress.percent + '% abgeschlossen';
         }
     }
 

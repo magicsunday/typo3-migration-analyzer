@@ -102,12 +102,12 @@
                 <div class="card-body">
                     <div class="d-flex justify-content-between mb-2">
                         <span class="text-muted">Analysiert</span>
-                        <span class="fw-semibold">{{ progress.analyzed }} / {{ progress.total }}</span>
+                        <span id="status-count" class="fw-semibold">{{ progress.analyzed }} / {{ progress.total }}</span>
                     </div>
                     <div class="progress mb-3" style="height: 8px;">
-                        <div class="progress-bar bg-typo3" style="width: {{ progress.percent }}%"></div>
+                        <div id="status-progress" class="progress-bar bg-typo3" style="width: {{ progress.percent }}%"></div>
                     </div>
-                    <p class="text-muted small mb-0">{{ progress.percent }}% abgeschlossen</p>
+                    <p id="status-percent" class="text-muted small mb-0">{{ progress.percent }}% abgeschlossen</p>
                 </div>
             </div>
 
