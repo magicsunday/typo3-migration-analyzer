@@ -234,6 +234,32 @@ final readonly class LlmResultRepository
         $this->pdo->exec(
             'CREATE INDEX IF NOT EXISTS idx_model_id ON llm_analysis_results(model_id)',
         );
+
+        $this->migrateSchema();
+    }
+
+    /**
+     * Apply schema migrations for backwards compatibility with older database files.
+     */
+    private function migrateSchema(): void
+    {
+        // Drop the raw_response column that was removed in a previous refactoring
+        $result = $this->pdo->query('PRAGMA table_info(llm_analysis_results)');
+
+        if ($result === false) {
+            return;
+        }
+
+        /** @var list<array{name: string}> $columns */
+        $columns = $result->fetchAll(PDO::FETCH_ASSOC);
+
+        foreach ($columns as $column) {
+            if ($column['name'] === 'raw_response') {
+                $this->pdo->exec('ALTER TABLE llm_analysis_results DROP COLUMN raw_response');
+
+                break;
+            }
+        }
     }
 
     /**
