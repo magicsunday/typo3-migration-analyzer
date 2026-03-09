@@ -11,7 +11,7 @@
         resultContainer.innerHTML =
             '<div class="text-center py-3">' +
             '<div class="spinner-border spinner-border-sm text-typo3" role="status"></div>' +
-            '<p class="text-muted small mt-2 mb-0">Analyse läuft...</p>' +
+            '<p class="text-muted small mt-2 mb-0">Analyzing...</p>' +
             '</div>';
     }
 
@@ -47,7 +47,7 @@
         }
 
         if (data.migrationSteps && data.migrationSteps.length > 0) {
-            html += '<h6 class="small fw-bold text-muted mt-3 mb-1">Migrationsschritte</h6><ol class="small mb-2">';
+            html += '<h6 class="small fw-bold text-muted mt-3 mb-1">Migration Steps</h6><ol class="small mb-2">';
             data.migrationSteps.forEach(function (step) {
                 html += '<li>' + escapeHtml(step) + '</li>';
             });
@@ -71,7 +71,7 @@
         }
 
         if (data.codeMappings && data.codeMappings.length > 0) {
-            html += '<h6 class="small fw-bold text-muted mt-3 mb-1">Code-Mappings</h6>';
+            html += '<h6 class="small fw-bold text-muted mt-3 mb-1">Code Mappings</h6>';
             html += '<div class="small mb-2">';
             data.codeMappings.forEach(function (mapping) {
                 html += '<div class="d-flex align-items-start gap-2 mb-1">';
@@ -80,7 +80,7 @@
                 if (mapping['new']) {
                     html += '<code class="text-success text-break">' + escapeHtml(mapping['new']) + '</code>';
                 } else {
-                    html += '<span class="text-muted fst-italic">entfernt</span>';
+                    html += '<span class="text-muted fst-italic">removed</span>';
                 }
                 html += '<span class="badge bg-light text-muted border ms-auto flex-shrink-0">' + escapeHtml(mapping.type) + '</span>';
                 html += '</div>';
@@ -92,12 +92,12 @@
             html += '<div class="mt-2 small border-top pt-2">';
             html += '<i class="bi bi-gear me-1"></i><strong>Rector:</strong> ';
             if (data.rectorAssessment.feasible) {
-                html += '<span class="text-success">Automatisierbar</span>';
+                html += '<span class="text-success">Automatable</span>';
                 if (data.rectorAssessment.ruleType) {
                     html += ' <span class="text-muted">via ' + escapeHtml(data.rectorAssessment.ruleType) + '</span>';
                 }
             } else {
-                html += '<span class="text-danger">Nicht automatisierbar</span>';
+                html += '<span class="text-danger">Not automatable</span>';
             }
             if (data.rectorAssessment.notes) {
                 html += '<br><span class="text-muted">' + escapeHtml(data.rectorAssessment.notes) + '</span>';
@@ -111,6 +111,21 @@
             '</div>';
 
         resultContainer.innerHTML = html;
+
+        // Show re-analyze button in card header if not already present
+        var cardHeader = resultContainer.closest('.card').querySelector('.card-header');
+
+        if (cardHeader && !document.getElementById('llm-reanalyze')) {
+            var btn = document.createElement('button');
+            btn.className = 'btn btn-sm btn-outline-primary';
+            btn.id = 'llm-reanalyze';
+            btn.dataset.url = (analyzeNowBtn || reanalyzeBtn).dataset.url;
+            btn.innerHTML = '<i class="bi bi-arrow-clockwise"></i>';
+            btn.addEventListener('click', function () {
+                triggerAnalysis(btn.dataset.url, true);
+            });
+            cardHeader.appendChild(btn);
+        }
     }
 
     function showError(message) {
