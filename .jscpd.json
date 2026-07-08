@@ -1,17 +1,16 @@
 {
-    "languages": [
+    "format": [
         "php"
     ],
     "threshold": 0,
     "reporters": [
-        "consoleFull"
+        "console-full"
     ],
     "minTokens": 100,
     "minLines": 5,
     "path": [
         "src/"
     ],
-    "ignore": [
-    ],
-    "exitCode": true
+    "ignore": [],
+    "exitCode": 1
 }
