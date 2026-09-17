@@ -73,19 +73,10 @@ final class ScanReportExporterTest extends TestCase
     #[Test]
     public function toJsonStripsControlCharactersFromExtensionPathFilePathAndLineContent(): void
     {
-        $result = new ScanResult(
+        $result = $this->createResultWithControlCharacters(
             extensionPath: "/test/\x7Fext",
-            fileResults: [
-                new ScanFileResult(
-                    filePath: "Classes/\x7FFoo.php",
-                    findings: [
-                        new ScanFinding(10, 'Deprecated class usage', 'strong', "use \x7FFoo;", []),
-                    ],
-                    isFileIgnored: false,
-                    effectiveCodeLines: 50,
-                    ignoredLines: 0,
-                ),
-            ],
+            filePath: "Classes/\x7FFoo.php",
+            lineContent: "use \x7FFoo;",
         );
 
         $json = $this->exporter->toJson($result);
@@ -231,20 +222,7 @@ final class ScanReportExporterTest extends TestCase
     #[Test]
     public function toCsvStripsControlCharactersFromFilePath(): void
     {
-        $result = new ScanResult(
-            extensionPath: '/test/ext',
-            fileResults: [
-                new ScanFileResult(
-                    filePath: "Classes/\x1BFoo.php",
-                    findings: [
-                        new ScanFinding(10, 'Deprecated class usage', 'strong', 'use Foo;', []),
-                    ],
-                    isFileIgnored: false,
-                    effectiveCodeLines: 50,
-                    ignoredLines: 0,
-                ),
-            ],
-        );
+        $result = $this->createResultWithControlCharacters(filePath: "Classes/\x1BFoo.php");
 
         $csv = $this->exporter->toCsv($result);
 
@@ -276,19 +254,9 @@ final class ScanReportExporterTest extends TestCase
     #[Test]
     public function toMarkdownStripsControlCharactersFromExtensionPathAndFilePath(): void
     {
-        $result = new ScanResult(
+        $result = $this->createResultWithControlCharacters(
             extensionPath: "/test/\x1Bext",
-            fileResults: [
-                new ScanFileResult(
-                    filePath: "Classes/\x1BFoo.php",
-                    findings: [
-                        new ScanFinding(10, 'Deprecated class usage', 'strong', 'use Foo;', []),
-                    ],
-                    isFileIgnored: false,
-                    effectiveCodeLines: 50,
-                    ignoredLines: 0,
-                ),
-            ],
+            filePath: "Classes/\x1BFoo.php",
         );
 
         $md = $this->exporter->toMarkdown($result);
@@ -296,6 +264,31 @@ final class ScanReportExporterTest extends TestCase
         self::assertStringNotContainsString("\x1B", $md);
         self::assertStringContainsString('/test/ext', $md);
         self::assertStringContainsString('Classes/Foo.php', $md);
+    }
+
+    /**
+     * Build a scan result with one strong finding, letting each test override
+     * only whichever field it injects a control character into.
+     */
+    private function createResultWithControlCharacters(
+        string $extensionPath = '/test/ext',
+        string $filePath = 'Classes/Foo.php',
+        string $lineContent = 'use Foo;',
+    ): ScanResult {
+        return new ScanResult(
+            extensionPath: $extensionPath,
+            fileResults: [
+                new ScanFileResult(
+                    filePath: $filePath,
+                    findings: [
+                        new ScanFinding(10, 'Deprecated class usage', 'strong', $lineContent, []),
+                    ],
+                    isFileIgnored: false,
+                    effectiveCodeLines: 50,
+                    ignoredLines: 0,
+                ),
+            ],
+        );
     }
 
     /**
