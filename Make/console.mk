@@ -21,7 +21,14 @@
 # (e.g. pasted from an issue/PR) into a `make` command in this repo.
 override SCAN_SOURCE := $(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))
 
+# The invoked target name itself (scan / scan-json / scan-csv / scan-markdown)
+# selects the report format; it is a fixed, developer-authored string picked
+# from the target list below, never user-supplied text, so this is not
+# subject to the SOURCE-argument risk documented above.
+override SCAN_FORMAT_FLAG := $(if $(filter scan-%,$(word 1,$(MAKECMDGOALS))),--format=$(subst scan-,,$(word 1,$(MAKECMDGOALS))))
+
 export SCAN_SOURCE
+export SCAN_FORMAT_FLAG
 
 # =============================================================================
 # TARGETS
@@ -29,11 +36,19 @@ export SCAN_SOURCE
 
 #### Console
 
-.PHONY: scan
+.PHONY: scan scan-json scan-csv scan-markdown
 
-scan: .logo ## Scans a TYPO3 extension for deprecated API usage. Usage: make scan <path-or-git-url>
+# Each target below gets its own help-visible "## ..." line (make help greps
+# one-target-per-line); the shared guard + docker compose recipe is attached
+# separately so all four run the identical logic.
+scan: ## Scans a TYPO3 extension for deprecated API usage (text). Usage: make scan <path-or-git-url>
+scan-json: ## Scans a TYPO3 extension and prints the findings as JSON. Usage: make scan-json <path-or-git-url>
+scan-csv: ## Scans a TYPO3 extension and prints the findings as CSV. Usage: make scan-csv <path-or-git-url>
+scan-markdown: ## Scans a TYPO3 extension and prints the findings as Markdown. Usage: make scan-markdown <path-or-git-url>
+
+scan scan-json scan-csv scan-markdown: .logo
 	@if [ -z "$$SCAN_SOURCE" ]; then \
-		echo "Usage: make scan <path-or-git-url>"; \
+		echo "Usage: make $@ <path-or-git-url>"; \
 		exit 1; \
 	fi
-	${COMPOSE_BIN} exec -u www-data -e SCAN_SOURCE phpfpm sh -c 'exec bin/console scan:extension "$$SCAN_SOURCE"'
+	${COMPOSE_BIN} exec -u www-data -e SCAN_SOURCE -e SCAN_FORMAT_FLAG phpfpm sh -c 'exec bin/console scan:extension "$$SCAN_SOURCE" $$SCAN_FORMAT_FLAG'
