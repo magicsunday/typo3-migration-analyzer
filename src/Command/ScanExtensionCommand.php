@@ -147,7 +147,10 @@ final class ScanExtensionCommand extends Command
         if ($outputFile !== null) {
             $bytesWritten = is_dir(dirname($outputFile)) ? file_put_contents($outputFile, $report) : false;
 
-            if (($bytesWritten === false) || ($bytesWritten !== strlen($report))) {
+            if (
+                ($bytesWritten === false)
+                || ($bytesWritten !== strlen($report))
+            ) {
                 $io->error(sprintf(
                     'Failed to write report to %s',
                     $outputFile,
@@ -164,7 +167,10 @@ final class ScanExtensionCommand extends Command
             $io->writeln($report);
         }
 
-        if (($input->getOption('fail-on-findings') === true) && ($result->totalFindings() > 0)) {
+        if (
+            ($input->getOption('fail-on-findings') === true)
+            && ($result->totalFindings() > 0)
+        ) {
             return Command::FAILURE;
         }
 
