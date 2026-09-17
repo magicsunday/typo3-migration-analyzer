@@ -33,7 +33,6 @@ use function implode;
 use function in_array;
 use function is_dir;
 use function sprintf;
-use function strlen;
 
 /**
  * Scan a TYPO3 extension for deprecated API usage from the command line.
@@ -158,14 +157,7 @@ final class ScanExtensionCommand extends Command
         if ($outputFile !== null) {
             $bytesWritten = is_dir(dirname($outputFile)) ? file_put_contents($outputFile, $report) : false;
 
-            // file_put_contents() returns false on any incomplete write in
-            // this PHP version, never a positive count short of
-            // strlen($report). The second check is kept as a belt-and-braces
-            // guard against a stream implementation that behaves differently.
-            if (
-                ($bytesWritten === false)
-                || ($bytesWritten !== strlen($report))
-            ) {
+            if ($bytesWritten === false) {
                 return $this->fail(
                     $io,
                     sprintf(
