@@ -34,12 +34,16 @@ interface GitRepositoryHandlerInterface
     /**
      * Remove a previously cloned temporary directory.
      *
+     * @param string $path The path of the temporary directory to remove.
+     *
      * @throws InvalidArgumentException If the path is outside the temporary directory
      */
     public function cleanup(string $path): void;
 
     /**
      * Validate that the given URL points to a supported public Git repository.
+     *
+     * @param string $url The URL to validate.
      *
      * @throws InvalidArgumentException If the URL is not a valid GitHub or GitLab HTTPS URL
      */
