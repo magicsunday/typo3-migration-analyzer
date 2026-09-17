@@ -20,6 +20,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use RuntimeException;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Tester\CommandTester;
 
@@ -151,6 +152,35 @@ final class ScanExtensionCommandTest extends TestCase
         self::assertStringContainsString(
             'Nur öffentliche GitHub- und GitLab-Repositories werden unterstützt.',
             $this->tester->getDisplay(),
+        );
+    }
+
+    /**
+     * A repository URL that passes validate() but fails to actually clone
+     * (e.g. the process exits non-zero) must be reported as a clean failure
+     * through the same catch block as an invalid URL, not left to propagate
+     * as an uncaught exception.
+     */
+    #[Test]
+    public function executeFailsCleanlyWhenCloningARepositoryUrlFails(): void
+    {
+        $command = new ScanExtensionCommand(
+            new ExtensionScanner(),
+            new FakeGitRepositoryHandler(
+                self::FIXTURE_PATH,
+                new RuntimeException('Repository konnte nicht geklont werden: fatal error'),
+            ),
+            new ScanReportExporter(),
+            new ScanSourcePathResolver('', ''),
+        );
+
+        $tester     = new CommandTester($command);
+        $statusCode = $tester->execute(['source' => 'https://github.com/vendor/repo']);
+
+        self::assertSame(Command::FAILURE, $statusCode);
+        self::assertStringContainsString(
+            'Repository konnte nicht geklont werden: fatal error',
+            $tester->getDisplay(),
         );
     }
 
