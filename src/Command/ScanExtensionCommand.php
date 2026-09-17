@@ -106,11 +106,14 @@ final class ScanExtensionCommand extends Command
         $format = $input->getOption('format');
 
         if (!in_array($format, self::VALID_FORMATS, true)) {
-            return $this->fail($io, sprintf(
-                'Invalid format "%s". Allowed: %s',
-                $format,
-                implode(', ', self::VALID_FORMATS),
-            ));
+            return $this->fail(
+                $io,
+                sprintf(
+                    'Invalid format "%s". Allowed: %s',
+                    $format,
+                    implode(', ', self::VALID_FORMATS),
+                ),
+            );
         }
 
         if (is_dir($source)) {
@@ -120,7 +123,10 @@ final class ScanExtensionCommand extends Command
         try {
             $clonedPath = $this->gitHandler->clone($source);
         } catch (InvalidArgumentException|RuntimeException $exception) {
-            return $this->fail($io, $exception->getMessage());
+            return $this->fail(
+                $io,
+                $exception->getMessage(),
+            );
         }
 
         try {
@@ -138,7 +144,10 @@ final class ScanExtensionCommand extends Command
         try {
             $result = $this->scanner->scan($path);
         } catch (Throwable $exception) {
-            return $this->fail($io, $exception->getMessage());
+            return $this->fail(
+                $io,
+                $exception->getMessage(),
+            );
         }
 
         $report = $this->renderReport($result, $format);
@@ -153,10 +162,13 @@ final class ScanExtensionCommand extends Command
                 ($bytesWritten === false)
                 || ($bytesWritten !== strlen($report))
             ) {
-                return $this->fail($io, sprintf(
-                    'Failed to write report to %s',
-                    $outputFile,
-                ));
+                return $this->fail(
+                    $io,
+                    sprintf(
+                        'Failed to write report to %s',
+                        $outputFile,
+                    ),
+                );
             }
 
             $io->success(sprintf(
