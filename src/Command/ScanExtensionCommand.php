@@ -25,6 +25,7 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
+use Throwable;
 
 use function dirname;
 use function file_put_contents;
@@ -138,7 +139,14 @@ final class ScanExtensionCommand extends Command
      */
     private function scanAndReport(InputInterface $input, SymfonyStyle $io, string $path, string $format): int
     {
-        $result = $this->scanner->scan($path);
+        try {
+            $result = $this->scanner->scan($path);
+        } catch (Throwable $exception) {
+            $io->error($exception->getMessage());
+
+            return Command::FAILURE;
+        }
+
         $report = $this->renderReport($result, $format);
 
         /** @var string|null $outputFile */

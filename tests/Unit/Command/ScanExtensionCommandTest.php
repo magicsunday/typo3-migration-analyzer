@@ -51,6 +51,8 @@ final class ScanExtensionCommandTest extends TestCase
 
     private ?string $cleanScanDirectory = null;
 
+    private ?string $malformedScanDirectory = null;
+
     protected function setUp(): void
     {
         $command = new ScanExtensionCommand(
@@ -69,6 +71,11 @@ final class ScanExtensionCommandTest extends TestCase
             unlink($this->cleanScanDirectory . '/Clean.php');
             rmdir($this->cleanScanDirectory);
         }
+
+        if ($this->malformedScanDirectory !== null) {
+            unlink($this->malformedScanDirectory . '/Broken.php');
+            rmdir($this->malformedScanDirectory);
+        }
     }
 
     /**
@@ -81,6 +88,18 @@ final class ScanExtensionCommandTest extends TestCase
         file_put_contents($this->cleanScanDirectory . '/Clean.php', "<?php\n\nclass Clean {}\n");
 
         return $this->cleanScanDirectory;
+    }
+
+    /**
+     * Create a throwaway directory containing one PHP file with a syntax error.
+     */
+    private function createMalformedScanDirectory(): string
+    {
+        $this->malformedScanDirectory = sys_get_temp_dir() . '/scan-extension-command-test-malformed-' . uniqid();
+        mkdir($this->malformedScanDirectory, 0o755, true);
+        file_put_contents($this->malformedScanDirectory . '/Broken.php', "<?php\n\nclass Broken {\n    public function foo(\n");
+
+        return $this->malformedScanDirectory;
     }
 
     /**
@@ -182,6 +201,19 @@ final class ScanExtensionCommandTest extends TestCase
             'Repository konnte nicht geklont werden: fatal error',
             $tester->getDisplay(),
         );
+    }
+
+    /**
+     * A scanned file with a PHP syntax error must not crash the command
+     * with an uncaught exception. It must fail cleanly, the same way any
+     * other scan failure does.
+     */
+    #[Test]
+    public function executeFailsCleanlyWhenAScannedFileHasAPhpSyntaxError(): void
+    {
+        $statusCode = $this->tester->execute(['source' => $this->createMalformedScanDirectory()]);
+
+        self::assertSame(Command::FAILURE, $statusCode);
     }
 
     /**
