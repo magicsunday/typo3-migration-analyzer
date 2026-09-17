@@ -6,16 +6,15 @@
 # repo. GNU Make unconditionally re-materializes a command-line "VAR=..."
 # override into MAKEFLAGS and re-expands any Make function/variable syntax
 # ("$(...)") embedded in it as soon as a real recipe runs, in any makefile —
-# no $(shell ...) call anywhere is needed for that (confirmed by direct
-# reproduction; plain shell metacharacters like backticks or semicolons in
-# the same override are NOT re-expanded by this mechanism, only Make's own
-# "$(...)" syntax is). In this repo specifically, `make -n` and a
-# nonexistent target aren't safe either, because the root Makefile computes
-# COMPOSE_BIN via an immediately-evaluated $(shell ...) call, which forces
-# the same materialization while parsing the Makefile itself, before any
-# goal is even resolved (also confirmed by direct reproduction; a makefile
-# with no $(shell ...) call anywhere does NOT trigger under -n or for a
-# nonexistent target, only once a real recipe actually runs). SCAN_SOURCE is
+# no $(shell ...) call anywhere is needed for that; plain shell metacharacters
+# like backticks or semicolons in the same override are NOT re-expanded by
+# this mechanism, only Make's own "$(...)" syntax is. In this repo
+# specifically, `make -n` and a nonexistent target aren't safe either,
+# because the root Makefile computes COMPOSE_BIN via an immediately-evaluated
+# $(shell ...) call, which forces the same materialization while parsing the
+# Makefile itself, before any goal is even resolved; a makefile with no
+# $(shell ...) call anywhere does NOT trigger under -n or for a nonexistent
+# target, only once a real recipe actually runs. SCAN_SOURCE is
 # therefore extracted from $(MAKECMDGOALS) instead (a plain positional
 # argument, immune to this mechanism), and must stay referenced only via
 # the exported shell variable $$SCAN_SOURCE below, never spliced in as
