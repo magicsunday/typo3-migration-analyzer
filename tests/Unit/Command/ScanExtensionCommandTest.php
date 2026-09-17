@@ -258,7 +258,7 @@ final class ScanExtensionCommandTest extends TestCase
         $outputFile = $outputDirectory . '/report.json';
 
         // file_put_contents() itself raises an E_WARNING on a permission-denied
-        // write; the command already turns that into a clean Command::FAILURE
+        // write. The command already turns that into a clean Command::FAILURE
         // via its return-value check, so the raw PHP warning is expected here
         // and suppressed for the duration of the call under test.
         set_error_handler(static fn (): bool => true);
