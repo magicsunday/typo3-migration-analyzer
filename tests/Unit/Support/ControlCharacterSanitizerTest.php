@@ -45,4 +45,23 @@ final class ControlCharacterSanitizerTest extends TestCase
     {
         self::assertSame('clean value', ControlCharacterSanitizer::strip('clean value'));
     }
+
+    /**
+     * 0x1F is the upper boundary of the stripped control-character range.
+     */
+    #[Test]
+    public function stripRemovesTheUpperBoundaryControlCharacter(): void
+    {
+        self::assertSame('ab', ControlCharacterSanitizer::strip("a\x1Fb"));
+    }
+
+    /**
+     * 0x20 (space) is the first byte outside the control-character range and
+     * must survive untouched.
+     */
+    #[Test]
+    public function stripPreservesTheFirstNonControlCharacter(): void
+    {
+        self::assertSame("a\x20b", ControlCharacterSanitizer::strip("a\x20b"));
+    }
 }
