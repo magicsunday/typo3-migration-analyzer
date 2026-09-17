@@ -6,13 +6,13 @@
 # repo. GNU Make unconditionally re-materializes a command-line "VAR=..."
 # override into MAKEFLAGS and re-expands any Make function/variable syntax
 # ("$(...)") embedded in it as soon as a real recipe runs, in any makefile —
-# no $(shell ...) call anywhere is needed for that; plain shell metacharacters
+# no $(shell ...) call anywhere is needed for that. Plain shell metacharacters
 # like backticks or semicolons in the same override are NOT re-expanded by
 # this mechanism, only Make's own "$(...)" syntax is. In this repo
 # specifically, `make -n` and a nonexistent target aren't safe either,
 # because the root Makefile computes COMPOSE_BIN via an immediately-evaluated
 # $(shell ...) call, which forces the same materialization while parsing the
-# Makefile itself, before any goal is even resolved; a makefile with no
+# Makefile itself, before any goal is even resolved. A makefile with no
 # $(shell ...) call anywhere does NOT trigger under -n or for a nonexistent
 # target, only once a real recipe actually runs. SCAN_SOURCE is
 # therefore extracted from $(MAKECMDGOALS) instead (a plain positional
@@ -44,7 +44,7 @@ export SCAN_FORMAT_FLAG
 .PHONY: scan scan-json scan-csv scan-markdown
 
 # Each target needs its own help-visible "## ..." line (make help's grep is
-# one-target-per-line); the shared guard + recipe below is attached
+# one-target-per-line). The shared guard + recipe below is attached
 # separately so the four targets don't duplicate it.
 scan: ## Scans a TYPO3 extension for deprecated API usage (text). Usage: make scan <path-or-git-url>
 scan-json: ## Scans a TYPO3 extension and prints the findings as JSON. Usage: make scan-json <path-or-git-url>
