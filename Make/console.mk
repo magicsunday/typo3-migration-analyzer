@@ -6,12 +6,12 @@
 # token on a `make` command line (any variable name, any target, in ANY
 # makefile, not just this one) is unconditionally re-materialized into
 # MAKEFLAGS by GNU Make itself, which re-evaluates embedded "$(shell ...)"/
-# backtick/semicolon syntax in the value as a side effect of that
-# materialization — this happens during Make's own command-line parsing,
-# before any target-level code (including this file's override/recipe
-# logic) ever runs, so nothing here can intercept it. No $(shell ...) call
-# needs to exist anywhere in the makefile for this to trigger. A plain
-# positional argument via $(MAKECMDGOALS) is not funneled through this
+# backtick/semicolon syntax in the value as soon as this invocation runs
+# its first recipe (any recipe, `make -n`/an unresolvable target never
+# does) — before that recipe's own command text runs, so nothing in a
+# recipe body can intercept it. No $(shell ...) call needs to exist
+# anywhere in the makefile for this to trigger. A plain positional
+# argument via $(MAKECMDGOALS) is not funneled through this
 # MAKEFLAGS override mechanism, which is why SCAN_SOURCE is extracted that
 # way below. It stays safe only as long as it's dereferenced exclusively
 # via the exported shell variable ($$SCAN_SOURCE, as in the recipe below),
