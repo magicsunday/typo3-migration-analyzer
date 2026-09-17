@@ -60,7 +60,7 @@ final class ScanReportExporterTest extends TestCase
 
         /** @var list<array<string, mixed>> $files */
         $files = $data['files'];
-        self::assertCount(1, $files);
+        self::assertCount(1, $files, 'only the file carrying findings from createResult() is listed');
     }
 
     /**
@@ -177,7 +177,7 @@ final class ScanReportExporterTest extends TestCase
         $csv   = $this->exporter->toCsv($result);
         $lines = explode("\n", trim($csv));
 
-        self::assertCount(3, $lines);
+        self::assertCount(3, $lines, 'header row + one row per finding (2) from createResult()');
         self::assertSame('"File","Line","Severity","Message","RST Files"', $lines[0]);
     }
 
