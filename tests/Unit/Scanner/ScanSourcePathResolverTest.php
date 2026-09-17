@@ -23,6 +23,7 @@ use SplFileInfo;
 use function file_put_contents;
 use function is_dir;
 use function mkdir;
+use function realpath;
 use function rmdir;
 use function sys_get_temp_dir;
 use function uniqid;
@@ -188,6 +189,44 @@ final class ScanSourcePathResolverTest extends TestCase
     }
 
     /**
+     * A path that rewrites to exactly the container mount root itself, with
+     * the root genuinely existing on disk, is accepted rather than rejected
+     * by the realpath() equality branch of the containment check.
+     */
+    #[Test]
+    public function resolveAcceptsAnExactMatchAgainstARealContainerMountRoot(): void
+    {
+        $mountRoot = $this->tmpDir . '/allowed';
+
+        mkdir($mountRoot, 0o755, true);
+
+        $resolver = new ScanSourcePathResolver('/host-prefix', $mountRoot);
+
+        self::assertSame(realpath($mountRoot), $resolver->resolve('/host-prefix'));
+    }
+
+    /**
+     * When the container mount root exists but the rewritten target inside
+     * it does not, the containment check cannot canonicalize the target and
+     * defers rejection to the caller's own is_dir() check instead of failing
+     * itself.
+     */
+    #[Test]
+    public function resolveDefersToTheCallerWhenTheRewrittenTargetDoesNotExist(): void
+    {
+        $mountRoot = $this->tmpDir . '/allowed';
+
+        mkdir($mountRoot, 0o755, true);
+
+        $resolver = new ScanSourcePathResolver('/host-prefix', $mountRoot);
+
+        self::assertSame(
+            $mountRoot . '/missing-extension',
+            $resolver->resolve('/host-prefix/missing-extension'),
+        );
+    }
+
+    /**
      * A submitted path containing a null byte must not reach realpath(),
      * which throws a ValueError on one, and is left unchanged instead.
      */
@@ -197,8 +236,8 @@ final class ScanSourcePathResolverTest extends TestCase
         $resolver = new ScanSourcePathResolver('/srv/projects', '/scan-sources');
 
         self::assertSame(
-            "/srv/projects/../secret\0.txt",
-            $resolver->resolve("/srv/projects/../secret\0.txt"),
+            "/srv/projects/secret\0.txt",
+            $resolver->resolve("/srv/projects/secret\0.txt"),
         );
     }
 

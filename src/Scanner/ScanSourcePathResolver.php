@@ -40,7 +40,9 @@ final readonly class ScanSourcePathResolver
      * when it falls under the configured host mount source, otherwise return
      * it unchanged. The rewritten path is canonicalized and verified to still
      * reside within the configured container path, rejecting any "../"
-     * sequence that would otherwise escape the mounted directory.
+     * sequence that would otherwise escape the mounted directory. A path
+     * containing a null byte is also returned unchanged, since realpath()
+     * throws a ValueError on one.
      *
      * @param string $path Path as entered in the "Server-Pfad" scan form.
      *
@@ -87,6 +89,11 @@ final readonly class ScanSourcePathResolver
      * Determine whether the given path equals the given root, or is a
      * descendant of it bounded by a path separator (never matching a sibling
      * directory that merely shares the same string prefix).
+     *
+     * @param string $path The path to test.
+     * @param string $root The root $path must equal or descend from.
+     *
+     * @return bool True when $path equals $root or is a path-separator-bounded descendant of it.
      */
     private function isWithinOrEqual(string $path, string $root): bool
     {
