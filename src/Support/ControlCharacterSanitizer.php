@@ -25,6 +25,9 @@ final class ControlCharacterSanitizer
     }
 
     /**
+     * Remove ASCII control characters (0x00-0x1F, 0x7F) from a value before
+     * it reaches a terminal or a downstream parser.
+     *
      * @param string $value       The value to sanitize.
      * @param string $replacement The string each control character is replaced with.
      */
