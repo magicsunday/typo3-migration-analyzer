@@ -24,6 +24,10 @@ services:
             - /etc/timezone:/etc/timezone:ro
             - /etc/localtime:/etc/localtime:ro
             - app:/var/www
+            # Read-only mount for the "Server-Pfad" extension scan source.
+            # Points at SCAN_SOURCE_PATH (see .env.dist) so the scanned path is
+            # not tied to a fixed host directory layout.
+            - ${SCAN_SOURCE_PATH:-./scan-sources}:/scan-sources:ro
         networks:
             - default
 

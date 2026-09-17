@@ -55,9 +55,13 @@
                     <div class="mb-3">
                         <label for="extension_path" class="form-label">Pfad zur Extension</label>
                         <input type="text" class="form-control" id="extension_path" name="extension_path"
-                               placeholder="/var/www/html/packages/my_extension"
+                               placeholder="/scan-sources/my-project/vendor/my-ext"
                                required>
-                        <div class="form-text">Absoluter Pfad zum Verzeichnis der TYPO3-Extension auf dem Server.</div>
+                        <div class="form-text">
+                            Absoluter Pfad zum Verzeichnis der TYPO3-Extension, wie er von diesem Server-Prozess aus sichtbar ist.
+                            Bei lokaler Docker-Entwicklung: Host-Verzeichnis per <code>SCAN_SOURCE_PATH</code> in <code>.env</code> mounten,
+                            danach unter <code>/scan-sources/…</code> ansprechbar (siehe <code>.env.dist</code>).
+                        </div>
                     </div>
                     <button type="submit" class="btn btn-typo3">
                         <i class="bi bi-play-circle me-1"></i>Scan starten

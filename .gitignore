@@ -33,3 +33,8 @@ phpstan-baseline.neon
 ###> docker ###
 /.typo3-dummy
 ###< docker ###
+
+###> scan-source ###
+/scan-sources/*
+!/scan-sources/.gitkeep
+###< scan-source ###
