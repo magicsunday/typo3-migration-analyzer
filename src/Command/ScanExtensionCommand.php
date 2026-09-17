@@ -25,7 +25,7 @@ use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
-use function count;
+use function dirname;
 use function file_put_contents;
 use function implode;
 use function in_array;
@@ -103,11 +103,10 @@ final class ScanExtensionCommand extends Command
         }
 
         if (is_dir($source)) {
-            return $this->scanAndReport($input, $output, $io, $source, $format);
+            return $this->scanAndReport($input, $io, $source, $format);
         }
 
         try {
-            $this->gitHandler->validate($source);
             $clonedPath = $this->gitHandler->clone($source);
         } catch (InvalidArgumentException|RuntimeException $exception) {
             $io->error($exception->getMessage());
@@ -116,7 +115,7 @@ final class ScanExtensionCommand extends Command
         }
 
         try {
-            return $this->scanAndReport($input, $output, $io, $clonedPath, $format);
+            return $this->scanAndReport($input, $io, $clonedPath, $format);
         } finally {
             $this->gitHandler->cleanup($clonedPath);
         }
@@ -125,24 +124,24 @@ final class ScanExtensionCommand extends Command
     /**
      * Run the scan against a resolved local path and render the report.
      */
-    private function scanAndReport(
-        InputInterface $input,
-        OutputInterface $output,
-        SymfonyStyle $io,
-        string $path,
-        string $format,
-    ): int {
+    private function scanAndReport(InputInterface $input, SymfonyStyle $io, string $path, string $format): int
+    {
         $result = $this->scanner->scan($path);
-        $report = $this->renderReport($result, $path, $format);
+        $report = $this->renderReport($result, $format);
 
         /** @var string|null $outputFile */
         $outputFile = $input->getOption('output');
 
         if ($outputFile !== null) {
-            file_put_contents($outputFile, $report);
+            if (!is_dir(dirname($outputFile)) || (file_put_contents($outputFile, $report) === false)) {
+                $io->error(sprintf('Failed to write report to %s', $outputFile));
+
+                return Command::FAILURE;
+            }
+
             $io->success(sprintf('Report written to %s', $outputFile));
         } else {
-            $output->writeln($report);
+            $io->writeln($report);
         }
 
         if (($input->getOption('fail-on-findings') === true) && ($result->totalFindings() > 0)) {
@@ -155,21 +154,13 @@ final class ScanExtensionCommand extends Command
     /**
      * Render the scan result in the requested format.
      */
-    private function renderReport(ScanResult $result, string $path, string $format): string
+    private function renderReport(ScanResult $result, string $format): string
     {
         return match ($format) {
             'json'     => $this->exporter->toJson($result),
             'csv'      => $this->exporter->toCsv($result),
             'markdown' => $this->exporter->toMarkdown($result),
-            default    => sprintf(
-                "Scanned: %s\nFiles scanned: %d\nFindings: %d (strong: %d, weak: %d)\nFiles with findings: %d",
-                $path,
-                $result->scannedFiles(),
-                $result->totalFindings(),
-                $result->strongFindings(),
-                $result->weakFindings(),
-                count($result->filesWithFindings()),
-            ),
+            default    => $this->exporter->toText($result),
         };
     }
 }

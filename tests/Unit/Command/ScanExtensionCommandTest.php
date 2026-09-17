@@ -24,6 +24,7 @@ use Symfony\Component\Console\Tester\CommandTester;
 
 use function file_exists;
 use function file_get_contents;
+use function preg_replace;
 use function rtrim;
 use function sprintf;
 use function sys_get_temp_dir;
@@ -34,6 +35,8 @@ use function unlink;
 final class ScanExtensionCommandTest extends TestCase
 {
     private const string FIXTURE_PATH = __DIR__ . '/../../Fixtures/Extension';
+
+    private const string CLEAN_FIXTURE_PATH = __DIR__ . '/../../Fixtures/CleanExtension';
 
     private CommandTester $tester;
 
@@ -48,22 +51,13 @@ final class ScanExtensionCommandTest extends TestCase
         $this->tester = new CommandTester($command);
     }
 
-    #[Test]
-    public function executeWithTextFormatPrintsSummaryForFixtureExtension(): void
-    {
-        $statusCode = $this->tester->execute(['source' => self::FIXTURE_PATH]);
-
-        self::assertSame(Command::SUCCESS, $statusCode);
-        self::assertStringContainsString(self::FIXTURE_PATH, $this->tester->getDisplay());
-        self::assertMatchesRegularExpression('/Findings: [1-9]\d*/', $this->tester->getDisplay());
-    }
-
     /**
      * @return array<string, array{string}>
      */
-    public static function structuredFormatProvider(): array
+    public static function formatProvider(): array
     {
         return [
+            'text'     => ['text'],
             'json'     => ['json'],
             'csv'      => ['csv'],
             'markdown' => ['markdown'],
@@ -71,12 +65,13 @@ final class ScanExtensionCommandTest extends TestCase
     }
 
     #[Test]
-    #[DataProvider('structuredFormatProvider')]
+    #[DataProvider('formatProvider')]
     public function executeRoutesEachFormatThroughItsExporterMethod(string $format): void
     {
         $result   = (new ExtensionScanner())->scan(self::FIXTURE_PATH);
         $exporter = new ScanReportExporter();
         $expected = match ($format) {
+            'text'     => $exporter->toText($result),
             'json'     => $exporter->toJson($result),
             'csv'      => $exporter->toCsv($result),
             'markdown' => $exporter->toMarkdown($result),
@@ -134,11 +129,34 @@ final class ScanExtensionCommandTest extends TestCase
             self::assertFileExists($outputFile);
             self::assertSame($expected, file_get_contents($outputFile));
             self::assertStringNotContainsString('"extensionPath"', $this->tester->getDisplay());
+            self::assertStringContainsString(
+                $this->normalizeWhitespace(sprintf('Report written to %s', $outputFile)),
+                $this->normalizeWhitespace($this->tester->getDisplay()),
+            );
         } finally {
             if (file_exists($outputFile)) {
                 unlink($outputFile);
             }
         }
+    }
+
+    #[Test]
+    public function executeFailsWhenOutputFileCannotBeWritten(): void
+    {
+        $outputFile = sys_get_temp_dir() . '/scan-extension-command-test-' . uniqid() . '/does-not-exist/report.json';
+
+        $statusCode = $this->tester->execute([
+            'source'   => self::FIXTURE_PATH,
+            '--format' => 'json',
+            '--output' => $outputFile,
+        ]);
+
+        self::assertSame(Command::FAILURE, $statusCode);
+        self::assertStringContainsString(
+            $this->normalizeWhitespace(sprintf('Failed to write report to %s', $outputFile)),
+            $this->normalizeWhitespace($this->tester->getDisplay()),
+        );
+        self::assertFileDoesNotExist($outputFile);
     }
 
     #[Test]
@@ -158,5 +176,26 @@ final class ScanExtensionCommandTest extends TestCase
         ]);
 
         self::assertSame(Command::FAILURE, $statusCode);
+    }
+
+    #[Test]
+    public function executeSucceedsWhenFailOnFindingsIsSetButScanHasNoFindings(): void
+    {
+        $statusCode = $this->tester->execute([
+            'source'             => self::CLEAN_FIXTURE_PATH,
+            '--fail-on-findings' => true,
+        ]);
+
+        self::assertSame(Command::SUCCESS, $statusCode);
+        self::assertMatchesRegularExpression('/Findings: 0\b/', $this->tester->getDisplay());
+    }
+
+    /**
+     * Collapse whitespace so a SymfonyStyle block's word-wrapped line breaks
+     * do not break a substring match against its rendered message.
+     */
+    private function normalizeWhitespace(string $value): string
+    {
+        return preg_replace('/\s+/', '', $value) ?? $value;
     }
 }

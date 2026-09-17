@@ -19,6 +19,7 @@ use function array_map;
 use function count;
 use function implode;
 use function json_encode;
+use function preg_replace;
 use function sprintf;
 use function str_contains;
 use function str_replace;
@@ -28,10 +29,26 @@ use const JSON_THROW_ON_ERROR;
 use const JSON_UNESCAPED_SLASHES;
 
 /**
- * Exports scan results in multiple formats: JSON, CSV, and Markdown.
+ * Exports scan results in multiple formats: plain text, JSON, CSV, and Markdown.
  */
 final readonly class ScanReportExporter
 {
+    /**
+     * Export scan results as a plain-text summary for terminal output.
+     */
+    public function toText(ScanResult $result): string
+    {
+        return sprintf(
+            "Scanned: %s\nFiles scanned: %d\nFindings: %d (strong: %d, weak: %d)\nFiles with findings: %d",
+            $this->stripControlCharacters($result->extensionPath),
+            $result->scannedFiles(),
+            $result->totalFindings(),
+            $result->strongFindings(),
+            $result->weakFindings(),
+            count($result->filesWithFindings()),
+        );
+    }
+
     /**
      * Export scan results as structured JSON.
      */
@@ -143,5 +160,14 @@ final readonly class ScanReportExporter
         }
 
         return $escaped;
+    }
+
+    /**
+     * Strip control characters (e.g. terminal escape sequences) from a value
+     * before it is written to a plain-text report consumed by a terminal.
+     */
+    private function stripControlCharacters(string $value): string
+    {
+        return preg_replace('/[\x00-\x1F\x7F]/', '', $value) ?? $value;
     }
 }

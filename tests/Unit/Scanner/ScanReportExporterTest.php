@@ -61,6 +61,31 @@ final class ScanReportExporterTest extends TestCase
     }
 
     #[Test]
+    public function toTextContainsScanSummary(): void
+    {
+        $result = $this->createResult();
+
+        $text = $this->exporter->toText($result);
+
+        self::assertTrue(str_contains($text, 'Scanned: /test/ext'));
+        self::assertTrue(str_contains($text, 'Findings: 2 (strong: 1, weak: 1)'));
+    }
+
+    #[Test]
+    public function toTextStripsControlCharactersFromExtensionPath(): void
+    {
+        $result = new ScanResult(
+            extensionPath: "/test/\x1Bext",
+            fileResults: [],
+        );
+
+        $text = $this->exporter->toText($result);
+
+        self::assertStringNotContainsString("\x1B", $text);
+        self::assertStringContainsString('/test/ext', $text);
+    }
+
+    #[Test]
     public function toCsvContainsHeaderAndDataRows(): void
     {
         $result = $this->createResult();
