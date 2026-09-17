@@ -11,8 +11,14 @@
 # before any target-level code (including this file's override/recipe
 # logic) ever runs, so nothing here can intercept it. No $(shell ...) call
 # needs to exist anywhere in the makefile for this to trigger. A plain
-# positional argument via $(MAKECMDGOALS) is not subject to it, which is
-# why SCAN_SOURCE is extracted that way below.
+# positional argument via $(MAKECMDGOALS) is not funneled through this
+# MAKEFLAGS override mechanism, which is why SCAN_SOURCE is extracted that
+# way below. It stays safe only as long as it's dereferenced exclusively
+# via the exported shell variable ($$SCAN_SOURCE, as in the recipe below),
+# never spliced in via Make syntax ($(SCAN_SOURCE)) inside a recipe line —
+# that would hand attacker-controlled text to the downstream shell as
+# literal source, which has its own "$(...)" command-substitution syntax
+# independent of Make's.
 #
 # Residual, unfixable-from-here risk: this only protects the documented
 # "make scan[-json|-csv|-markdown] <path-or-git-url>" interface. Typing an
