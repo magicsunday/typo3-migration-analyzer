@@ -31,7 +31,7 @@ final class ControlCharacterSanitizer
      * @param string $value       The value to sanitize.
      * @param string $replacement The string each control character is replaced with.
      *
-     * @return string The sanitized value.
+     * @return string The value with control characters removed.
      */
     public static function strip(string $value, string $replacement = ''): string
     {
