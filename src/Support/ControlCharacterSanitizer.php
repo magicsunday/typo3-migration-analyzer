@@ -33,6 +33,10 @@ final class ControlCharacterSanitizer
      */
     public static function strip(string $value, string $replacement = ''): string
     {
+        // preg_replace() returns null only on a PCRE engine failure (e.g. the
+        // backtrack limit); this fixed, backtracking-free character class
+        // cannot trigger that, so the fallback just returns the original,
+        // unsanitized value.
         return preg_replace('/[\x00-\x1F\x7F]/', $replacement, $value) ?? $value;
     }
 }
