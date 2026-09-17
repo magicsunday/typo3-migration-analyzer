@@ -36,6 +36,9 @@ final class ScanReportExporterTest extends TestCase
         $this->exporter = new ScanReportExporter();
     }
 
+    /**
+     * The JSON summary and file list must reflect a result with both a strong and a weak finding.
+     */
     #[Test]
     public function toJsonReturnsValidJson(): void
     {
@@ -57,9 +60,149 @@ final class ScanReportExporterTest extends TestCase
 
         /** @var list<array<string, mixed>> $files */
         $files = $data['files'];
-        self::assertCount(1, $files);
+        self::assertCount(1, $files, 'only the file carrying findings from createResult() is listed');
     }
 
+    /**
+     * A raw DEL byte in the extension path, a scanned file's path, or a
+     * finding's source line must never reach the JSON report. json_encode()
+     * does escape 0x00-0x1F on its own, but leaves 0x7F untouched, and even
+     * the escaped bytes reappear as soon as a downstream tool (e.g. `jq`)
+     * decodes and re-displays the string.
+     */
+    #[Test]
+    public function toJsonStripsControlCharactersFromExtensionPathFilePathAndLineContent(): void
+    {
+        $result = $this->createResultWithControlCharacters(
+            extensionPath: "/test/\x7Fext",
+            filePath: "Classes/\x7FFoo.php",
+            lineContent: "use \x7FFoo;",
+        );
+
+        $json = $this->exporter->toJson($result);
+
+        self::assertStringNotContainsString("\x7F", $json);
+
+        /** @var array<string, mixed> $data */
+        $data = json_decode($json, true, 512, JSON_THROW_ON_ERROR);
+
+        self::assertSame('/test/ext', $data['extensionPath']);
+
+        /** @var list<array<string, mixed>> $files */
+        $files = $data['files'];
+        self::assertSame('Classes/Foo.php', $files[0]['file']);
+
+        /** @var list<array<string, mixed>> $findings */
+        $findings = $files[0]['findings'];
+        self::assertSame('use Foo;', $findings[0]['code']);
+    }
+
+    /**
+     * Each summary field must appear in its own designated position, using a
+     * fixture with distinct counts per field so a swapped sprintf() argument
+     * or a hardcoded field value would make this assertion fail.
+     */
+    #[Test]
+    public function toTextRendersEachSummaryFieldInItsOwnPosition(): void
+    {
+        $result = new ScanResult(
+            extensionPath: '/test/ext',
+            fileResults: [
+                new ScanFileResult(
+                    filePath: 'Classes/Foo.php',
+                    findings: [
+                        new ScanFinding(10, 'a', 'strong', 'a', []),
+                        new ScanFinding(11, 'b', 'strong', 'b', []),
+                    ],
+                    isFileIgnored: false,
+                    effectiveCodeLines: 50,
+                    ignoredLines: 0,
+                ),
+                new ScanFileResult(
+                    filePath: 'Classes/Bar.php',
+                    findings: [
+                        new ScanFinding(12, 'c', 'strong', 'c', []),
+                        new ScanFinding(13, 'd', 'strong', 'd', []),
+                    ],
+                    isFileIgnored: false,
+                    effectiveCodeLines: 30,
+                    ignoredLines: 0,
+                ),
+                new ScanFileResult(
+                    filePath: 'Classes/Baz.php',
+                    findings: [
+                        new ScanFinding(20, 'e', 'weak', 'e', []),
+                        new ScanFinding(21, 'f', 'weak', 'f', []),
+                    ],
+                    isFileIgnored: false,
+                    effectiveCodeLines: 20,
+                    ignoredLines: 0,
+                ),
+                new ScanFileResult(
+                    filePath: 'Classes/Qux.php',
+                    findings: [],
+                    isFileIgnored: false,
+                    effectiveCodeLines: 10,
+                    ignoredLines: 0,
+                ),
+                new ScanFileResult(
+                    filePath: 'Classes/Quux.php',
+                    findings: [],
+                    isFileIgnored: false,
+                    effectiveCodeLines: 10,
+                    ignoredLines: 0,
+                ),
+                new ScanFileResult(
+                    filePath: 'Classes/Corge.php',
+                    findings: [],
+                    isFileIgnored: false,
+                    effectiveCodeLines: 10,
+                    ignoredLines: 0,
+                ),
+                new ScanFileResult(
+                    filePath: 'Classes/Grault.php',
+                    findings: [],
+                    isFileIgnored: false,
+                    effectiveCodeLines: 10,
+                    ignoredLines: 0,
+                ),
+            ],
+        );
+
+        // Every value below is pairwise distinct (7 scanned, 6 total findings,
+        // 4 strong, 2 weak, 3 files with findings, explicitly cross-checked:
+        // 7 != 6 != 4 != 2 != 3 and no other pair collides either) so a
+        // swapped sprintf() argument in any position produces a different,
+        // non-matching string.
+        $text = $this->exporter->toText($result);
+
+        self::assertSame(
+            "Scanned: /test/ext\nFiles scanned: 7\nFindings: 6 (strong: 4, weak: 2)\nFiles with findings: 3",
+            $text,
+        );
+    }
+
+    /**
+     * A raw ESC byte in the extension path (e.g. from a maliciously named
+     * scanned directory) must never reach the terminal-consumed text report.
+     */
+    #[Test]
+    public function toTextStripsControlCharactersFromExtensionPath(): void
+    {
+        $result = new ScanResult(
+            extensionPath: "/test/\x1Bext",
+            fileResults: [],
+        );
+
+        $text = $this->exporter->toText($result);
+
+        self::assertStringNotContainsString("\x1B", $text);
+        self::assertStringContainsString('/test/ext', $text);
+    }
+
+    /**
+     * The CSV export must start with the fixed header row followed by one row per finding.
+     */
     #[Test]
     public function toCsvContainsHeaderAndDataRows(): void
     {
@@ -68,10 +211,29 @@ final class ScanReportExporterTest extends TestCase
         $csv   = $this->exporter->toCsv($result);
         $lines = explode("\n", trim($csv));
 
-        self::assertCount(3, $lines);
+        self::assertCount(3, $lines, 'header row + one row per finding (2) from createResult()');
         self::assertSame('"File","Line","Severity","Message","RST Files"', $lines[0]);
     }
 
+    /**
+     * A raw ESC byte in a scanned file's path must never reach a CSV report
+     * opened in a terminal (e.g. via `cat`) or piped through a CI log.
+     */
+    #[Test]
+    public function toCsvStripsControlCharactersFromFilePath(): void
+    {
+        $result = $this->createResultWithControlCharacters(filePath: "Classes/\x1BFoo.php");
+
+        $csv = $this->exporter->toCsv($result);
+
+        self::assertStringNotContainsString("\x1B", $csv);
+        self::assertStringContainsString('Classes/Foo.php', $csv);
+    }
+
+    /**
+     * The Markdown export must contain the report heading, the summary line,
+     * a per-file heading, and the findings table header.
+     */
     #[Test]
     public function toMarkdownContainsSummaryAndTable(): void
     {
@@ -85,6 +247,53 @@ final class ScanReportExporterTest extends TestCase
         self::assertTrue(str_contains($md, '| Line | Severity | Message | RST Files |'));
     }
 
+    /**
+     * A raw ESC byte in either the extension path or a scanned file's path
+     * must never reach a Markdown report consumed on a terminal.
+     */
+    #[Test]
+    public function toMarkdownStripsControlCharactersFromExtensionPathAndFilePath(): void
+    {
+        $result = $this->createResultWithControlCharacters(
+            extensionPath: "/test/\x1Bext",
+            filePath: "Classes/\x1BFoo.php",
+        );
+
+        $md = $this->exporter->toMarkdown($result);
+
+        self::assertStringNotContainsString("\x1B", $md);
+        self::assertStringContainsString('/test/ext', $md);
+        self::assertStringContainsString('Classes/Foo.php', $md);
+    }
+
+    /**
+     * Build a scan result with one strong finding, letting each test override
+     * only whichever field it injects a control character into.
+     */
+    private function createResultWithControlCharacters(
+        string $extensionPath = '/test/ext',
+        string $filePath = 'Classes/Foo.php',
+        string $lineContent = 'use Foo;',
+    ): ScanResult {
+        return new ScanResult(
+            extensionPath: $extensionPath,
+            fileResults: [
+                new ScanFileResult(
+                    filePath: $filePath,
+                    findings: [
+                        new ScanFinding(10, 'Deprecated class usage', 'strong', $lineContent, []),
+                    ],
+                    isFileIgnored: false,
+                    effectiveCodeLines: 50,
+                    ignoredLines: 0,
+                ),
+            ],
+        );
+    }
+
+    /**
+     * Build a scan result with one strong and one weak finding in a single file.
+     */
     private function createResult(): ScanResult
     {
         return new ScanResult(

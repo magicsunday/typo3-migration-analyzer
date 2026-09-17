@@ -14,6 +14,7 @@ namespace App\Scanner;
 use App\Dto\ScanFileResult;
 use App\Dto\ScanFinding;
 use App\Dto\ScanResult;
+use App\Support\ControlCharacterSanitizer;
 
 use function array_map;
 use function count;
@@ -28,17 +29,33 @@ use const JSON_THROW_ON_ERROR;
 use const JSON_UNESCAPED_SLASHES;
 
 /**
- * Exports scan results in multiple formats: JSON, CSV, and Markdown.
+ * Exports scan results in multiple formats: plain text, JSON, CSV, and Markdown.
  */
 final readonly class ScanReportExporter
 {
+    /**
+     * Export scan results as a plain-text summary for terminal output.
+     */
+    public function toText(ScanResult $result): string
+    {
+        return sprintf(
+            "Scanned: %s\nFiles scanned: %d\nFindings: %d (strong: %d, weak: %d)\nFiles with findings: %d",
+            ControlCharacterSanitizer::strip($result->extensionPath),
+            $result->scannedFiles(),
+            $result->totalFindings(),
+            $result->strongFindings(),
+            $result->weakFindings(),
+            count($result->filesWithFindings()),
+        );
+    }
+
     /**
      * Export scan results as structured JSON.
      */
     public function toJson(ScanResult $result): string
     {
         $data = [
-            'extensionPath' => $result->extensionPath,
+            'extensionPath' => ControlCharacterSanitizer::strip($result->extensionPath),
             'summary'       => [
                 'totalFindings'  => $result->totalFindings(),
                 'strongFindings' => $result->strongFindings(),
@@ -48,13 +65,13 @@ final readonly class ScanReportExporter
             ],
             'files' => array_map(
                 static fn (ScanFileResult $fileResult): array => [
-                    'file'     => $fileResult->filePath,
+                    'file'     => ControlCharacterSanitizer::strip($fileResult->filePath),
                     'findings' => array_map(
                         static fn (ScanFinding $finding): array => [
                             'line'      => $finding->line,
                             'message'   => $finding->message,
                             'severity'  => $finding->indicator,
-                            'code'      => $finding->lineContent,
+                            'code'      => ControlCharacterSanitizer::strip($finding->lineContent),
                             'restFiles' => $finding->restFiles,
                         ],
                         $fileResult->findings,
@@ -78,7 +95,7 @@ final readonly class ScanReportExporter
             foreach ($fileResult->findings as $finding) {
                 $lines[] = sprintf(
                     '"%s",%d,"%s","%s","%s"',
-                    $this->escapeCsv($fileResult->filePath),
+                    $this->escapeCsv(ControlCharacterSanitizer::strip($fileResult->filePath)),
                     $finding->line,
                     $this->escapeCsv($finding->indicator),
                     $this->escapeCsv($finding->message),
@@ -96,7 +113,7 @@ final readonly class ScanReportExporter
     public function toMarkdown(ScanResult $result): string
     {
         $lines   = [];
-        $lines[] = sprintf('# Scan Report: %s', $result->extensionPath);
+        $lines[] = sprintf('# Scan Report: %s', ControlCharacterSanitizer::strip($result->extensionPath));
         $lines[] = '';
         $lines[] = sprintf(
             '**%d** findings in **%d** files (%d scanned), **%d** strong / **%d** weak',
@@ -109,7 +126,7 @@ final readonly class ScanReportExporter
         $lines[] = '';
 
         foreach ($result->filesWithFindings() as $fileResult) {
-            $lines[] = sprintf('## %s', $fileResult->filePath);
+            $lines[] = sprintf('## %s', ControlCharacterSanitizer::strip($fileResult->filePath));
             $lines[] = '';
             $lines[] = '| Line | Severity | Message | RST Files |';
             $lines[] = '|------|----------|---------|-----------|';

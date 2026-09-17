@@ -17,6 +17,7 @@ use App\Llm\LlmClientFactory;
 use App\Service\DocumentService;
 use App\Service\LlmAnalysisService;
 use App\Service\LlmConfigurationService;
+use App\Support\ControlCharacterSanitizer;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
@@ -36,7 +37,6 @@ use function json_decode;
 use function max;
 use function min;
 use function number_format;
-use function preg_replace;
 use function round;
 use function sprintf;
 use function str_repeat;
@@ -161,7 +161,7 @@ final class LlmModelCompareCommand extends Command
 
                 try {
                     $response  = $client->analyze($config->analysisPrompt, $userPrompt, $modelId);
-                    $sanitized = preg_replace('/[\x00-\x1F\x7F]/', ' ', $response->content) ?? $response->content;
+                    $sanitized = ControlCharacterSanitizer::strip($response->content, ' ');
 
                     /** @var array{score?: int, automation_grade?: string, summary?: string, reasoning?: string} $parsed */
                     $parsed = json_decode($sanitized, true, 512, JSON_THROW_ON_ERROR);

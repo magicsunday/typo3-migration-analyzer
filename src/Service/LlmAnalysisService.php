@@ -19,6 +19,7 @@ use App\Dto\RstDocument;
 use App\Llm\LlmClientFactory;
 use App\Llm\LlmResponse;
 use App\Repository\LlmResultRepository;
+use App\Support\ControlCharacterSanitizer;
 use JsonException;
 
 use function array_intersect;
@@ -29,7 +30,6 @@ use function is_array;
 use function json_decode;
 use function mb_substr;
 use function preg_match;
-use function preg_replace;
 use function round;
 use function sprintf;
 
@@ -199,7 +199,7 @@ final readonly class LlmAnalysisService
         string $promptVersion,
     ): LlmAnalysisResult {
         // Sanitize control characters that LLMs may produce unescaped inside JSON strings
-        $sanitized = preg_replace('/[\x00-\x1F\x7F]/', ' ', $response->content) ?? $response->content;
+        $sanitized = ControlCharacterSanitizer::strip($response->content, ' ');
 
         /** @var array{score?: int, automation_grade?: string, summary?: string, reasoning?: string, migration_steps?: list<string|array<string, mixed>>, affected_areas?: list<string|array<string, mixed>>, affected_components?: list<string|array<string, mixed>>, code_mappings?: list<mixed>, rector_assessment?: array{feasible?: bool, rule_type?: string|null, notes?: string}|null} $data */
         $data = $this->decodeJson($sanitized, $filename);
