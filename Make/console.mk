@@ -9,13 +9,10 @@
 # backtick/semicolon syntax in the value as a side effect of that
 # materialization — this happens during Make's own command-line parsing,
 # before any target-level code (including this file's override/recipe
-# logic) ever runs, so nothing here can intercept it. See commit 5efd85a1
-# for the original reproduction (note: its own commit message and this
-# comment's earlier revision both incorrectly implied this requires a
-# $(shell ...) call elsewhere in the makefile; it does not, confirmed by
-# reproducing it against a makefile containing no $(shell ...) call at
-# all). A plain positional argument via $(MAKECMDGOALS) is not subject to
-# this mechanism, which is why SCAN_SOURCE is extracted that way below.
+# logic) ever runs, so nothing here can intercept it. No $(shell ...) call
+# needs to exist anywhere in the makefile for this to trigger. A plain
+# positional argument via $(MAKECMDGOALS) is not subject to it, which is
+# why SCAN_SOURCE is extracted that way below.
 #
 # Residual, unfixable-from-here risk: this only protects the documented
 # "make scan[-json|-csv|-markdown] <path-or-git-url>" interface. Typing an
