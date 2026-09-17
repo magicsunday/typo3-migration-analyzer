@@ -4,6 +4,7 @@
 # Put parameters here that don't need to change on each machine where the app is deployed
 # https://symfony.com/doc/current/best_practices.html#use-parameters-for-application-configuration
 parameters:
+    env(SCAN_SOURCE_PATH): ''
 
 services:
     # default configuration for services in *this* file
@@ -14,6 +15,8 @@ services:
             string $tmpDir: '%kernel.project_dir%/var/tmp'
             string $sqlitePath: '%kernel.project_dir%/var/data/llm_results.db'
             string $dataDir: '%kernel.project_dir%/var/data'
+            string $scanSourceHostPath: '%env(SCAN_SOURCE_PATH)%'
+            string $scanSourceContainerPath: '/scan-sources'
 
     # makes classes in src/ available to be used as services
     # this creates a service per class whose id is the fully-qualified class name

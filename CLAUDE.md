@@ -71,7 +71,7 @@ php -S localhost:8000 -t public/
 ## Bekannte Eigenheiten
 - TYPO3 cms-composer-installers überschreibt public/index.php — Workaround via `extra.typo3/cms.web-dir` in composer.json
 - Coverage aktuell bei ~51.7% (205 von 424 RST-Dokumenten ohne Matcher)
-- Der "Server-Pfad"-Scan auf `/scan` prüft den eingegebenen Pfad mit `is_dir()` aus Sicht des PHP-Prozesses. Im Docker-Setup sieht der phpfpm-Container per Bind-Mount nur `/var/www` (App) und `/scan-sources` (per `SCAN_SOURCE_PATH` in `.env` auf ein beliebiges Host-Verzeichnis mountbar, siehe `.env.dist`). Andere Host-Pfade sind für den Container unsichtbar, unabhängig davon, welcher konkrete Pfad im Formular eingegeben wird — das ist Container-Isolation, kein Bug. Alternativ: ZIP-Upload oder Git-URL-Scan nutzen (kein Mount nötig).
+- Der "Server-Pfad"-Scan auf `/scan` prüft den eingegebenen Pfad mit `is_dir()` aus Sicht des PHP-Prozesses. Im Docker-Setup sieht der phpfpm-Container per Bind-Mount nur `/var/www` (App) und `/scan-sources` (per `SCAN_SOURCE_PATH` in `.env` auf ein beliebiges Host-Verzeichnis mountbar, siehe `.env.dist`). Andere Host-Pfade sind für den Container unsichtbar, unabhängig davon, welcher konkrete Pfad im Formular eingegeben wird. Das ist Container-Isolation, kein Bug. `ScanSourcePathResolver` schreibt einen eingegebenen Pfad, der mit dem konfigurierten `SCAN_SOURCE_PATH` beginnt, automatisch auf sein `/scan-sources`-Äquivalent um, sodass der ursprüngliche Host-Pfad eingegeben werden kann. Alternativ: ZIP-Upload oder Git-URL-Scan nutzen (kein Mount nötig).
 
 ## Roadmap
 

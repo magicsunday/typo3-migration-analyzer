@@ -20,6 +20,7 @@ use App\Generator\RectorRuleGenerator;
 use App\Scanner\ExtensionScanner;
 use App\Scanner\GitRepositoryHandler;
 use App\Scanner\ScanReportExporter;
+use App\Scanner\ScanSourcePathResolver;
 use App\Scanner\ZipUploadHandler;
 use App\Service\DocumentService;
 use App\Service\LlmAnalysisService;
@@ -51,6 +52,7 @@ final class ScanController extends AbstractController
         private readonly RectorRuleGenerator $rectorGenerator,
         private readonly LlmRectorRuleGenerator $llmRectorGenerator,
         private readonly LlmAnalysisService $llmService,
+        private readonly ScanSourcePathResolver $scanSourcePathResolver,
     ) {
     }
 
@@ -66,7 +68,7 @@ final class ScanController extends AbstractController
     #[Route('/scan/run', name: 'scan_run', methods: ['POST'])]
     public function run(Request $request): Response
     {
-        $extensionPath = $request->request->getString('extension_path');
+        $extensionPath = $this->scanSourcePathResolver->resolve($request->request->getString('extension_path'));
 
         if ($extensionPath === '' || !is_dir($extensionPath)) {
             $this->addFlash('danger', 'Der angegebene Pfad existiert nicht oder ist kein Verzeichnis.');

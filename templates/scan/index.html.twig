@@ -58,9 +58,9 @@
                                placeholder="/scan-sources/my-project/vendor/my-ext"
                                required>
                         <div class="form-text">
-                            Absoluter Pfad zum Verzeichnis der TYPO3-Extension, wie er von diesem Server-Prozess aus sichtbar ist.
-                            Bei lokaler Docker-Entwicklung: Host-Verzeichnis per <code>SCAN_SOURCE_PATH</code> in <code>.env</code> mounten,
-                            danach unter <code>/scan-sources/…</code> ansprechbar (siehe <code>.env.dist</code>).
+                            Absoluter Pfad zum Verzeichnis der TYPO3-Extension. Bei lokaler Docker-Entwicklung:
+                            Host-Verzeichnis per <code>SCAN_SOURCE_PATH</code> in <code>.env</code> mounten (siehe <code>.env.dist</code>).
+                            Ein Pfad, der mit diesem Host-Verzeichnis beginnt, wird automatisch auf <code>/scan-sources/…</code> umgeschrieben.
                         </div>
                     </div>
                     <button type="submit" class="btn btn-typo3">
