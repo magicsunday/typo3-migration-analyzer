@@ -49,9 +49,9 @@ final class ScanExtensionCommandTest extends TestCase
 
     private CommandTester $tester;
 
-    private ?string $cleanScanDirectory = null;
+    private ?string $scanDirectoryPath = null;
 
-    private ?string $malformedScanDirectory = null;
+    private ?string $scanDirectoryFileName = null;
 
     protected function setUp(): void
     {
@@ -67,39 +67,23 @@ final class ScanExtensionCommandTest extends TestCase
 
     protected function tearDown(): void
     {
-        if ($this->cleanScanDirectory !== null) {
-            unlink($this->cleanScanDirectory . '/Clean.php');
-            rmdir($this->cleanScanDirectory);
-        }
-
-        if ($this->malformedScanDirectory !== null) {
-            unlink($this->malformedScanDirectory . '/Broken.php');
-            rmdir($this->malformedScanDirectory);
+        if ($this->scanDirectoryPath !== null) {
+            unlink($this->scanDirectoryPath . '/' . $this->scanDirectoryFileName);
+            rmdir($this->scanDirectoryPath);
         }
     }
 
     /**
-     * Create a throwaway directory containing one PHP file with no deprecated API usage.
+     * Create a throwaway directory containing one PHP file with the given content.
      */
-    private function createCleanScanDirectory(): string
+    private function createScanDirectory(string $suffix, string $fileName, string $content): string
     {
-        $this->cleanScanDirectory = sys_get_temp_dir() . '/scan-extension-command-test-clean-' . uniqid();
-        mkdir($this->cleanScanDirectory, 0o755, true);
-        file_put_contents($this->cleanScanDirectory . '/Clean.php', "<?php\n\nclass Clean {}\n");
+        $this->scanDirectoryPath     = sys_get_temp_dir() . '/scan-extension-command-test-' . $suffix . '-' . uniqid();
+        $this->scanDirectoryFileName = $fileName;
+        mkdir($this->scanDirectoryPath, 0o755, true);
+        file_put_contents($this->scanDirectoryPath . '/' . $fileName, $content);
 
-        return $this->cleanScanDirectory;
-    }
-
-    /**
-     * Create a throwaway directory containing one PHP file with a syntax error.
-     */
-    private function createMalformedScanDirectory(): string
-    {
-        $this->malformedScanDirectory = sys_get_temp_dir() . '/scan-extension-command-test-malformed-' . uniqid();
-        mkdir($this->malformedScanDirectory, 0o755, true);
-        file_put_contents($this->malformedScanDirectory . '/Broken.php', "<?php\n\nclass Broken {\n    public function foo(\n");
-
-        return $this->malformedScanDirectory;
+        return $this->scanDirectoryPath;
     }
 
     /**
@@ -211,7 +195,9 @@ final class ScanExtensionCommandTest extends TestCase
     #[Test]
     public function executeFailsCleanlyWhenAScannedFileHasAPhpSyntaxError(): void
     {
-        $statusCode = $this->tester->execute(['source' => $this->createMalformedScanDirectory()]);
+        $malformedDirectory = $this->createScanDirectory('malformed', 'Broken.php', "<?php\n\nclass Broken {\n    public function foo(\n");
+
+        $statusCode = $this->tester->execute(['source' => $malformedDirectory]);
 
         self::assertSame(Command::FAILURE, $statusCode);
     }
@@ -353,8 +339,10 @@ final class ScanExtensionCommandTest extends TestCase
     #[Test]
     public function executeSucceedsWhenFailOnFindingsIsSetButScanHasNoFindings(): void
     {
+        $cleanDirectory = $this->createScanDirectory('clean', 'Clean.php', "<?php\n\nclass Clean {}\n");
+
         $statusCode = $this->tester->execute([
-            'source'             => $this->createCleanScanDirectory(),
+            'source'             => $cleanDirectory,
             '--fail-on-findings' => true,
         ]);
 
