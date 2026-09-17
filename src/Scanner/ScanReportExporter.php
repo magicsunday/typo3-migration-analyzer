@@ -55,7 +55,7 @@ final readonly class ScanReportExporter
     public function toJson(ScanResult $result): string
     {
         $data = [
-            'extensionPath' => $result->extensionPath,
+            'extensionPath' => ControlCharacterSanitizer::strip($result->extensionPath),
             'summary'       => [
                 'totalFindings'  => $result->totalFindings(),
                 'strongFindings' => $result->strongFindings(),
@@ -65,13 +65,13 @@ final readonly class ScanReportExporter
             ],
             'files' => array_map(
                 static fn (ScanFileResult $fileResult): array => [
-                    'file'     => $fileResult->filePath,
+                    'file'     => ControlCharacterSanitizer::strip($fileResult->filePath),
                     'findings' => array_map(
                         static fn (ScanFinding $finding): array => [
                             'line'      => $finding->line,
                             'message'   => $finding->message,
                             'severity'  => $finding->indicator,
-                            'code'      => $finding->lineContent,
+                            'code'      => ControlCharacterSanitizer::strip($finding->lineContent),
                             'restFiles' => $finding->restFiles,
                         ],
                         $fileResult->findings,

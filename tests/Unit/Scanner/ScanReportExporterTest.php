@@ -64,6 +64,49 @@ final class ScanReportExporterTest extends TestCase
     }
 
     /**
+     * A raw DEL byte in the extension path, a scanned file's path, or a
+     * finding's source line must never reach the JSON report. json_encode()
+     * does escape 0x00-0x1F on its own, but leaves 0x7F untouched, and even
+     * the escaped bytes reappear as soon as a downstream tool (e.g. `jq`)
+     * decodes and re-displays the string.
+     */
+    #[Test]
+    public function toJsonStripsControlCharactersFromExtensionPathFilePathAndLineContent(): void
+    {
+        $result = new ScanResult(
+            extensionPath: "/test/\x7Fext",
+            fileResults: [
+                new ScanFileResult(
+                    filePath: "Classes/\x7FFoo.php",
+                    findings: [
+                        new ScanFinding(10, 'Deprecated class usage', 'strong', "use \x7FFoo;", []),
+                    ],
+                    isFileIgnored: false,
+                    effectiveCodeLines: 50,
+                    ignoredLines: 0,
+                ),
+            ],
+        );
+
+        $json = $this->exporter->toJson($result);
+
+        self::assertStringNotContainsString("\x7F", $json);
+
+        /** @var array<string, mixed> $data */
+        $data = json_decode($json, true, 512, JSON_THROW_ON_ERROR);
+
+        self::assertSame('/test/ext', $data['extensionPath']);
+
+        /** @var list<array<string, mixed>> $files */
+        $files = $data['files'];
+        self::assertSame('Classes/Foo.php', $files[0]['file']);
+
+        /** @var list<array<string, mixed>> $findings */
+        $findings = $files[0]['findings'];
+        self::assertSame('use Foo;', $findings[0]['code']);
+    }
+
+    /**
      * Each summary field must appear in its own designated position, using a
      * fixture with distinct counts per field so a swapped sprintf() argument
      * or a hardcoded field value would make this assertion fail.
