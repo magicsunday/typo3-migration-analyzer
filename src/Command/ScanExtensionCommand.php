@@ -106,13 +106,11 @@ final class ScanExtensionCommand extends Command
         $format = $input->getOption('format');
 
         if (!in_array($format, self::VALID_FORMATS, true)) {
-            $io->error(sprintf(
+            return $this->fail($io, sprintf(
                 'Invalid format "%s". Allowed: %s',
                 $format,
                 implode(', ', self::VALID_FORMATS),
             ));
-
-            return Command::FAILURE;
         }
 
         if (is_dir($source)) {
@@ -122,9 +120,7 @@ final class ScanExtensionCommand extends Command
         try {
             $clonedPath = $this->gitHandler->clone($source);
         } catch (InvalidArgumentException|RuntimeException $exception) {
-            $io->error($exception->getMessage());
-
-            return Command::FAILURE;
+            return $this->fail($io, $exception->getMessage());
         }
 
         try {
@@ -142,9 +138,7 @@ final class ScanExtensionCommand extends Command
         try {
             $result = $this->scanner->scan($path);
         } catch (Throwable $exception) {
-            $io->error($exception->getMessage());
-
-            return Command::FAILURE;
+            return $this->fail($io, $exception->getMessage());
         }
 
         $report = $this->renderReport($result, $format);
@@ -159,12 +153,10 @@ final class ScanExtensionCommand extends Command
                 ($bytesWritten === false)
                 || ($bytesWritten !== strlen($report))
             ) {
-                $io->error(sprintf(
+                return $this->fail($io, sprintf(
                     'Failed to write report to %s',
                     $outputFile,
                 ));
-
-                return Command::FAILURE;
             }
 
             $io->success(sprintf(
@@ -198,5 +190,15 @@ final class ScanExtensionCommand extends Command
             'markdown' => $this->exporter->toMarkdown($result),
             default    => $this->exporter->toText($result),
         };
+    }
+
+    /**
+     * Report an error message and signal command failure.
+     */
+    private function fail(SymfonyStyle $io, string $message): int
+    {
+        $io->error($message);
+
+        return Command::FAILURE;
     }
 }
