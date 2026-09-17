@@ -14,6 +14,7 @@ namespace App\Tests\Unit\Command;
 use App\Command\ScanExtensionCommand;
 use App\Scanner\ExtensionScanner;
 use App\Scanner\GitRepositoryHandler;
+use App\Scanner\GitRepositoryHandlerInterface;
 use App\Scanner\ScanReportExporter;
 use App\Scanner\ScanSourcePathResolver;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -55,14 +56,7 @@ final class ScanExtensionCommandTest extends TestCase
 
     protected function setUp(): void
     {
-        $command = new ScanExtensionCommand(
-            new ExtensionScanner(),
-            new GitRepositoryHandler(sys_get_temp_dir() . '/scan-extension-command-test-' . uniqid()),
-            new ScanReportExporter(),
-            new ScanSourcePathResolver('', ''),
-        );
-
-        $this->tester = new CommandTester($command);
+        $this->tester = new CommandTester($this->createCommand());
     }
 
     protected function tearDown(): void
@@ -71,6 +65,22 @@ final class ScanExtensionCommandTest extends TestCase
             unlink($this->scanDirectoryPath . '/' . $this->scanDirectoryFileName);
             rmdir($this->scanDirectoryPath);
         }
+    }
+
+    /**
+     * Build a ScanExtensionCommand with real collaborators, letting each test
+     * override only the collaborator its scenario actually varies.
+     */
+    private function createCommand(
+        ?GitRepositoryHandlerInterface $gitHandler = null,
+        ?ScanSourcePathResolver $scanSourcePathResolver = null,
+    ): ScanExtensionCommand {
+        return new ScanExtensionCommand(
+            new ExtensionScanner(),
+            $gitHandler ?? new GitRepositoryHandler(sys_get_temp_dir() . '/scan-extension-command-test-' . uniqid()),
+            new ScanReportExporter(),
+            $scanSourcePathResolver ?? new ScanSourcePathResolver('', ''),
+        );
     }
 
     /**
@@ -167,15 +177,10 @@ final class ScanExtensionCommandTest extends TestCase
     #[Test]
     public function executeFailsCleanlyWhenCloningARepositoryUrlFails(): void
     {
-        $command = new ScanExtensionCommand(
-            new ExtensionScanner(),
-            new FakeGitRepositoryHandler(
-                self::FIXTURE_PATH,
-                new RuntimeException('Repository konnte nicht geklont werden: fatal error'),
-            ),
-            new ScanReportExporter(),
-            new ScanSourcePathResolver('', ''),
-        );
+        $command = $this->createCommand(gitHandler: new FakeGitRepositoryHandler(
+            self::FIXTURE_PATH,
+            new RuntimeException('Repository konnte nicht geklont werden: fatal error'),
+        ));
 
         $tester     = new CommandTester($command);
         $statusCode = $tester->execute(['source' => 'https://github.com/vendor/repo']);
@@ -368,12 +373,7 @@ final class ScanExtensionCommandTest extends TestCase
     public function executeScansTheClonedDirectoryAndCleansItUpOnTheGitCloneSuccessPath(): void
     {
         $gitHandler = new FakeGitRepositoryHandler(self::FIXTURE_PATH);
-        $command    = new ScanExtensionCommand(
-            new ExtensionScanner(),
-            $gitHandler,
-            new ScanReportExporter(),
-            new ScanSourcePathResolver('', ''),
-        );
+        $command    = $this->createCommand(gitHandler: $gitHandler);
 
         $expected = (new ScanReportExporter())->toText((new ExtensionScanner())->scan(self::FIXTURE_PATH));
 
@@ -392,11 +392,8 @@ final class ScanExtensionCommandTest extends TestCase
     #[Test]
     public function executeResolvesSourceThroughTheScanSourcePathResolver(): void
     {
-        $command = new ScanExtensionCommand(
-            new ExtensionScanner(),
-            new GitRepositoryHandler(sys_get_temp_dir() . '/scan-extension-command-test-' . uniqid()),
-            new ScanReportExporter(),
-            new ScanSourcePathResolver('/synthetic-host-alias', dirname(self::FIXTURE_PATH)),
+        $command = $this->createCommand(
+            scanSourcePathResolver: new ScanSourcePathResolver('/synthetic-host-alias', dirname(self::FIXTURE_PATH)),
         );
 
         $statusCode = (new CommandTester($command))->execute(['source' => '/synthetic-host-alias/Extension']);
