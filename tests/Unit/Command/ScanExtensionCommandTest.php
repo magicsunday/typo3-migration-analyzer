@@ -298,6 +298,33 @@ final class ScanExtensionCommandTest extends TestCase
     }
 
     /**
+     * A source that is not a local directory but resolves as a valid
+     * repository URL must be cloned, scanned in place of the URL, reported
+     * exactly like a local scan, and the cloned directory must be handed to
+     * cleanup() afterwards.
+     */
+    #[Test]
+    public function executeScansTheClonedDirectoryAndCleansItUpOnTheGitCloneSuccessPath(): void
+    {
+        $gitHandler = new FakeGitRepositoryHandler(self::FIXTURE_PATH);
+        $command    = new ScanExtensionCommand(
+            new ExtensionScanner(),
+            $gitHandler,
+            new ScanReportExporter(),
+            new ScanSourcePathResolver('', ''),
+        );
+
+        $expected = (new ScanReportExporter())->toText((new ExtensionScanner())->scan(self::FIXTURE_PATH));
+
+        $tester     = new CommandTester($command);
+        $statusCode = $tester->execute(['source' => 'https://github.com/vendor/repo']);
+
+        self::assertSame(Command::SUCCESS, $statusCode);
+        self::assertSame($expected, rtrim($tester->getDisplay()));
+        self::assertSame(self::FIXTURE_PATH, $gitHandler->cleanedUpPath);
+    }
+
+    /**
      * A host-style source path must be rewritten to its container-visible
      * equivalent via ScanSourcePathResolver before the scan runs.
      */

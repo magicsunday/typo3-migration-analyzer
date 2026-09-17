@@ -38,7 +38,7 @@ use function unlink;
 /**
  * Handles cloning of public Git repositories and cleaning up temporary directories.
  */
-final readonly class GitRepositoryHandler
+final readonly class GitRepositoryHandler implements GitRepositoryHandlerInterface
 {
     /**
      * Default timeout for git clone in seconds.

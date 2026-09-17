@@ -13,7 +13,7 @@ namespace App\Command;
 
 use App\Dto\ScanResult;
 use App\Scanner\ExtensionScanner;
-use App\Scanner\GitRepositoryHandler;
+use App\Scanner\GitRepositoryHandlerInterface;
 use App\Scanner\ScanReportExporter;
 use App\Scanner\ScanSourcePathResolver;
 use InvalidArgumentException;
@@ -54,7 +54,7 @@ final class ScanExtensionCommand extends Command
 
     public function __construct(
         private readonly ExtensionScanner $scanner,
-        private readonly GitRepositoryHandler $gitHandler,
+        private readonly GitRepositoryHandlerInterface $gitHandler,
         private readonly ScanReportExporter $exporter,
         private readonly ScanSourcePathResolver $scanSourcePathResolver,
     ) {
