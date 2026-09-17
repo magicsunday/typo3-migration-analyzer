@@ -13,6 +13,7 @@ namespace App\Scanner;
 
 use function realpath;
 use function rtrim;
+use function str_contains;
 use function str_starts_with;
 use function strlen;
 use function substr;
@@ -47,13 +48,13 @@ final readonly class ScanSourcePathResolver
      */
     public function resolve(string $path): string
     {
-        if ($this->scanSourceHostPath === '') {
+        if (($this->scanSourceHostPath === '') || str_contains($path, "\0")) {
             return $path;
         }
 
         $hostPrefix = rtrim($this->scanSourceHostPath, '/');
 
-        if (($path !== $hostPrefix) && !str_starts_with($path, $hostPrefix . '/')) {
+        if (!$this->isWithinOrEqual($path, $hostPrefix)) {
             return $path;
         }
 
@@ -79,9 +80,16 @@ final readonly class ScanSourcePathResolver
             return true;
         }
 
-        $canonicalMountRoot = rtrim($canonicalMountRoot, '/');
+        return $this->isWithinOrEqual($canonicalRewritten, rtrim($canonicalMountRoot, '/'));
+    }
 
-        return ($canonicalRewritten === $canonicalMountRoot)
-            || str_starts_with($canonicalRewritten, $canonicalMountRoot . '/');
+    /**
+     * Determine whether the given path equals the given root, or is a
+     * descendant of it bounded by a path separator (never matching a sibling
+     * directory that merely shares the same string prefix).
+     */
+    private function isWithinOrEqual(string $path, string $root): bool
+    {
+        return ($path === $root) || str_starts_with($path, $root . '/');
     }
 }

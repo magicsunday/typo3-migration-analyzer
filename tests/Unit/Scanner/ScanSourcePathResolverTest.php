@@ -166,6 +166,42 @@ final class ScanSourcePathResolverTest extends TestCase
         );
     }
 
+    /**
+     * A path that genuinely resolves inside the configured container mount
+     * root is rewritten and returned, proving the containment check accepts
+     * real, legitimate targets rather than merely rejecting attacks.
+     */
+    #[Test]
+    public function resolveAcceptsARewriteThatStaysWithinTheContainerMountRoot(): void
+    {
+        $mountRoot = $this->tmpDir . '/allowed';
+        $target    = $mountRoot . '/my-extension';
+
+        mkdir($target, 0o755, true);
+
+        $resolver = new ScanSourcePathResolver('/host-prefix', $mountRoot);
+
+        self::assertSame(
+            $target,
+            $resolver->resolve('/host-prefix/my-extension'),
+        );
+    }
+
+    /**
+     * A submitted path containing a null byte must not reach realpath(),
+     * which throws a ValueError on one, and is left unchanged instead.
+     */
+    #[Test]
+    public function resolveLeavesAPathContainingANullByteUnchanged(): void
+    {
+        $resolver = new ScanSourcePathResolver('/srv/projects', '/scan-sources');
+
+        self::assertSame(
+            "/srv/projects/../secret\0.txt",
+            $resolver->resolve("/srv/projects/../secret\0.txt"),
+        );
+    }
+
     private function removeDirectory(string $path): void
     {
         $iterator = new RecursiveIteratorIterator(
