@@ -72,6 +72,11 @@ final readonly class ScanSourcePathResolver
      * configured container mount root. A path that cannot be canonicalized
      * (e.g. it does not exist yet) is allowed through, deferring the actual
      * rejection to the caller's own is_dir() check.
+     *
+     * @param string $rewritten The container-visible path to verify.
+     *
+     * @return bool True when $rewritten canonicalizes to a path within the configured container
+     *              mount root, or cannot be canonicalized at all (fail-open).
      */
     private function staysWithinContainerPath(string $rewritten): bool
     {
