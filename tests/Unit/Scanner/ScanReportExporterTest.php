@@ -80,7 +80,6 @@ final class ScanReportExporterTest extends TestCase
                         new ScanFinding(10, 'a', 'strong', 'a', []),
                         new ScanFinding(11, 'b', 'strong', 'b', []),
                         new ScanFinding(12, 'c', 'strong', 'c', []),
-                        new ScanFinding(13, 'd', 'weak', 'd', []),
                     ],
                     isFileIgnored: false,
                     effectiveCodeLines: 50,
@@ -88,6 +87,44 @@ final class ScanReportExporterTest extends TestCase
                 ),
                 new ScanFileResult(
                     filePath: 'Classes/Bar.php',
+                    findings: [
+                        new ScanFinding(20, 'd', 'weak', 'd', []),
+                        new ScanFinding(21, 'e', 'weak', 'e', []),
+                    ],
+                    isFileIgnored: false,
+                    effectiveCodeLines: 20,
+                    ignoredLines: 0,
+                ),
+                new ScanFileResult(
+                    filePath: 'Classes/Baz.php',
+                    findings: [],
+                    isFileIgnored: false,
+                    effectiveCodeLines: 10,
+                    ignoredLines: 0,
+                ),
+                new ScanFileResult(
+                    filePath: 'Classes/Qux.php',
+                    findings: [],
+                    isFileIgnored: false,
+                    effectiveCodeLines: 10,
+                    ignoredLines: 0,
+                ),
+                new ScanFileResult(
+                    filePath: 'Classes/Quux.php',
+                    findings: [],
+                    isFileIgnored: false,
+                    effectiveCodeLines: 10,
+                    ignoredLines: 0,
+                ),
+                new ScanFileResult(
+                    filePath: 'Classes/Corge.php',
+                    findings: [],
+                    isFileIgnored: false,
+                    effectiveCodeLines: 10,
+                    ignoredLines: 0,
+                ),
+                new ScanFileResult(
+                    filePath: 'Classes/Grault.php',
                     findings: [],
                     isFileIgnored: false,
                     effectiveCodeLines: 10,
@@ -96,10 +133,13 @@ final class ScanReportExporterTest extends TestCase
             ],
         );
 
+        // Every value below is pairwise distinct (7 scanned, 5 total findings,
+        // 3 strong, 2 weak, 2 files with findings) so a swapped sprintf()
+        // argument in any position produces a different, non-matching string.
         $text = $this->exporter->toText($result);
 
         self::assertSame(
-            "Scanned: /test/ext\nFiles scanned: 2\nFindings: 4 (strong: 3, weak: 1)\nFiles with findings: 1",
+            "Scanned: /test/ext\nFiles scanned: 7\nFindings: 5 (strong: 3, weak: 2)\nFiles with findings: 2",
             $text,
         );
     }

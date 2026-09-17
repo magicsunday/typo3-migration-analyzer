@@ -27,6 +27,7 @@ use function chmod;
 use function dirname;
 use function file_exists;
 use function file_get_contents;
+use function file_put_contents;
 use function mkdir;
 use function preg_replace;
 use function restore_error_handler;
@@ -43,9 +44,9 @@ final class ScanExtensionCommandTest extends TestCase
 {
     private const string FIXTURE_PATH = __DIR__ . '/../../Fixtures/Extension';
 
-    private const string CLEAN_FIXTURE_PATH = __DIR__ . '/../../Fixtures/CleanExtension';
-
     private CommandTester $tester;
+
+    private ?string $cleanScanDirectory = null;
 
     protected function setUp(): void
     {
@@ -57,6 +58,26 @@ final class ScanExtensionCommandTest extends TestCase
         );
 
         $this->tester = new CommandTester($command);
+    }
+
+    protected function tearDown(): void
+    {
+        if ($this->cleanScanDirectory !== null) {
+            unlink($this->cleanScanDirectory . '/Clean.php');
+            rmdir($this->cleanScanDirectory);
+        }
+    }
+
+    /**
+     * Create a throwaway directory containing one PHP file with no deprecated API usage.
+     */
+    private function createCleanScanDirectory(): string
+    {
+        $this->cleanScanDirectory = sys_get_temp_dir() . '/scan-extension-command-test-clean-' . uniqid();
+        mkdir($this->cleanScanDirectory, 0o755, true);
+        file_put_contents($this->cleanScanDirectory . '/Clean.php', "<?php\n\nclass Clean {}\n");
+
+        return $this->cleanScanDirectory;
     }
 
     /**
@@ -262,7 +283,7 @@ final class ScanExtensionCommandTest extends TestCase
     public function executeSucceedsWhenFailOnFindingsIsSetButScanHasNoFindings(): void
     {
         $statusCode = $this->tester->execute([
-            'source'             => self::CLEAN_FIXTURE_PATH,
+            'source'             => $this->createCleanScanDirectory(),
             '--fail-on-findings' => true,
         ]);
 

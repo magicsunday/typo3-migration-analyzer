@@ -14,12 +14,12 @@ namespace App\Scanner;
 use App\Dto\ScanFileResult;
 use App\Dto\ScanFinding;
 use App\Dto\ScanResult;
+use App\Support\ControlCharacterSanitizer;
 
 use function array_map;
 use function count;
 use function implode;
 use function json_encode;
-use function preg_replace;
 use function sprintf;
 use function str_contains;
 use function str_replace;
@@ -40,7 +40,7 @@ final readonly class ScanReportExporter
     {
         return sprintf(
             "Scanned: %s\nFiles scanned: %d\nFindings: %d (strong: %d, weak: %d)\nFiles with findings: %d",
-            $this->stripControlCharacters($result->extensionPath),
+            ControlCharacterSanitizer::strip($result->extensionPath),
             $result->scannedFiles(),
             $result->totalFindings(),
             $result->strongFindings(),
@@ -95,7 +95,7 @@ final readonly class ScanReportExporter
             foreach ($fileResult->findings as $finding) {
                 $lines[] = sprintf(
                     '"%s",%d,"%s","%s","%s"',
-                    $this->escapeCsv($this->stripControlCharacters($fileResult->filePath)),
+                    $this->escapeCsv(ControlCharacterSanitizer::strip($fileResult->filePath)),
                     $finding->line,
                     $this->escapeCsv($finding->indicator),
                     $this->escapeCsv($finding->message),
@@ -113,7 +113,7 @@ final readonly class ScanReportExporter
     public function toMarkdown(ScanResult $result): string
     {
         $lines   = [];
-        $lines[] = sprintf('# Scan Report: %s', $this->stripControlCharacters($result->extensionPath));
+        $lines[] = sprintf('# Scan Report: %s', ControlCharacterSanitizer::strip($result->extensionPath));
         $lines[] = '';
         $lines[] = sprintf(
             '**%d** findings in **%d** files (%d scanned), **%d** strong / **%d** weak',
@@ -126,7 +126,7 @@ final readonly class ScanReportExporter
         $lines[] = '';
 
         foreach ($result->filesWithFindings() as $fileResult) {
-            $lines[] = sprintf('## %s', $this->stripControlCharacters($fileResult->filePath));
+            $lines[] = sprintf('## %s', ControlCharacterSanitizer::strip($fileResult->filePath));
             $lines[] = '';
             $lines[] = '| Line | Severity | Message | RST Files |';
             $lines[] = '|------|----------|---------|-----------|';
@@ -160,14 +160,5 @@ final readonly class ScanReportExporter
         }
 
         return $escaped;
-    }
-
-    /**
-     * Strip control characters (e.g. terminal escape sequences) from a value
-     * before it is written to a plain-text report consumed by a terminal.
-     */
-    private function stripControlCharacters(string $value): string
-    {
-        return preg_replace('/[\x00-\x1F\x7F]/', '', $value) ?? $value;
     }
 }
