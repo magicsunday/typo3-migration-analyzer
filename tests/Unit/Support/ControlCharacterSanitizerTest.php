@@ -64,4 +64,23 @@ final class ControlCharacterSanitizerTest extends TestCase
     {
         self::assertSame("a\x20b", ControlCharacterSanitizer::strip("a\x20b"));
     }
+
+    /**
+     * 0x7F (DEL) is a second, disjoint control character outside the
+     * 0x00-0x1F range and must be stripped just like the others.
+     */
+    #[Test]
+    public function stripRemovesTheDeleteCharacter(): void
+    {
+        self::assertSame('ab', ControlCharacterSanitizer::strip("a\x7Fb"));
+    }
+
+    /**
+     * 0x7E is the byte immediately below 0x7F and must survive untouched.
+     */
+    #[Test]
+    public function stripPreservesTheByteBelowDelete(): void
+    {
+        self::assertSame("a\x7Eb", ControlCharacterSanitizer::strip("a\x7Eb"));
+    }
 }
