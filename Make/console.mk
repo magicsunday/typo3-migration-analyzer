@@ -5,8 +5,8 @@
 # Never type a literal "VAR=..." argument on any `make` invocation in this
 # repo. GNU Make unconditionally re-materializes a command-line "VAR=..."
 # override into MAKEFLAGS and re-expands any Make function/variable syntax
-# ("$(...)") embedded in it as soon as a real recipe runs, in any makefile —
-# no $(shell ...) call anywhere is needed for that. Plain shell metacharacters
+# ("$(...)") embedded in it as soon as a real recipe runs, in any makefile.
+# No $(shell ...) call anywhere is needed for that. Plain shell metacharacters
 # like backticks or semicolons in the same override are NOT re-expanded by
 # this mechanism, only Make's own "$(...)" syntax is. In this repo
 # specifically, `make -n` and a nonexistent target aren't safe either,
@@ -18,7 +18,7 @@
 # therefore extracted from $(MAKECMDGOALS) instead (a plain positional
 # argument, immune to this mechanism), and must stay referenced only via
 # the exported shell variable $$SCAN_SOURCE below, never spliced in as
-# $(SCAN_SOURCE) inside a recipe line — that would hand attacker-controlled
+# $(SCAN_SOURCE) inside a recipe line. That would hand attacker-controlled
 # text to the shell's own command substitution (where backticks/semicolons
 # WOULD matter).
 #

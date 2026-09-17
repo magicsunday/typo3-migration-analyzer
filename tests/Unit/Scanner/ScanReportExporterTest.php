@@ -179,7 +179,7 @@ final class ScanReportExporterTest extends TestCase
         );
 
         // Every value below is pairwise distinct (7 scanned, 6 total findings,
-        // 4 strong, 2 weak, 3 files with findings — explicitly cross-checked:
+        // 4 strong, 2 weak, 3 files with findings, explicitly cross-checked:
         // 7 != 6 != 4 != 2 != 3 and no other pair collides either) so a
         // swapped sprintf() argument in any position produces a different,
         // non-matching string.

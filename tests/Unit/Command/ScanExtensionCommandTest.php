@@ -249,7 +249,7 @@ final class ScanExtensionCommandTest extends TestCase
     public function executeFailsWhenOutputDirectoryExistsButIsNotWritable(): void
     {
         if (function_exists('posix_geteuid') && (posix_geteuid() === 0)) {
-            self::markTestSkipped('Root bypasses directory write permissions (CAP_DAC_OVERRIDE); this guard cannot be exercised as root.');
+            self::markTestSkipped('Root bypasses directory write permissions (CAP_DAC_OVERRIDE). This guard cannot be exercised as root.');
         }
 
         $outputDirectory = sys_get_temp_dir() . '/scan-extension-command-test-readonly-' . uniqid();
