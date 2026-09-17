@@ -15,6 +15,7 @@ use App\Dto\ScanResult;
 use App\Scanner\ExtensionScanner;
 use App\Scanner\GitRepositoryHandler;
 use App\Scanner\ScanReportExporter;
+use App\Scanner\ScanSourcePathResolver;
 use InvalidArgumentException;
 use RuntimeException;
 use Symfony\Component\Console\Attribute\AsCommand;
@@ -31,6 +32,7 @@ use function implode;
 use function in_array;
 use function is_dir;
 use function sprintf;
+use function strlen;
 
 /**
  * Scan a TYPO3 extension for deprecated API usage from the command line.
@@ -54,6 +56,7 @@ final class ScanExtensionCommand extends Command
         private readonly ExtensionScanner $scanner,
         private readonly GitRepositoryHandler $gitHandler,
         private readonly ScanReportExporter $exporter,
+        private readonly ScanSourcePathResolver $scanSourcePathResolver,
     ) {
         parent::__construct();
     }
@@ -64,13 +67,17 @@ final class ScanExtensionCommand extends Command
             ->addArgument(
                 'source',
                 InputArgument::REQUIRED,
-                'Local directory path or public GitHub/GitLab repository URL to scan',
+                'Local directory path (rewritten via SCAN_SOURCE_PATH like the web scan form, '
+                . 'see ScanSourcePathResolver) or public GitHub/GitLab repository URL to scan',
             )
             ->addOption(
                 'format',
                 null,
                 InputOption::VALUE_REQUIRED,
-                sprintf('Report format (%s)', implode('|', self::VALID_FORMATS)),
+                sprintf(
+                    'Report format (%s)',
+                    implode('|', self::VALID_FORMATS),
+                ),
                 'text',
             )
             ->addOption(
@@ -93,11 +100,16 @@ final class ScanExtensionCommand extends Command
 
         /** @var string $source */
         $source = $input->getArgument('source');
+        $source = $this->scanSourcePathResolver->resolve($source);
         /** @var string $format */
         $format = $input->getOption('format');
 
         if (!in_array($format, self::VALID_FORMATS, true)) {
-            $io->error(sprintf('Invalid format "%s". Allowed: %s', $format, implode(', ', self::VALID_FORMATS)));
+            $io->error(sprintf(
+                'Invalid format "%s". Allowed: %s',
+                $format,
+                implode(', ', self::VALID_FORMATS),
+            ));
 
             return Command::FAILURE;
         }
@@ -133,13 +145,21 @@ final class ScanExtensionCommand extends Command
         $outputFile = $input->getOption('output');
 
         if ($outputFile !== null) {
-            if (!is_dir(dirname($outputFile)) || (file_put_contents($outputFile, $report) === false)) {
-                $io->error(sprintf('Failed to write report to %s', $outputFile));
+            $bytesWritten = is_dir(dirname($outputFile)) ? file_put_contents($outputFile, $report) : false;
+
+            if (($bytesWritten === false) || ($bytesWritten !== strlen($report))) {
+                $io->error(sprintf(
+                    'Failed to write report to %s',
+                    $outputFile,
+                ));
 
                 return Command::FAILURE;
             }
 
-            $io->success(sprintf('Report written to %s', $outputFile));
+            $io->success(sprintf(
+                'Report written to %s',
+                $outputFile,
+            ));
         } else {
             $io->writeln($report);
         }
@@ -152,7 +172,9 @@ final class ScanExtensionCommand extends Command
     }
 
     /**
-     * Render the scan result in the requested format.
+     * Render the scan result in the requested format. $format was already
+     * validated in execute(), so an unrecognized value cannot reach the
+     * default case, which is reserved for the "text" format.
      */
     private function renderReport(ScanResult $result, string $format): string
     {

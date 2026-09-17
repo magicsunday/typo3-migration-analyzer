@@ -36,6 +36,9 @@ final class ScanReportExporterTest extends TestCase
         $this->exporter = new ScanReportExporter();
     }
 
+    /**
+     * The JSON summary and file list must reflect a result with both a strong and a weak finding.
+     */
     #[Test]
     public function toJsonReturnsValidJson(): void
     {
@@ -60,17 +63,51 @@ final class ScanReportExporterTest extends TestCase
         self::assertCount(1, $files);
     }
 
+    /**
+     * Each summary field must appear in its own designated position, using a
+     * fixture with distinct counts per field so a swapped sprintf() argument
+     * or a hardcoded field value would make this assertion fail.
+     */
     #[Test]
-    public function toTextContainsScanSummary(): void
+    public function toTextRendersEachSummaryFieldInItsOwnPosition(): void
     {
-        $result = $this->createResult();
+        $result = new ScanResult(
+            extensionPath: '/test/ext',
+            fileResults: [
+                new ScanFileResult(
+                    filePath: 'Classes/Foo.php',
+                    findings: [
+                        new ScanFinding(10, 'a', 'strong', 'a', []),
+                        new ScanFinding(11, 'b', 'strong', 'b', []),
+                        new ScanFinding(12, 'c', 'strong', 'c', []),
+                        new ScanFinding(13, 'd', 'weak', 'd', []),
+                    ],
+                    isFileIgnored: false,
+                    effectiveCodeLines: 50,
+                    ignoredLines: 0,
+                ),
+                new ScanFileResult(
+                    filePath: 'Classes/Bar.php',
+                    findings: [],
+                    isFileIgnored: false,
+                    effectiveCodeLines: 10,
+                    ignoredLines: 0,
+                ),
+            ],
+        );
 
         $text = $this->exporter->toText($result);
 
-        self::assertTrue(str_contains($text, 'Scanned: /test/ext'));
-        self::assertTrue(str_contains($text, 'Findings: 2 (strong: 1, weak: 1)'));
+        self::assertSame(
+            "Scanned: /test/ext\nFiles scanned: 2\nFindings: 4 (strong: 3, weak: 1)\nFiles with findings: 1",
+            $text,
+        );
     }
 
+    /**
+     * A raw ESC byte in the extension path (e.g. from a maliciously named
+     * scanned directory) must never reach the terminal-consumed text report.
+     */
     #[Test]
     public function toTextStripsControlCharactersFromExtensionPath(): void
     {
@@ -85,6 +122,9 @@ final class ScanReportExporterTest extends TestCase
         self::assertStringContainsString('/test/ext', $text);
     }
 
+    /**
+     * The CSV export must start with the fixed header row followed by one row per finding.
+     */
     #[Test]
     public function toCsvContainsHeaderAndDataRows(): void
     {
@@ -97,6 +137,38 @@ final class ScanReportExporterTest extends TestCase
         self::assertSame('"File","Line","Severity","Message","RST Files"', $lines[0]);
     }
 
+    /**
+     * A raw ESC byte in a scanned file's path must never reach a CSV report
+     * opened in a terminal (e.g. via `cat`) or piped through a CI log.
+     */
+    #[Test]
+    public function toCsvStripsControlCharactersFromFilePath(): void
+    {
+        $result = new ScanResult(
+            extensionPath: '/test/ext',
+            fileResults: [
+                new ScanFileResult(
+                    filePath: "Classes/\x1BFoo.php",
+                    findings: [
+                        new ScanFinding(10, 'Deprecated class usage', 'strong', 'use Foo;', []),
+                    ],
+                    isFileIgnored: false,
+                    effectiveCodeLines: 50,
+                    ignoredLines: 0,
+                ),
+            ],
+        );
+
+        $csv = $this->exporter->toCsv($result);
+
+        self::assertStringNotContainsString("\x1B", $csv);
+        self::assertStringContainsString('Classes/Foo.php', $csv);
+    }
+
+    /**
+     * The Markdown export must contain the report heading, the summary line,
+     * a per-file heading, and the findings table header.
+     */
     #[Test]
     public function toMarkdownContainsSummaryAndTable(): void
     {
@@ -110,6 +182,38 @@ final class ScanReportExporterTest extends TestCase
         self::assertTrue(str_contains($md, '| Line | Severity | Message | RST Files |'));
     }
 
+    /**
+     * A raw ESC byte in either the extension path or a scanned file's path
+     * must never reach a Markdown report consumed on a terminal.
+     */
+    #[Test]
+    public function toMarkdownStripsControlCharactersFromExtensionPathAndFilePath(): void
+    {
+        $result = new ScanResult(
+            extensionPath: "/test/\x1Bext",
+            fileResults: [
+                new ScanFileResult(
+                    filePath: "Classes/\x1BFoo.php",
+                    findings: [
+                        new ScanFinding(10, 'Deprecated class usage', 'strong', 'use Foo;', []),
+                    ],
+                    isFileIgnored: false,
+                    effectiveCodeLines: 50,
+                    ignoredLines: 0,
+                ),
+            ],
+        );
+
+        $md = $this->exporter->toMarkdown($result);
+
+        self::assertStringNotContainsString("\x1B", $md);
+        self::assertStringContainsString('/test/ext', $md);
+        self::assertStringContainsString('Classes/Foo.php', $md);
+    }
+
+    /**
+     * Build a scan result with one strong and one weak finding in a single file.
+     */
     private function createResult(): ScanResult
     {
         return new ScanResult(

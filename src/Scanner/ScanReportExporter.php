@@ -95,7 +95,7 @@ final readonly class ScanReportExporter
             foreach ($fileResult->findings as $finding) {
                 $lines[] = sprintf(
                     '"%s",%d,"%s","%s","%s"',
-                    $this->escapeCsv($fileResult->filePath),
+                    $this->escapeCsv($this->stripControlCharacters($fileResult->filePath)),
                     $finding->line,
                     $this->escapeCsv($finding->indicator),
                     $this->escapeCsv($finding->message),
@@ -113,7 +113,7 @@ final readonly class ScanReportExporter
     public function toMarkdown(ScanResult $result): string
     {
         $lines   = [];
-        $lines[] = sprintf('# Scan Report: %s', $result->extensionPath);
+        $lines[] = sprintf('# Scan Report: %s', $this->stripControlCharacters($result->extensionPath));
         $lines[] = '';
         $lines[] = sprintf(
             '**%d** findings in **%d** files (%d scanned), **%d** strong / **%d** weak',
@@ -126,7 +126,7 @@ final readonly class ScanReportExporter
         $lines[] = '';
 
         foreach ($result->filesWithFindings() as $fileResult) {
-            $lines[] = sprintf('## %s', $fileResult->filePath);
+            $lines[] = sprintf('## %s', $this->stripControlCharacters($fileResult->filePath));
             $lines[] = '';
             $lines[] = '| Line | Severity | Message | RST Files |';
             $lines[] = '|------|----------|---------|-----------|';
