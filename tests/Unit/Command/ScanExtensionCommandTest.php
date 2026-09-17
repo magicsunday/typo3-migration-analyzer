@@ -195,7 +195,11 @@ final class ScanExtensionCommandTest extends TestCase
     #[Test]
     public function executeFailsCleanlyWhenAScannedFileHasAPhpSyntaxError(): void
     {
-        $malformedDirectory = $this->createScanDirectory('malformed', 'Broken.php', "<?php\n\nclass Broken {\n    public function foo(\n");
+        $malformedDirectory = $this->createScanDirectory(
+            'malformed',
+            'Broken.php',
+            "<?php\n\nclass Broken {\n    public function foo(\n",
+        );
 
         $statusCode = $this->tester->execute(['source' => $malformedDirectory]);
 
@@ -339,7 +343,11 @@ final class ScanExtensionCommandTest extends TestCase
     #[Test]
     public function executeSucceedsWhenFailOnFindingsIsSetButScanHasNoFindings(): void
     {
-        $cleanDirectory = $this->createScanDirectory('clean', 'Clean.php', "<?php\n\nclass Clean {}\n");
+        $cleanDirectory = $this->createScanDirectory(
+            'clean',
+            'Clean.php',
+            "<?php\n\nclass Clean {}\n",
+        );
 
         $statusCode = $this->tester->execute([
             'source'             => $cleanDirectory,
