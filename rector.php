@@ -9,15 +9,9 @@
 
 declare(strict_types=1);
 
-use Rector\CodeQuality\Rector\FunctionLike\SimplifyUselessVariableRector;
-use Rector\CodingStyle\Rector\Catch_\CatchExceptionNameMatchingTypeRector;
 use Rector\Config\RectorConfig;
-use Rector\DeadCode\Rector\Assign\RemoveUnusedVariableAssignRector;
 use Rector\DeadCode\Rector\Plus\RemoveDeadZeroAndOneOperationRector;
-use Rector\DeadCode\Rector\Stmt\RemoveUnreachableStatementRector;
 use Rector\Php84\Rector\MethodCall\NewMethodCallWithoutParenthesesRector;
-use Rector\Set\ValueObject\LevelSetList;
-use Rector\Set\ValueObject\SetList;
 
 return static function (RectorConfig $rectorConfig): void {
     $rectorConfig->paths([
@@ -25,60 +19,35 @@ return static function (RectorConfig $rectorConfig): void {
         __DIR__ . '/tests/',
     ]);
 
-    if (
-        !is_dir($concurrentDirectory = __DIR__ . '/.build/cache/.rector.cache')
-        && !mkdir($concurrentDirectory, 0775, true)
-        && !is_dir($concurrentDirectory)
-    ) {
-        throw new RuntimeException(
-            sprintf(
-                'Directory "%s" was not created',
-                $concurrentDirectory
-            )
-        );
+    // Keep the Rector caches inside the build directory rather than the repository root.
+    $rectorCacheDirectory          = __DIR__ . '/.build/cache/.rector.cache';
+    $rectorContainerCacheDirectory = __DIR__ . '/.build/cache/.rector.container.cache';
+
+    foreach ([$rectorCacheDirectory, $rectorContainerCacheDirectory] as $cacheDirectory) {
+        if (
+            !is_dir($cacheDirectory)
+            && !mkdir($cacheDirectory, 0o775, true)
+            && !is_dir($cacheDirectory)
+        ) {
+            throw new RuntimeException(sprintf('Directory "%s" was not created.', $cacheDirectory));
+        }
     }
 
-    if (
-        !is_dir($concurrentDirectory = __DIR__ . '/.build/cache/.rector.container.cache')
-        && !mkdir($concurrentDirectory, 0775, true)
-        && !is_dir($concurrentDirectory)
-    ) {
-        throw new RuntimeException(
-            sprintf(
-                'Directory "%s" was not created',
-                $concurrentDirectory
-            )
-        );
-    }
-
+    $rectorConfig->cacheDirectory($rectorCacheDirectory);
+    $rectorConfig->containerCacheDirectory($rectorContainerCacheDirectory);
     $rectorConfig->phpstanConfig(__DIR__ . '/phpstan.neon');
-    $rectorConfig->importNames();
-    $rectorConfig->removeUnusedImports();
-    $rectorConfig->disableParallel();
-    $rectorConfig->cacheDirectory(__DIR__ . '/.build/cache/.rector.cache');
-    $rectorConfig->containerCacheDirectory(__DIR__ . '/.build/cache/.rector.container.cache');
 
-    // Define what rule sets will be applied
-    $rectorConfig->sets([
-        SetList::CODE_QUALITY,
-        SetList::CODING_STYLE,
-        SetList::DEAD_CODE,
-        SetList::EARLY_RETURN,
-        SetList::INSTANCEOF,
-        SetList::PRIVATIZATION,
-        SetList::TYPE_DECLARATION,
-        SetList::TYPE_DECLARATION_DOCBLOCKS,
-        LevelSetList::UP_TO_PHP_84,
-    ]);
+    // The shared rule sets and skips; 80400 is this application's PHP floor.
+    (require __DIR__ . '/vendor/magicsunday/coding-standard/rector/base.php')($rectorConfig, 80400);
 
-    // Skip some rules
+    // Skips on top of the shared ones (skip() merges, it does not replace).
     $rectorConfig->skip([
-        CatchExceptionNameMatchingTypeRector::class,
         // Explicit (new Foo())->method() parentheses kept for readability
         NewMethodCallWithoutParenthesesRector::class,
         // Intentional: $x * 1.0 casts int to float
         RemoveDeadZeroAndOneOperationRector::class,
-        // Intentional: defensive guard clauses after exhaustive matches
-        RemoveUnreachableStatementRector::class,
+        // The scanner fixtures stand in for third-party TYPO3 extension code; tests
+        // assert findings by line number, so they are kept byte-for-byte.
+        __DIR__ . '/tests/Fixtures/Extension',
     ]);
 };

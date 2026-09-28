@@ -19,8 +19,7 @@
             "symfony/flex": true,
             "symfony/runtime": true,
             "typo3/class-alias-loader": true,
-            "typo3/cms-composer-installers": true,
-            "phpstan/extension-installer": true
+            "typo3/cms-composer-installers": true
         },
         "bump-after-update": true,
         "sort-packages": true
@@ -45,16 +44,8 @@
         "typo3/cms-install": "^14.1"
     },
     "require-dev": {
-        "friendsofphp/php-cs-fixer": "^3.94",
-        "overtrue/phplint": "*",
-        "phpstan/extension-installer": "^1.4",
-        "phpstan/phpstan": "^2.1",
-        "phpstan/phpstan-deprecation-rules": "*",
-        "phpstan/phpstan-phpunit": "*",
-        "phpstan/phpstan-strict-rules": "*",
-        "phpstan/phpstan-symfony": "^2.0",
-        "phpunit/phpunit": "^13.0",
-        "rector/rector": "*"
+        "magicsunday/coding-standard": "^3.0",
+        "phpstan/phpstan-symfony": "^2.0.20"
     },
     "autoload": {
         "psr-4": {
@@ -97,7 +88,7 @@
             "importmap:install": "symfony-cmd"
         },
         "ci:cgl": [
-            "php-cs-fixer fix --config .php-cs-fixer.dist.php --diff --verbose --sequential"
+            "php-cs-fixer fix --config .php-cs-fixer.dist.php --diff --verbose"
         ],
         "ci:rector": [
             "rector process --config rector.php"
@@ -111,9 +102,6 @@
         "ci:test:php:phpstan": [
             "phpstan analyze --configuration phpstan.neon --memory-limit=-1"
         ],
-        "ci:test:php:phpstan:baseline": [
-            "phpstan analyze --configuration phpstan.neon --memory-limit=-1 --generate-baseline phpstan-baseline.neon --allow-empty-baseline"
-        ],
         "ci:test:php:rector": [
             "@ci:rector --dry-run"
         ],
@@ -126,11 +114,23 @@
         "ci:test:php:cpd": [
             "npx jscpd --config .jscpd.json --skip-comments --no-tips"
         ],
+        "ci:test:php:templates": [
+            "check-consumer-config.php ."
+        ],
+        "ci:test:php:deptrac": [
+            "deptrac analyse --no-progress",
+            "deptrac debug:unassigned",
+            "@php -r \"is_dir('.build') || mkdir('.build', 0777, true);\"",
+            "deptrac analyse --no-progress --formatter=graphviz-dot --output=.build/deptrac-layers.dot",
+            "check-deptrac-cycles.php .build/deptrac-layers.dot"
+        ],
         "ci:test": [
             "@ci:test:php:lint",
             "@ci:test:php:cgl",
             "@ci:test:php:rector",
             "@ci:test:php:phpstan",
+            "@ci:test:php:deptrac",
+            "@ci:test:php:templates",
             "@ci:test:php:unit",
             "@ci:test:php:cpd"
         ],

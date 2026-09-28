@@ -1,11 +1,16 @@
 includes:
-    - phpstan-baseline.neon
+    - %currentWorkingDirectory%/vendor/magicsunday/coding-standard/phpstan/base.neon
+    # Not part of the shared base: the Symfony extension is this application's own
+    # addition, included explicitly because phpstan/extension-installer does not reach
+    # Rector's bundled PHPStan.
+    - %currentWorkingDirectory%/vendor/phpstan/phpstan-symfony/extension.neon
+    - %currentWorkingDirectory%/vendor/phpstan/phpstan-symfony/rules.neon
 
 parameters:
-    # You can currently choose from 11 levels (0 is the loosest and 10 is the strictest).
-    level: max
+    # level: max, the rule packs (strict, deprecation, phpunit) and checked exceptions
+    # come from the shared base.
 
-    # PHP Version to check against (PHP 8.4 as minimum target)
+    # Single-PHP application: 8.4 is both floor and ceiling.
     phpVersion: 80400
 
     tmpDir: %currentWorkingDirectory%/.build/cache/.phpstan.cache
