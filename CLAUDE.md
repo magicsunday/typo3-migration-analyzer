@@ -10,7 +10,8 @@
 - PHP 8.4+, Symfony 7.4, Twig, Bootstrap 5.3
 - symfony/property-info + symfony/property-access für Introspection
 - typo3/cms-core + typo3/cms-install als Composer-Dependency (Datenquelle)
-- PHPUnit, PHPStan Level max, PHP-CS-Fixer (@PER-CS2x0 + @Symfony)
+- QA-Toolchain über `magicsunday/coding-standard` (^3.0, `require-dev`): PHP-CS-Fixer, PHPStan (Level max inkl. strict-, deprecation- und phpunit-Regeln sowie Checked Exceptions, keine Baseline), Rector, phplint, PHPUnit und Deptrac kommen transitiv; `.php-cs-fixer.dist.php`, `phpstan.neon` und `rector.php` binden nur die geteilten Configs ein. `phpstan/phpstan-symfony` ist die einzige eigene Ergänzung. `phpunit.xml`, `.phplint.yml`, `.jscpd.json`, `.editorconfig` und `.gitattributes` sind Kopien der Templates, geprüft per `composer ci:test:php:templates`
+- Composer nutzt bewusst das Standard-`vendor/` (nicht `.build/vendor`): die Symfony-Front-Controller und der TYPO3-Changelog-Zugriff lesen es zur Laufzeit
 - Kein Webpack/Node — AssetMapper only
 - Keine relationale Server-Datenbank (MySQL/Postgres), aber lokales SQLite für Caching erlaubt
 - Laufzeit-Daten werden aus Dateien geparsed + gecacht
@@ -22,6 +23,8 @@
 - `src/Generator/` — MatcherConfigGenerator
 - `src/Service/` — DocumentService (Caching-Layer, zentrale Datenquelle)
 - `src/Controller/` — Dashboard, Deprecation (List/Detail), Matcher (Analysis/Generate/Export)
+- `src/Support/` — Generische Helfer (ControlCharacterSanitizer, DirectoryRemover)
+- Schichten per Deptrac (`deptrac.yaml`, importiert die geteilten Layer aus `magicsunday/coding-standard`): `Support < Model (src/Dto) < Repository, Llm, Parser, Scanner < Analyzer < Service, Generator < EventSubscriber, Command, Controller`; eine Schicht hängt nur von tieferen ab. `ActionPlanGenerator` zählt trotz `src/Analyzer` zur Generator-Schicht. `composer ci:test:php:deptrac` prüft Verstöße, nicht zugeordnete Klassen und Zyklen
 
 ## Entwicklungsprinzipien
 - TDD (Test-Driven Development)
@@ -33,7 +36,7 @@
 - Law of Demeter, Separation of Concerns, Convention over Configuration
 - Fein-granulare Commits
 - Vor jedem Commit: `composer ci:cgl` und `composer ci:rector` ausführen, Änderungen übernehmen
-- Vor jedem Commit MUSS `composer ci:test` grün sein
+- Vor jedem Commit MUSS `composer ci:test` grün sein (Lint, CGL, Rector, PHPStan, Deptrac, Templates, PHPUnit, jscpd — dieselben Schritte laufen in `.github/workflows/ci.yml`)
 - `composer ci:test`/`vendor/bin/phpunit` immer als `www-data` ausführen, nie als Container-Default-User (root, kein `USER`-Directive im Dockerfile). Root umgeht Unix-Schreibrechte (`CAP_DAC_OVERRIDE`), wodurch `chmod`-basierte Permission-Guard-Tests (z. B. für `--output`-Schreibfehler) sich selbst überspringen statt echt zu laufen. `make test` pinnt das (`Make/test.mk`), das manuelle `docker compose exec -u www-data phpfpm composer ci:test` bleibt als Fallback gültig
 - Nach jedem Commit: Code-Review durchführen und Findings sofort fixen
 - Commit subjects — and the pull-request title — are governed by the shared `commit-convention` gate; the normative rule and its full rationale live in `magicsunday/.github/.github/workflows/commit-convention.yml@main`, which self-tests a decision table before applying it. In short: a `GH-`-prefixed subject must match `^GH-\d+: [A-Z]`, every other subject `^[A-Z]` — a capitalised English imperative — and conventional-commit prefixes (`feat:`, `Fix:`, …) as well as path-like starts (`src/…: …`) are rejected whatever their case. It runs on every pull request via `.github/workflows/commit-lint.yml`, advisory until `commit-convention / Commit convention` is a required context in branch protection.
