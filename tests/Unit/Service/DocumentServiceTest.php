@@ -46,9 +46,8 @@ final class DocumentServiceTest extends TestCase
     public function getVersionRangeReturnsDefaultRange(): void
     {
         $service = $this->createServiceWithFixtures();
-        $range   = $service->getVersionRange();
 
-        self::assertInstanceOf(VersionRange::class, $range);
+        self::assertEquals((new VersionRangeProvider())->getDefaultRange(), $service->getVersionRange());
     }
 
     #[Test]

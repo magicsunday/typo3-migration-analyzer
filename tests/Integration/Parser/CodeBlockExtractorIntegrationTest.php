@@ -77,7 +77,8 @@ final class CodeBlockExtractorIntegrationTest extends TestCase
         $changelogDir = dirname(__DIR__, 3)
             . '/vendor/typo3/cms-core/Documentation/Changelog/13.0/';
 
-        $files = glob($changelogDir . '*.rst') ?: [];
+        $files = glob($changelogDir . '*.rst');
+        self::assertIsArray($files);
         self::assertNotEmpty($files);
 
         $parser = new RstParser();

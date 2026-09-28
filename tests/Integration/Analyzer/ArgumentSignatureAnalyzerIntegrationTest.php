@@ -64,7 +64,8 @@ final class ArgumentSignatureAnalyzerIntegrationTest extends TestCase
         $changelogDir = dirname(__DIR__, 3)
             . '/vendor/typo3/cms-core/Documentation/Changelog/13.0/';
 
-        $rstFiles = glob($changelogDir . '*.rst') ?: [];
+        $rstFiles = glob($changelogDir . '*.rst');
+        self::assertIsArray($rstFiles);
         self::assertNotEmpty($rstFiles, 'No RST changelog files found');
 
         $processedFiles = 0;
