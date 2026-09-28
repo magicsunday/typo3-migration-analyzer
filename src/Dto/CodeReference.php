@@ -67,51 +67,12 @@ final readonly class CodeReference
 
         // Instance member: Class->method() or Class->$property
         if (preg_match('/^(.+)->(.+)$/', $value, $matches) === 1) {
-            $className = $matches[1];
-            $memberRaw = $matches[2];
-
-            // Property: Class->$property
-            if (str_starts_with($memberRaw, '$')) {
-                return new self(
-                    className: $className,
-                    member: ltrim($memberRaw, '$'),
-                    type: CodeReferenceType::Property,
-                );
-            }
-
-            // Instance method: Class->method()
-            return new self(
-                className: $className,
-                member: rtrim($memberRaw, '()'),
-                type: CodeReferenceType::InstanceMethod,
-            );
+            return self::fromInstanceMember($matches[1], $matches[2], 1.0);
         }
 
         // Static member: Class::member
         if (str_contains($value, '::')) {
-            $parts     = explode('::', $value, 2);
-            $className = $parts[0];
-            $memberRaw = $parts[1];
-
-            // Explicit method call indicated by trailing parentheses
-            $isMethodCall = str_ends_with($memberRaw, '()');
-            $member       = rtrim($memberRaw, '()');
-
-            // Class constant: all uppercase (with underscores/digits) and no parentheses
-            if (!$isMethodCall && preg_match('/^[A-Z][A-Z0-9_]*$/', $member) === 1) {
-                return new self(
-                    className: $className,
-                    member: $member,
-                    type: CodeReferenceType::ClassConstant,
-                );
-            }
-
-            // Static method
-            return new self(
-                className: $className,
-                member: $member,
-                type: CodeReferenceType::StaticMethod,
-            );
+            return self::fromStaticMember($value, 1.0);
         }
 
         // Plain FQCN (class name only)
@@ -143,50 +104,12 @@ final readonly class CodeReference
 
         // Short class with instance member: ShortClass->method() or ShortClass->$prop
         if (preg_match('/^([A-Za-z]\w*)(?:->)(.+)$/', $value, $matches) === 1) {
-            $className = $matches[1];
-            $memberRaw = $matches[2];
-
-            if (str_starts_with($memberRaw, '$')) {
-                return new self(
-                    className: $className,
-                    member: ltrim($memberRaw, '$'),
-                    type: CodeReferenceType::Property,
-                    resolutionConfidence: 0.5,
-                );
-            }
-
-            return new self(
-                className: $className,
-                member: rtrim($memberRaw, '()'),
-                type: CodeReferenceType::InstanceMethod,
-                resolutionConfidence: 0.5,
-            );
+            return self::fromInstanceMember($matches[1], $matches[2], 0.5);
         }
 
         // Short class with static member: ShortClass::method() or ShortClass::CONST
         if (str_contains($value, '::')) {
-            $parts     = explode('::', $value, 2);
-            $className = $parts[0];
-            $memberRaw = $parts[1];
-
-            $isMethodCall = str_ends_with($memberRaw, '()');
-            $member       = rtrim($memberRaw, '()');
-
-            if (!$isMethodCall && preg_match('/^[A-Z][A-Z0-9_]*$/', $member) === 1) {
-                return new self(
-                    className: $className,
-                    member: $member,
-                    type: CodeReferenceType::ClassConstant,
-                    resolutionConfidence: 0.5,
-                );
-            }
-
-            return new self(
-                className: $className,
-                member: $member,
-                type: CodeReferenceType::StaticMethod,
-                resolutionConfidence: 0.5,
-            );
+            return self::fromStaticMember($value, 0.5);
         }
 
         // Property: $property
@@ -245,6 +168,69 @@ final readonly class CodeReference
             member: $value,
             type: CodeReferenceType::UnqualifiedMethod,
             resolutionConfidence: 0.3,
+        );
+    }
+
+    /**
+     * Build a reference to an instance member: `Class->$property` or `Class->method()`.
+     *
+     * @param string $className  The class part in front of `->`
+     * @param string $memberRaw  The member part after `->`, with `$` prefix or `()` suffix
+     * @param float  $confidence The resolution confidence of the reference
+     */
+    private static function fromInstanceMember(string $className, string $memberRaw, float $confidence): self
+    {
+        // Property: Class->$property
+        if (str_starts_with($memberRaw, '$')) {
+            return new self(
+                className: $className,
+                member: ltrim($memberRaw, '$'),
+                type: CodeReferenceType::Property,
+                resolutionConfidence: $confidence,
+            );
+        }
+
+        // Instance method: Class->method()
+        return new self(
+            className: $className,
+            member: rtrim($memberRaw, '()'),
+            type: CodeReferenceType::InstanceMethod,
+            resolutionConfidence: $confidence,
+        );
+    }
+
+    /**
+     * Build a reference to a static member: `Class::method()` or `Class::CONSTANT`.
+     *
+     * @param string $value      The role value containing `::`
+     * @param float  $confidence The resolution confidence of the reference
+     */
+    private static function fromStaticMember(string $value, float $confidence): self
+    {
+        $parts     = explode('::', $value, 2);
+        $className = $parts[0];
+        $memberRaw = $parts[1];
+
+        // Explicit method call indicated by trailing parentheses
+        $isMethodCall = str_ends_with($memberRaw, '()');
+        $member       = rtrim($memberRaw, '()');
+
+        // Class constant: all uppercase (with underscores/digits) and no parentheses
+        if (!$isMethodCall && preg_match('/^[A-Z][A-Z0-9_]*$/', $member) === 1) {
+            return new self(
+                className: $className,
+                member: $member,
+                type: CodeReferenceType::ClassConstant,
+                resolutionConfidence: $confidence,
+            );
+        }
+
+        // Static method
+        return new self(
+            className: $className,
+            member: $member,
+            type: CodeReferenceType::StaticMethod,
+            resolutionConfidence: $confidence,
         );
     }
 }
