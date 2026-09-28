@@ -12,9 +12,11 @@ declare(strict_types=1);
 namespace App\Tests\Unit\Parser;
 
 use App\Parser\CodeBlockExtractor;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
+#[CoversClass(CodeBlockExtractor::class)]
 final class CodeBlockExtractorTest extends TestCase
 {
     private CodeBlockExtractor $extractor;

@@ -21,12 +21,14 @@ use App\Dto\RstDocument;
 use App\Dto\ScanStatus;
 use App\Generator\RectorConfigRenderer;
 use App\Generator\RectorRuleGenerator;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 use function array_filter;
 use function array_values;
 
+#[CoversClass(RectorRuleGenerator::class)]
 final class RectorRuleGeneratorTest extends TestCase
 {
     private RectorRuleGenerator $generator;

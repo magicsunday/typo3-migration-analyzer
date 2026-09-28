@@ -20,11 +20,13 @@ use App\Dto\MatcherType;
 use App\Dto\RstDocument;
 use App\Dto\ScanStatus;
 use App\Generator\MatcherConfigGenerator;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use TYPO3\CMS\Core\DataHandling\DataHandler;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 
+#[CoversClass(MatcherConfigGenerator::class)]
 final class MatcherConfigGeneratorTest extends TestCase
 {
     private MatcherConfigGenerator $generator;

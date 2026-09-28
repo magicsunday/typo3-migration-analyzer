@@ -17,9 +17,11 @@ use App\Dto\MatcherEntry;
 use App\Dto\MatcherType;
 use App\Dto\RstDocument;
 use App\Dto\ScanStatus;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
+#[CoversClass(MatcherCoverageAnalyzer::class)]
 final class MatcherCoverageAnalyzerTest extends TestCase
 {
     private MatcherCoverageAnalyzer $analyzer;

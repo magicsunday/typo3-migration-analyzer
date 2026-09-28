@@ -13,6 +13,7 @@ namespace App\Tests\Unit\Dto;
 
 use App\Dto\CodeReference;
 use App\Dto\CodeReferenceType;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -20,6 +21,7 @@ use TYPO3\CMS\Core\Resource\FileReference;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Extbase\Property\TypeConverter\AbstractTypeConverter;
 
+#[CoversClass(CodeReference::class)]
 final class CodeReferenceTest extends TestCase
 {
     #[Test]

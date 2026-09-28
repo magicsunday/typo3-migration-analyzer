@@ -13,9 +13,11 @@ namespace App\Tests\Unit\Scanner;
 
 use App\Scanner\ExtensionScanner;
 use InvalidArgumentException;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
+#[CoversClass(ExtensionScanner::class)]
 final class ExtensionScannerTest extends TestCase
 {
     private ExtensionScanner $scanner;
