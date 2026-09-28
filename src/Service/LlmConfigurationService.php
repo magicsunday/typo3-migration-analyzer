@@ -154,7 +154,7 @@ final readonly class LlmConfigurationService
     {
         $config = $this->load();
         $provider ??= $config->provider;
-        $apiKey ??= $config->apiKey;
+        $apiKey   ??= $config->apiKey;
 
         if ($apiKey === '') {
             return $this->getStaticModels($provider);

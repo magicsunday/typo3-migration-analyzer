@@ -68,7 +68,7 @@ final class LlmStatusCommand extends Command
 
         $io->definitionList(
             ['Provider' => $config->provider->value],
-            ['Model'          => $model !== null ? $model->label : $config->modelId],
+            ['Model' => $model !== null ? $model->label : $config->modelId],
             ['Prompt version' => $config->promptVersion],
             ['Analyzed' => sprintf(
                 '%d / %d documents (%s%%)',

@@ -500,7 +500,7 @@ final class LlmModelCompareCommand extends Command
 
                 $scores[$modelId][] = $data['score'];
                 $grades[$modelId][] = $data['grade'];
-                $tokensIn[$modelId] += $data['tokens_in'];
+                $tokensIn[$modelId]  += $data['tokens_in'];
                 $tokensOut[$modelId] += $data['tokens_out'];
                 $durations[$modelId] += $data['duration'];
             }

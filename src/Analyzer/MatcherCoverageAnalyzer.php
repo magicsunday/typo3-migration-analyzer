@@ -98,9 +98,7 @@ final class MatcherCoverageAnalyzer
                 default      => $document->version,
             };
 
-            if (!isset($groups[$key])) {
-                $groups[$key] = ['total' => 0, 'covered' => 0];
-            }
+            $groups[$key] ??= ['total' => 0, 'covered' => 0];
 
             ++$groups[$key]['total'];
 
@@ -147,9 +145,7 @@ final class MatcherCoverageAnalyzer
         foreach ($matchers as $matcher) {
             $type = $matcher->matcherType->value;
 
-            if (!isset($byType[$type])) {
-                $byType[$type] = [];
-            }
+            $byType[$type] ??= [];
 
             foreach ($matcher->restFiles as $restFile) {
                 $byType[$type][$restFile] = true;
