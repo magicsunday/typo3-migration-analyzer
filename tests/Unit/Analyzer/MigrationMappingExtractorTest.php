@@ -13,9 +13,11 @@ namespace App\Tests\Unit\Analyzer;
 
 use App\Analyzer\MigrationMappingExtractor;
 use App\Dto\CodeReferenceType;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
+#[CoversClass(MigrationMappingExtractor::class)]
 final class MigrationMappingExtractorTest extends TestCase
 {
     private MigrationMappingExtractor $extractor;

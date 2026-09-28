@@ -11,11 +11,9 @@ declare(strict_types=1);
 
 namespace App\Scanner;
 
+use App\Support\DirectoryRemover;
 use InvalidArgumentException;
-use RecursiveDirectoryIterator;
-use RecursiveIteratorIterator;
 use RuntimeException;
-use SplFileInfo;
 use Symfony\Component\Process\Process;
 
 use function array_any;
@@ -28,12 +26,10 @@ use function mkdir;
 use function parse_url;
 use function preg_replace;
 use function realpath;
-use function rmdir;
 use function sprintf;
 use function str_starts_with;
 use function trim;
 use function uniqid;
-use function unlink;
 
 /**
  * Handles cloning of public Git repositories and cleaning up temporary directories.
@@ -90,7 +86,7 @@ final readonly class GitRepositoryHandler implements GitRepositoryHandlerInterfa
         $process->run();
 
         if (!$process->isSuccessful()) {
-            $this->removeDirectory($cloneDir);
+            DirectoryRemover::remove($cloneDir);
 
             throw new RuntimeException(
                 sprintf('Repository konnte nicht geklont werden: %s', $process->getErrorOutput()),
@@ -116,7 +112,7 @@ final readonly class GitRepositoryHandler implements GitRepositoryHandlerInterfa
             );
         }
 
-        $this->removeDirectory($path);
+        DirectoryRemover::remove($path);
     }
 
     /**
@@ -163,31 +159,5 @@ final readonly class GitRepositoryHandler implements GitRepositoryHandlerInterfa
             self::ALLOWED_HOSTS,
             static fn (string $allowedHost): bool => $allowedHost === $host,
         );
-    }
-
-    /**
-     * Recursively remove a directory and all its contents.
-     */
-    private function removeDirectory(string $path): void
-    {
-        if (!is_dir($path)) {
-            return;
-        }
-
-        $iterator = new RecursiveIteratorIterator(
-            new RecursiveDirectoryIterator($path, RecursiveDirectoryIterator::SKIP_DOTS),
-            RecursiveIteratorIterator::CHILD_FIRST,
-        );
-
-        /** @var SplFileInfo $file */
-        foreach ($iterator as $file) {
-            if ($file->isDir()) {
-                rmdir($file->getPathname());
-            } else {
-                unlink($file->getPathname());
-            }
-        }
-
-        rmdir($path);
     }
 }

@@ -16,6 +16,7 @@ use App\Dto\CodeReferenceType;
 use App\Dto\DocumentType;
 use App\Dto\ScanStatus;
 use App\Parser\RstParser;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
@@ -23,6 +24,7 @@ use TYPO3\CMS\Core\DataHandling\DataHandler;
 
 use function dirname;
 
+#[CoversClass(RstParser::class)]
 final class RstParserTest extends TestCase
 {
     private RstParser $parser;

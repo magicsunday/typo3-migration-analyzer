@@ -11,23 +11,19 @@ declare(strict_types=1);
 
 namespace App\Scanner;
 
+use App\Support\DirectoryRemover;
 use InvalidArgumentException;
-use RecursiveDirectoryIterator;
-use RecursiveIteratorIterator;
 use RuntimeException;
-use SplFileInfo;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use ZipArchive;
 
 use function is_dir;
 use function mb_strtolower;
 use function mkdir;
-use function rmdir;
 use function sprintf;
 use function str_contains;
 use function str_starts_with;
 use function uniqid;
-use function unlink;
 
 /**
  * Handles uploaded ZIP files: validates, extracts to a temporary directory, and cleans up.
@@ -72,7 +68,7 @@ final readonly class ZipUploadHandler
         $zip = new ZipArchive();
 
         if ($zip->open($file->getPathname()) !== true) {
-            $this->removeDirectory($extractDir);
+            DirectoryRemover::remove($extractDir);
 
             throw new RuntimeException('Failed to open ZIP file.');
         }
@@ -83,7 +79,7 @@ final readonly class ZipUploadHandler
 
             if ($entryName === false || str_contains($entryName, '..')) {
                 $zip->close();
-                $this->removeDirectory($extractDir);
+                DirectoryRemover::remove($extractDir);
 
                 throw new InvalidArgumentException(
                     'ZIP file contains invalid path entries.',
@@ -113,7 +109,7 @@ final readonly class ZipUploadHandler
             );
         }
 
-        $this->removeDirectory($path);
+        DirectoryRemover::remove($path);
     }
 
     /**
@@ -136,31 +132,5 @@ final readonly class ZipUploadHandler
                 ),
             );
         }
-    }
-
-    /**
-     * Recursively remove a directory and all its contents.
-     */
-    private function removeDirectory(string $path): void
-    {
-        if (!is_dir($path)) {
-            return;
-        }
-
-        $iterator = new RecursiveIteratorIterator(
-            new RecursiveDirectoryIterator($path, RecursiveDirectoryIterator::SKIP_DOTS),
-            RecursiveIteratorIterator::CHILD_FIRST,
-        );
-
-        /** @var SplFileInfo $file */
-        foreach ($iterator as $file) {
-            if ($file->isDir()) {
-                rmdir($file->getPathname());
-            } else {
-                unlink($file->getPathname());
-            }
-        }
-
-        rmdir($path);
     }
 }

@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace App\Tests\Integration\Scanner;
 
 use App\Scanner\ExtensionScanner;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -26,6 +27,7 @@ use function unlink;
 /**
  * Integration test that runs the full scanner pipeline against the test fixture extension.
  */
+#[CoversClass(ExtensionScanner::class)]
 final class ExtensionScannerIntegrationTest extends TestCase
 {
     #[Test]

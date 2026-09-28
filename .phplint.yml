@@ -1,8 +1,15 @@
-path: ./
+# Based on magicsunday/coding-standard's templates/phplint.yml; lints the whole
+# repository (config, public and the root PHP configs included), not only src and tests.
+path:
+    - ./
+
 jobs: 10
-cache-dir: .build/.phplint.cache
+
+cache-dir: .build/cache/.phplint.cache
+
 extensions:
     - php
+
 exclude:
     - .build
     - node_modules

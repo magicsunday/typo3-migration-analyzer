@@ -11,7 +11,9 @@ declare(strict_types=1);
 
 namespace App\Tests\Integration\Parser;
 
+use App\Parser\CodeBlockExtractor;
 use App\Parser\RstParser;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -25,6 +27,8 @@ use function str_starts_with;
 /**
  * Integration tests verifying CodeBlockExtractor against real TYPO3 RST files.
  */
+#[CoversClass(CodeBlockExtractor::class)]
+#[CoversClass(RstParser::class)]
 final class CodeBlockExtractorIntegrationTest extends TestCase
 {
     #[Test]
@@ -77,7 +81,8 @@ final class CodeBlockExtractorIntegrationTest extends TestCase
         $changelogDir = dirname(__DIR__, 3)
             . '/vendor/typo3/cms-core/Documentation/Changelog/13.0/';
 
-        $files = glob($changelogDir . '*.rst') ?: [];
+        $files = glob($changelogDir . '*.rst');
+        self::assertIsArray($files);
         self::assertNotEmpty($files);
 
         $parser = new RstParser();

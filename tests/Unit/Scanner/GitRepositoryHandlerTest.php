@@ -119,7 +119,7 @@ final class GitRepositoryHandlerTest extends TestCase
     public function validateRejectsInvalidUrl(string $url, string $expectedMessage): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage($expectedMessage);
+        $this->expectExceptionMessageIsOrContains($expectedMessage);
 
         $this->handler->validate($url);
     }
@@ -128,7 +128,7 @@ final class GitRepositoryHandlerTest extends TestCase
     public function cleanupRefusesPathOutsideTmpDir(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('outside the temporary directory');
+        $this->expectExceptionMessageIsOrContains('outside the temporary directory');
 
         $this->handler->cleanup('/etc/passwd');
     }

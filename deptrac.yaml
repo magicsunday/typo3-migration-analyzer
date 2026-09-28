@@ -1,0 +1,154 @@
+# Architecture layers for magicsunday/typo3-migration-analyzer.
+#
+# The canonical layer definitions and ruleset come from the shared coding-standard import. Of
+# those, src/Support lands in Support, src/Repository in Repository and src/Service in Service
+# by directory. src/Dto (the value objects and enums) is filed under the shared Model layer by a
+# collector of its own below. Nothing lives under an Enum, Contract, Configuration, Adapter,
+# Facade or Module namespace, so those shared layers stay empty here.
+#
+# The package-local layers are anchored to their top-level namespace, and each class lands in
+# exactly one layer. One class is filed by name rather than by namespace:
+#
+#   - ActionPlanGenerator sits in src/Analyzer but builds the action plan from the Rector rules
+#     RectorRuleGenerator produces, while the generators themselves read the analyzers
+#     (MigrationMappingExtractor, ArgumentSignatureAnalyzer). Filing it with the generators keeps
+#     Analyzer below Generator; left in Analyzer it would close an Analyzer <-> Generator cycle.
+#
+# The layers form one total order, lowest first, and a layer lists only layers below it:
+#
+#   Support < Model < Repository, Llm, Parser, Scanner < Analyzer < Service, Generator
+#       < EventSubscriber, Command, Controller
+#
+# plus Kernel, the Symfony kernel, which depends on no layer. The allow-lists admit no cycle, and
+# the layer-cycle gate (check-deptrac-cycles.php, part of `composer ci:test:php:deptrac`) proves
+# the measured graph has none.
+#
+# Deptrac unites these rulesets with the imported one, so the entries for Model and Service only
+# ADD edges to the shared layers. The one widening of a shared rule: Service reaches the concrete
+# LlmResultRepository (the LLM result cache) directly instead of through a Contract port. A layer
+# may always depend on itself.
+#
+# The import path follows this application's Composer layout: it keeps the default `vendor/`
+# directory because the Symfony front controllers and the TYPO3 changelog lookup read it.
+
+imports:
+    - vendor/magicsunday/coding-standard/deptrac/layers.yaml
+
+deptrac:
+    paths:
+        - src
+
+    layers:
+        # Merged with the shared Model layer; see the header.
+        -
+            name: Model
+            collectors:
+                -
+                    type: directory
+                    value: 'src/Dto/.*'
+        -
+            name: Llm
+            collectors:
+                -
+                    type: directory
+                    value: 'src/Llm/.*'
+        -
+            name: Parser
+            collectors:
+                -
+                    type: directory
+                    value: 'src/Parser/.*'
+        -
+            name: Scanner
+            collectors:
+                -
+                    type: directory
+                    value: 'src/Scanner/.*'
+        # src/Analyzer minus ActionPlanGenerator; see the header.
+        -
+            name: Analyzer
+            collectors:
+                -
+                    type: bool
+                    must:
+                        -
+                            type: directory
+                            value: 'src/Analyzer/.*'
+                    must_not:
+                        -
+                            type: directory
+                            value: 'src/Analyzer/ActionPlanGenerator\.php$'
+        # src/Generator plus ActionPlanGenerator; see the header.
+        -
+            name: Generator
+            collectors:
+                -
+                    type: directory
+                    value: 'src/Generator/.*'
+                -
+                    type: directory
+                    value: 'src/Analyzer/ActionPlanGenerator\.php$'
+        -
+            name: EventSubscriber
+            collectors:
+                -
+                    type: directory
+                    value: 'src/EventSubscriber/.*'
+        -
+            name: Command
+            collectors:
+                -
+                    type: directory
+                    value: 'src/Command/.*'
+        -
+            name: Controller
+            collectors:
+                -
+                    type: directory
+                    value: 'src/Controller/.*'
+        -
+            name: Kernel
+            collectors:
+                -
+                    type: classNameRegex
+                    value: '#^App\\Kernel$#'
+
+    ruleset:
+        # Service: DocumentService and the LLM services orchestrate the parsers, the analyzers,
+        # the LLM clients and the result repository.
+        Service:
+            - Repository
+            - Llm
+            - Parser
+            - Analyzer
+        Llm:
+            - Model
+        Parser:
+            - Model
+        Scanner:
+            - Support
+            - Model
+        Analyzer:
+            - Model
+            - Repository
+        Generator:
+            - Model
+            - Analyzer
+        EventSubscriber:
+            - Model
+            - Service
+        Command:
+            - Support
+            - Model
+            - Llm
+            - Scanner
+            - Service
+        # Controller, Command and EventSubscriber: the Symfony entry points, the top of the graph;
+        # no layer depends on them.
+        Controller:
+            - Model
+            - Analyzer
+            - Generator
+            - Scanner
+            - Service
+        Kernel: ~

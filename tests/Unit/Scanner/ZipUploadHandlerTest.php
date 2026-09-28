@@ -70,7 +70,7 @@ final class ZipUploadHandlerTest extends TestCase
         $file = new UploadedFile($tmpFile, 'test.php', 'text/plain', null, true);
 
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Only ZIP files are allowed');
+        $this->expectExceptionMessageIsOrContains('Only ZIP files are allowed');
 
         try {
             $this->handler->extract($file);
@@ -88,7 +88,7 @@ final class ZipUploadHandlerTest extends TestCase
         $handler = new ZipUploadHandler($this->tmpDir, 1);
 
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('exceeds maximum allowed size');
+        $this->expectExceptionMessageIsOrContains('exceeds maximum allowed size');
 
         $handler->extract($file);
     }
@@ -120,7 +120,7 @@ final class ZipUploadHandlerTest extends TestCase
         $file = new UploadedFile($zipPath, 'evil.zip', 'application/zip', null, true);
 
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('invalid path entries');
+        $this->expectExceptionMessageIsOrContains('invalid path entries');
 
         try {
             $this->handler->extract($file);
@@ -133,7 +133,7 @@ final class ZipUploadHandlerTest extends TestCase
     public function cleanupRefusesPathOutsideTmpDir(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('outside the temporary directory');
+        $this->expectExceptionMessageIsOrContains('outside the temporary directory');
 
         $this->handler->cleanup('/etc/passwd');
     }

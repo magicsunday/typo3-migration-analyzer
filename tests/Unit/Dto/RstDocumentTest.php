@@ -16,10 +16,12 @@ use App\Dto\CodeReferenceType;
 use App\Dto\DocumentType;
 use App\Dto\RstDocument;
 use App\Dto\ScanStatus;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 
+#[CoversClass(RstDocument::class)]
 final class RstDocumentTest extends TestCase
 {
     #[Test]
