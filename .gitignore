@@ -20,9 +20,9 @@
 /.php-cs-fixer.php
 ###< friendsofphp/php-cs-fixer ###
 
-###> phpstan/phpstan ###
-phpstan-baseline.neon
-###< phpstan/phpstan ###
+###> deptrac/deptrac ###
+/.deptrac.cache
+###< deptrac/deptrac ###
 
 ###> build ###
 /.build/
