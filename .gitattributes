@@ -11,6 +11,8 @@
 /.phplint.yml               export-ignore
 /CLAUDE.md                  export-ignore
 /deptrac.yaml               export-ignore
+/package.json               export-ignore
+/package-lock.json          export-ignore
 /phpstan.neon               export-ignore
 /phpunit.xml                export-ignore
 /rector.php                 export-ignore

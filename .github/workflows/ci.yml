@@ -9,6 +9,13 @@ permissions:
     contents: read
 
 jobs:
+    # Copy-paste detection runs in the shared Node-only lane, since jscpd is a
+    # Node tool.
+    cpd:
+        uses: magicsunday/.github/.github/workflows/cpd.yml@main
+        permissions:
+            contents: read
+
     build:
         runs-on: ubuntu-latest
 
@@ -30,20 +37,13 @@ jobs:
                   extensions: intl, zip
                   tools: composer:v2
 
-            - name: Install Node.js
-              uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
-              with:
-                  node-version: '22'
-
             # --no-scripts skips the Symfony auto-scripts, which need a booted
-            # application; jscpd, which post-install-cmd would install, is
-            # installed explicitly instead.
+            # application.
             - id: install
               name: Install dependencies
               run: |
                   composer validate
                   composer install --prefer-dist --no-ansi --no-interaction --no-progress --no-scripts
-                  npm install jscpd@^5.0.11
 
             - name: Lint
               if: ${{ always() && steps.install.conclusion == 'success' }}
@@ -72,7 +72,3 @@ jobs:
             - name: PHPUnit
               if: ${{ always() && steps.install.conclusion == 'success' }}
               run: composer ci:test:php:unit
-
-            - name: Copy-Paste Detection
-              if: ${{ always() && steps.install.conclusion == 'success' }}
-              run: composer ci:test:php:cpd

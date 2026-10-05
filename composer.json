@@ -111,7 +111,7 @@
             "XDEBUG_MODE=coverage phpunit --configuration phpunit.xml --coverage-html .build/coverage/"
         ],
         "ci:test:php:cpd": [
-            "npx jscpd --config .jscpd.json --skip-comments --no-tips"
+            "node_modules/.bin/jscpd --config .jscpd.json --skip-comments --no-tips --fail-on-empty"
         ],
         "ci:test:php:templates": [
             "check-consumer-config.php ."
@@ -134,12 +134,10 @@
             "@ci:test:php:cpd"
         ],
         "post-install-cmd": [
-            "@auto-scripts",
-            "npm install jscpd@^5.0.11"
+            "@auto-scripts"
         ],
         "post-update-cmd": [
-            "@auto-scripts",
-            "npm install jscpd@^5.0.11"
+            "@auto-scripts"
         ]
     }
 }

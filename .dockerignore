@@ -1,6 +1,7 @@
 /.git
 /.idea
 /docs
+/node_modules
 /tests
 /var
 /vendor
