@@ -1,7 +1,7 @@
 # TYPO3 Migration Analyzer
 
 ## Projekt-Kontext
-- Symfony 7.2 Web-App die TYPO3 Deprecation/Breaking-Change RST-Dokumente parst
+- Symfony Web-App die TYPO3 Deprecation/Breaking-Change RST-Dokumente parst
 - Identifiziert fehlende Extension-Scanner-Matcher und generiert diese
 - Multi-Version Migration Support (7→8 bis 13→14, konfigurierbar per UI-Dropdown)
 - Repo: https://github.com/magicsunday/typo3-migration-analyzer
@@ -74,7 +74,6 @@ php -S localhost:8000 -t public/
 
 ## Bekannte Eigenheiten
 - TYPO3 cms-composer-installers überschreibt public/index.php — Workaround via `extra.typo3/cms.web-dir` in composer.json
-- Coverage aktuell bei ~51.7% (205 von 424 RST-Dokumenten ohne Matcher)
 - Der „Server-Pfad“-Scan auf `/scan` prüft den eingegebenen Pfad mit `is_dir()` aus Sicht des PHP-Prozesses. Im Docker-Setup sieht der phpfpm-Container standardmäßig nur die Named-Volume-Kopie unter `/var/www` sowie `/scan-sources` (per `SCAN_SOURCE_PATH` in `.env` als Read-only-Bind-Mount auf ein beliebiges Host-Verzeichnis, siehe `.env.dist`). Ein Bezug zum Host besteht bei `/var/www` nur, wenn das `compose.development.yaml`-Overlay aktiv ist, dann per echtem Bind-Mount auf das Projektverzeichnis. Andere Host-Pfade sind für den Container unsichtbar, unabhängig davon, welcher konkrete Pfad im Formular eingegeben wird. Das ist Container-Isolation, kein Bug. `ScanSourcePathResolver` schreibt einen eingegebenen Pfad, der mit dem konfigurierten `SCAN_SOURCE_PATH` beginnt, automatisch auf sein `/scan-sources`-Äquivalent um, sodass der ursprüngliche Host-Pfad eingegeben werden kann. Der Rewrite prüft per `realpath()`-Containment gegen `../`-Traversal und verwirft Pfade mit eingebettetem Null-Byte (sonst `ValueError` in `realpath()`). Alternativ: ZIP-Upload oder Git-URL-Scan nutzen (kein Mount nötig).
 
 ## Roadmap
@@ -121,7 +120,7 @@ Detaillierte Architektur und Komponenten-Beschreibungen: `docs/plans/2026-03-07-
 - [x] LLM-basiertes Komplexitäts-Scoring (Hybrid: Heuristik-Vorbewertung + LLM-Verfeinerung für Score 3-4)
 
 ### v2.1 — CI/CD Integration
-- [ ] CLI-Modus: `bin/console scan:extension`, `report:coverage`, `generate:matcher`, `generate:rector` (llm:analyze + llm:status bereits in v2.0)
+- [ ] CLI-Modus: `report:coverage`, `generate:matcher`, `generate:rector` (`scan:extension` sowie `llm:analyze`, `llm:compare` und `llm:status` bestehen bereits)
 - [ ] GitHub Action: `magicsunday/typo3-migration-check-action`
 - [ ] Composer Plugin: `magicsunday/typo3-migration-check-plugin`
 - [ ] Multi-Result Session-Cache (mehrere Scan-Ergebnisse parallel vorhalten)
