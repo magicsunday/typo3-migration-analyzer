@@ -22,3 +22,12 @@ parameters:
     excludePaths:
         - %currentWorkingDirectory%/.build/
         - %currentWorkingDirectory%/tests/Fixtures/Extension/
+
+    ignoreErrors:
+        # The renderer writes the class name of this Rector rule into the rector.php files it
+        # generates for other projects, so it names the class although Rector marks it as deprecated.
+        -
+            identifier: classConstant.deprecatedClass
+            message: '#^Access to constant on deprecated class Rector\\Renaming\\Rector\\StaticCall\\RenameStaticMethodRector:#'
+            path: %currentWorkingDirectory%/src/Generator/RectorConfigRenderer.php
+            count: 1
