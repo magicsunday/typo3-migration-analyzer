@@ -27,4 +27,4 @@ concurrency:
 
 jobs:
     commit-convention:
-        uses: magicsunday/.github/.github/workflows/commit-convention.yml@main
+        uses: magicsunday/.github/.github/workflows/commit-convention.yml@fde6739f4621e059d0c5fa8a88e249ec742502a1 # main
