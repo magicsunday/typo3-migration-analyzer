@@ -12,13 +12,13 @@ permissions:
 
 jobs:
     code-scanning:
-        uses: magicsunday/.github/.github/workflows/code-scanning.yml@main
+        uses: magicsunday/.github/.github/workflows/code-scanning.yml@fde6739f4621e059d0c5fa8a88e249ec742502a1 # main
         permissions:
             contents: read
             security-events: write
 
     zizmor:
-        uses: magicsunday/.github/.github/workflows/zizmor.yml@main
+        uses: magicsunday/.github/.github/workflows/zizmor.yml@fde6739f4621e059d0c5fa8a88e249ec742502a1 # main
         permissions:
             contents: read
             security-events: write
@@ -26,7 +26,7 @@ jobs:
     scorecard:
         # Scorecard publishes against the default branch; skip pull-request runs.
         if: github.event_name != 'pull_request'
-        uses: magicsunday/.github/.github/workflows/scorecard.yml@main
+        uses: magicsunday/.github/.github/workflows/scorecard.yml@fde6739f4621e059d0c5fa8a88e249ec742502a1 # main
         permissions:
             contents: read
             security-events: write
@@ -35,12 +35,12 @@ jobs:
     dependency-review:
         # The dependency-review action only runs in a pull-request context.
         if: github.event_name == 'pull_request'
-        uses: magicsunday/.github/.github/workflows/dependency-review.yml@main
+        uses: magicsunday/.github/.github/workflows/dependency-review.yml@fde6739f4621e059d0c5fa8a88e249ec742502a1 # main
         permissions:
             contents: read
             pull-requests: write
 
     yamllint:
-        uses: magicsunday/.github/.github/workflows/yamllint.yml@main
+        uses: magicsunday/.github/.github/workflows/yamllint.yml@fde6739f4621e059d0c5fa8a88e249ec742502a1 # main
         permissions:
             contents: read
