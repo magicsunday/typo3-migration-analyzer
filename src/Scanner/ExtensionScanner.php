@@ -23,8 +23,6 @@ use ReflectionClass;
 use RuntimeException;
 use SplFileObject;
 use Symfony\Component\Finder\Finder;
-use TYPO3\CMS\Install\ExtensionScanner\Php\CodeStatistics;
-use TYPO3\CMS\Install\ExtensionScanner\Php\GeneratorClassesResolver;
 use TYPO3\CMS\Install\ExtensionScanner\Php\Matcher\AbstractCoreMatcher;
 use TYPO3\CMS\Install\ExtensionScanner\Php\Matcher\ArrayDimensionMatcher;
 use TYPO3\CMS\Install\ExtensionScanner\Php\Matcher\ArrayGlobalMatcher;
@@ -48,6 +46,8 @@ use TYPO3\CMS\Install\ExtensionScanner\Php\Matcher\PropertyExistsStaticMatcher;
 use TYPO3\CMS\Install\ExtensionScanner\Php\Matcher\PropertyProtectedMatcher;
 use TYPO3\CMS\Install\ExtensionScanner\Php\Matcher\PropertyPublicMatcher;
 use TYPO3\CMS\Install\ExtensionScanner\Php\Matcher\ScalarStringMatcher;
+use TYPO3\CMS\Install\ExtensionScanner\Php\Visitor\CodeStatistics;
+use TYPO3\CMS\Install\ExtensionScanner\Php\Visitor\GeneratorClassesResolver;
 
 use function dirname;
 use function file_get_contents;
@@ -213,7 +213,7 @@ final readonly class ExtensionScanner
         foreach (self::MATCHER_CONFIG as $matcherClass => $configFile) {
             $configFilePath = $configDirectory . '/' . $configFile;
 
-            /** @var array<string, mixed> $configuration */
+            /** @var array<string, array<string, mixed>> $configuration */
             $configuration = require $configFilePath;
 
             $matchers[] = new $matcherClass($configuration);
