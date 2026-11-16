@@ -154,7 +154,7 @@ Detaillierte Architektur und Komponenten-Beschreibungen: `docs/plans/2026-03-07-
 - [x] Session-basierter Scan-Result-Cache (Exports für alle Quellen, Clone-Deduplizierung)
 
 ### v2.0 — Multi-Version + Rector-Integration
-- [x] Multi-Version Support (VersionRange DTO, VersionRangeProvider, Session-basiert, UI-Dropdown, typo3/cms-core ^14.1)
+- [x] Multi-Version Support (VersionRange DTO, VersionRangeProvider, Session-basiert, UI-Dropdown, typo3/cms-core ^14.3.11)
 - [x] Erweiterte Pattern-Erkennung (non-FQCN CodeReference mit Confidence, 5 neue Mapping-Patterns, Description-Scan)
 - [x] Rector-Config-Export basierend auf Scan-Ergebnissen (kombinierte rector.php für alle Full-Automation Rules)
 - [x] Aktionsplan-Generator (ActionPlanGenerator, AutomationGrade Full/Partial/Manual, priorisiert)
