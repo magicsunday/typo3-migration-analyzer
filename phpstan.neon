@@ -26,8 +26,9 @@ parameters:
     ignoreErrors:
         # The renderer writes the class name of this Rector rule into the rector.php files it
         # generates for other projects, so it names the class although Rector marks it as deprecated.
+        # The entry is bounded by identifier, file and count, because the wording of the message
+        # changes between PHPStan releases.
         -
             identifier: classConstant.deprecatedClass
-            message: '#^Access to constant on deprecated class Rector\\Renaming\\Rector\\StaticCall\\RenameStaticMethodRector:#'
             path: %currentWorkingDirectory%/src/Generator/RectorConfigRenderer.php
             count: 1
