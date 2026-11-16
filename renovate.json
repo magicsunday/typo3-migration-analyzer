@@ -2,5 +2,21 @@
     "$schema": "https://docs.renovatebot.com/renovate-schema.json",
     "extends": [
         "local>magicsunday/.github:renovate-config"
+    ],
+    "packageRules": [
+        {
+            "description": "The locked TYPO3 core requires the Symfony 7.4 components, so a major bump of the Symfony packages cannot be resolved. Remove this rule once the TYPO3 core allows the next Symfony major line.",
+            "matchManagers": [
+                "composer"
+            ],
+            "matchPackageNames": [
+                "/^symfony\\//",
+                "!symfony/flex"
+            ],
+            "matchUpdateTypes": [
+                "major"
+            ],
+            "enabled": false
+        }
     ]
 }
