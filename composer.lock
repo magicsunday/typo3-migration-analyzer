@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "4e551f5deffadd7879c4bb060505602a",
+    "content-hash": "b92d6fb272963231bf012f136029dda0",
     "packages": [
         {
             "name": "bacon/bacon-qr-code",
@@ -8071,16 +8071,16 @@
         },
         {
             "name": "magicsunday/coding-standard",
-            "version": "3.11.0",
+            "version": "3.12.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/magicsunday/coding-standard.git",
-                "reference": "6ffc0b340bae0519297ff8c7e08ff169816576a6"
+                "reference": "abfaad69125fb30505f54daaf8acb2d31de74bfc"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/magicsunday/coding-standard/zipball/6ffc0b340bae0519297ff8c7e08ff169816576a6",
-                "reference": "6ffc0b340bae0519297ff8c7e08ff169816576a6",
+                "url": "https://api.github.com/repos/magicsunday/coding-standard/zipball/abfaad69125fb30505f54daaf8acb2d31de74bfc",
+                "reference": "abfaad69125fb30505f54daaf8acb2d31de74bfc",
                 "shasum": ""
             },
             "require": {
@@ -8112,7 +8112,8 @@
             "bin": [
                 "bin/check-consumer-config.php",
                 "bin/check-deptrac-cycles.php",
-                "bin/check-phpat-subjects.php"
+                "bin/check-phpat-subjects.php",
+                "bin/check-stale-advisory-ignores.php"
             ],
             "type": "library",
             "notification-url": "https://packagist.org/downloads/",
@@ -8137,10 +8138,10 @@
             ],
             "support": {
                 "issues": "https://github.com/magicsunday/coding-standard/issues",
-                "source": "https://github.com/magicsunday/coding-standard/tree/3.11.0"
+                "source": "https://github.com/magicsunday/coding-standard/tree/3.12.0"
             },
-            "time": "2026-11-10T19:19:25+00:00",
-            "published-time": "2026-11-10T19:19:54+00:00"
+            "time": "2026-11-19T08:10:37+00:00",
+            "published-time": "2026-11-19T08:11:00+00:00"
         },
         {
             "name": "myclabs/deep-copy",
